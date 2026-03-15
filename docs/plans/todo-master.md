@@ -309,7 +309,7 @@
 ## 8. PWA APP ENHANCEMENTS (Can do anytime)
 
 - [x] Implement real-time telemetry dashboard (battery, speed, heading, GPS, IMU, uptime)
-- [ ] Implement live camera streaming (MJPEG from Jetson web_server_node)
+- [x] Implement live camera streaming (MJPEG from Jetson web_server_node, source selector, snapshot)
 - [x] Implement interactive map (Leaflet.js, rover position, geofence circle, waypoints, trail)
 - [x] Implement gamepad input support (Gamepad API, controller mapping, speed modes)
 - [x] Implement D-pad touch control for manual driving (in PWA and ESP32 embedded web UI)

@@ -1035,6 +1035,26 @@ input[type="color"] {
 input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
 input[type="color"]::-webkit-color-swatch { border-radius: 4px; border: none; }
 
+.settings-btn {
+    padding: 6px 14px;
+    background: var(--secondary);
+    color: var(--ctp-base);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.settings-btn:active {
+    opacity: 0.7;
+}
+
+.settings-btn--danger {
+    background: var(--danger);
+}
+
 select {
     padding: 8px 12px;
     background: var(--bg-input);
@@ -1793,6 +1813,41 @@ select:focus {
                     </div>
                 </div>
             </div>
+
+            <div class="settings-group">
+                <div class="settings-group__title">System</div>
+                <div class="setting-row">
+                    <span class="setting-row__label">ESP32 Firmware</span>
+                    <div class="setting-row__control">
+                        <span class="setting-row__value" id="sys-fw-version">--</span>
+                        <button class="settings-btn" id="sys-ota-btn">Update OTA</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-row__label">Jetson Uptime</span>
+                    <div class="setting-row__control">
+                        <span class="setting-row__value" id="sys-jetson-uptime">--</span>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-row__label">WiFi Signal</span>
+                    <div class="setting-row__control">
+                        <span class="setting-row__value" id="sys-wifi-rssi">--</span>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-row__label">CPU Temp</span>
+                    <div class="setting-row__control">
+                        <span class="setting-row__value" id="sys-cpu-temp">--</span>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-row__label">Restart ESP32</span>
+                    <div class="setting-row__control">
+                        <button class="settings-btn settings-btn--danger" id="sys-restart-btn">Restart</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -2360,6 +2415,33 @@ select:focus {
             updateModeButtonUI(data.mode);
         }
 
+        // System info
+        if (data.sys) {
+            var fwEl = document.getElementById('sys-fw-version');
+            if (fwEl && data.sys.fw) fwEl.textContent = data.sys.fw;
+            var uptimeEl = document.getElementById('sys-jetson-uptime');
+            if (uptimeEl && data.sys.uptime !== undefined) uptimeEl.textContent = formatUptime(data.sys.uptime);
+            var rssiEl = document.getElementById('sys-wifi-rssi');
+            if (rssiEl && data.sys.rssi !== undefined) rssiEl.textContent = data.sys.rssi + ' dBm';
+            var tempEl = document.getElementById('sys-cpu-temp');
+            if (tempEl && data.sys.temp !== undefined) tempEl.textContent = data.sys.temp.toFixed(1) + '\u00B0C';
+        }
+
+        // OTA progress
+        if (data.ota) {
+            var otaBtn = document.getElementById('sys-ota-btn');
+            if (data.ota.status === 'complete') {
+                addLog('info', 'OTA update complete');
+                if (otaBtn) { otaBtn.textContent = 'Update OTA'; otaBtn.disabled = false; }
+            } else if (data.ota.status === 'error') {
+                addLog('error', 'OTA failed: ' + (data.ota.msg || 'unknown'));
+                if (otaBtn) { otaBtn.textContent = 'Update OTA'; otaBtn.disabled = false; }
+            } else if (data.ota.progress !== undefined) {
+                addLog('info', 'OTA: ' + data.ota.progress + '%');
+                if (otaBtn) otaBtn.textContent = data.ota.progress + '%';
+            }
+        }
+
         // Error from rover
         if (data.error) addLog('error', 'Rover: ' + data.error);
     }
@@ -2456,13 +2538,17 @@ select:focus {
         else fill.style.background = 'var(--info)';
     }
 
-    function updateUptimeUI(seconds) {
-        var el = document.getElementById('telem-uptime');
-        if (!el) return;
+    function formatUptime(seconds) {
         var h = Math.floor(seconds / 3600);
         var m = Math.floor((seconds % 3600) / 60);
         var s = seconds % 60;
-        el.textContent = h + 'h ' + m + 'm ' + s + 's';
+        return h + 'h ' + m + 'm ' + s + 's';
+    }
+
+    function updateUptimeUI(seconds) {
+        var el = document.getElementById('telem-uptime');
+        if (!el) return;
+        el.textContent = formatUptime(seconds);
     }
 
     // ============================================================
@@ -2804,6 +2890,38 @@ select:focus {
                 settings.theme = theme;
                 saveSettings(settings);
                 applyTheme(theme);
+            });
+        }
+
+        // OTA firmware update button
+        var otaBtn = document.getElementById('sys-ota-btn');
+        if (otaBtn) {
+            otaBtn.addEventListener('click', function() {
+                if (!conn.isConnected) {
+                    addLog('warn', 'Not connected — cannot trigger OTA');
+                    return;
+                }
+                otaBtn.textContent = 'Updating...';
+                otaBtn.disabled = true;
+                conn.send({ cmd: 'ota', target: 'esp32' });
+                addLog('cmd', 'OTA update triggered for ESP32');
+                setTimeout(function() {
+                    otaBtn.textContent = 'Update OTA';
+                    otaBtn.disabled = false;
+                }, 30000);
+            });
+        }
+
+        // Restart ESP32 button
+        var restartBtn = document.getElementById('sys-restart-btn');
+        if (restartBtn) {
+            restartBtn.addEventListener('click', function() {
+                if (!conn.isConnected) {
+                    addLog('warn', 'Not connected — cannot restart');
+                    return;
+                }
+                conn.send({ cmd: 'restart', target: 'esp32' });
+                addLog('cmd', 'ESP32 restart requested');
             });
         }
     }
