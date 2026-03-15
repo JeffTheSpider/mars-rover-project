@@ -4,7 +4,7 @@
 **Date**: 2026-03-15
 **Purpose**: Define material selection, print settings, part segmentation, print orientation, heat-set insert specifications, and post-processing for all 3D printed rover components across all build phases.
 **Depends on**: EA-01 (Suspension), EA-05 (Weight), EA-08 (Phase 1 Spec)
-**See also**: `docs/references/3d-printing-strategy.md` — supplementary research with community project data and additional Ender 3 tips
+**See also**: `docs/references/3d-printing-strategy.md` and `docs/references/3d-printing-materials-research.md` — supplementary research with community project data, CNC Kitchen strength test numbers, and additional Ender 3 tips
 
 ---
 
@@ -163,6 +163,10 @@ Small parts that join extrusions or hold bearings.
 **Acceptable**: Insert axis parallel to layers (inserted from side). Slightly lower pull-out strength (~70% of perpendicular) because the knurls push layers apart rather than gripping into them.
 
 **Rule**: Where possible, design parts so inserts go in perpendicular to layers. If this conflicts with the best print orientation for strength, prioritise the print orientation and accept slightly lower insert strength (still far exceeds our loads).
+
+### 3.5 Slicer Tip: Local Infill Override
+
+In Cura or PrusaSlicer, use **modifier meshes** to set 100% infill in a cylinder around each insert hole while keeping the rest of the part at normal infill (30-50%). This maximises insert retention without wasting filament on the entire part. Create a cylinder modifier (10mm OD × hole depth) centred on each insert location.
 
 ---
 
@@ -420,6 +424,25 @@ PETG parts used outdoors should be protected from UV:
 | Print in ASA instead | 5+ years | None | $5 extra/kg | Best solution — UV-resistant material |
 
 **Recommendation**: Print structural parts in ASA for inherent UV resistance. For PETG body panels, apply 2 coats of automotive clear coat spray — quick, cheap, effective.
+
+**Layered UV protection (best results for PETG panels)**:
+1. Sand with 220 grit for adhesion
+2. Spray primer (Rust-Oleum 2X Ultra Cover Primer)
+3. 2-3 thin coats spray paint
+4. 2 coats UV clear coat (Rust-Oleum Crystal Clear) — primary UV barrier
+5. Total cost: ~£15-20 for entire rover
+
+### 7.4 Phase 2 Structural Reinforcement
+
+For high-stress parts at full scale (16.7 kg rover weight):
+
+| Method | Application | Difficulty | When to Use |
+|--------|------------|------------|-------------|
+| Carbon fiber strips (1mm × 10mm pultruded) | Epoxy-bonded to rocker/bogie arm surfaces | Easy — glue flat strips along arm | Phase 2 rocker arms (bending loads) |
+| Fiberglass tape (25mm woven) | Wrapped around pivot joints with epoxy | Moderate — wet layup | Phase 2 pivot bosses (shear loads) |
+| M3 threaded rod tensile core | Through-bolt running arm length | Easy — drill and insert | Alternative to aluminium tube core |
+
+**Not needed for Phase 1** — at 1.1 kg total weight, PETG alone is more than adequate.
 
 ### 7.3 Waterproofing (Phase 2)
 
