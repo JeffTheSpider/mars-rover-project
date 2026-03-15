@@ -76,8 +76,9 @@ Order these first — filament arrives first so you can start printing while wai
 | 16 | Jumper wire set (M-M, M-F) | 1 | Amazon | $3 |
 | 17 | Mini breadboard | 1 | Amazon | $2 |
 | 18 | 8mm steel rod (300mm length) | 1 | Hardware store | $2 |
+| 19 | 100nF ceramic capacitors | 6 | Amazon/AliExpress | $1 |
 
-**Subtotal: ~$29**
+**Subtotal: ~$30**
 
 **Grand total: ~$109** (slightly over $92 budget due to larger filament spool — worth the extra margin for reprints).
 
@@ -233,12 +234,15 @@ Place assembled chassis on a table. Press down on one side — the other side sh
 
 ### 5.1 Wire Motors
 
-Before mounting, solder wires to all 6 motors:
-1. Cut 12 pieces of wire, ~200mm each (6 motors × 2 wires)
-2. Strip 5mm at each end
-3. Solder to motor terminals (red = +, black = -)
-4. Add heat-shrink over solder joints
-5. Label each motor wire pair: W1(FL), W2(ML), W3(RL), W4(RR), W5(MR), W6(FR)
+Before mounting, solder wires and noise suppression capacitors to all 6 motors:
+1. Solder a **100nF (0.1μF) ceramic capacitor** directly across each motor's terminals (keeps leads as short as possible). This suppresses electrical noise that can interfere with the ESP32's WiFi and I2C.
+2. Cut 12 pieces of wire, ~200mm each (6 motors × 2 wires)
+3. Strip 5mm at each end
+4. Solder to motor terminals (red = +, black = -)
+5. Add heat-shrink over solder joints and capacitor
+6. Label each motor wire pair: W1(FL), W2(ML), W3(RL), W4(RR), W5(MR), W6(FR)
+
+**Note on L298N logic levels**: The L298N is specified for 5V logic, but ESP32-S3 outputs 3.3V. This usually works (the HIGH threshold is ~2.3V) but is technically out of spec. If motors respond sluggishly, add a 4-channel logic level shifter (~$1) between ESP32 and L298N. Phase 2's Cytron MDD10A natively accepts 3.3V logic.
 
 ### 5.2 Mount Motors
 
