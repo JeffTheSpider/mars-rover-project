@@ -2,9 +2,9 @@
 
 **Project**: Charlie's Mars Rover
 **Date**: 2026-03-14 (updated 2026-03-15)
-**Version**: 1.1
-**Status**: Design Phase — Engineering Analysis Complete
-**Engineering References**: EA-01 through EA-07 in `docs/engineering/`
+**Version**: 1.2
+**Status**: Design Phase — Engineering Analysis Complete, Phase 1 Firmware Started
+**Engineering References**: EA-01 through EA-12 in `docs/engineering/`
 
 ---
 
@@ -1020,12 +1020,12 @@ Rover underside:
 ## 12. Next Steps
 
 1. **Install Fusion 360** — download and set up for CAD modelling
-2. **Design Phase 1 prototype in CAD** — rocker-bogie geometry first
+2. **Design Phase 1 prototype in CAD** — use dimensions from EA-08, rocker-bogie geometry first
 3. **Simulate suspension** — test articulation range in Fusion 360
-4. **Print Phase 1 parts** — start with wheels and rocker arms
-5. **Order Phase 1 electronics** — ESP32-S3, N20 motors, SG90 servos, L298N drivers
-6. **Write ESP32 firmware** — basic motor control + WiFi web server
-7. **Assemble and test** — validate the design before Phase 2
+4. **Print Phase 1 parts** — follow EA-08 §13.3 print order, EA-11 for settings
+5. **Order Phase 1 electronics** — ESP32-S3, N20 motors, SG90 servos, L298N drivers ($92, EA-06)
+6. ~~**Write ESP32 firmware**~~ — ✅ DONE: `firmware/esp32/` — motor control + WiFi web server + Ackermann steering
+7. **Assemble and test** — follow EA-08 §14 assembly sequence, calibrate servos
 
 ---
 
@@ -1044,6 +1044,11 @@ All design decisions in this document are backed by detailed engineering analyse
 | EA-05 | Weight Budget | 16.7 kg Phase 2, 20.8 kg Phase 3, CoG at 232mm above ground |
 | EA-06 | Cost Breakdown | $1,933.75 grand total, prioritised build order, cost reduction options |
 | EA-07 | Open Source Review | Sawppy construction + JPL geometry hybrid approach recommended |
+| EA-08 | Phase 1 Prototype Spec | All parts dimensioned for CAD, 22 printed parts, 65hr print time, assembly sequence |
+| EA-09 | ESP32-S3 GPIO Pin Map | Complete pin assignment for Phase 1 (20 pins) and Phase 2 (28 pins), wiring diagrams |
+| EA-10 | Ackermann Steering | Steering angle calculations, min turn radius 993mm, point turn, crab walk, servo mapping |
+| EA-11 | 3D Printing Strategy | PETG/ASA material selection, print settings, heat-set inserts, part segmentation, ~317hr Phase 2 |
+| EA-12 | UART Protocol | Text-based NMEA-style protocol, 115200 baud, 50Hz control loop, 18 message types |
 
 ---
 
