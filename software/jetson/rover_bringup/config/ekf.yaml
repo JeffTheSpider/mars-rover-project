@@ -1,0 +1,71 @@
+# Extended Kalman Filter configuration for robot_localization
+# Fuses: IMU (orientation + angular velocity + accel) + wheel odometry (x, y, yaw) + GPS
+
+ekf_filter_node:
+  ros__parameters:
+    use_sim_time: false
+    frequency: 30.0
+    two_d_mode: true
+    publish_tf: true
+    publish_acceleration: true
+
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: odom
+
+    # Wheel odometry (from ESP32 encoders via uart_bridge)
+    # Provides: x position, y position, yaw
+    odom0: /wheel_odom
+    odom0_config: [true, true, false,      # x, y, z
+                   false, false, true,      # roll, pitch, yaw
+                   false, false, false,     # vx, vy, vz
+                   false, false, false,     # vroll, vpitch, vyaw
+                   false, false, false]     # ax, ay, az
+    odom0_differential: false
+    odom0_relative: false
+    odom0_queue_size: 10
+
+    # IMU (BNO055 or MPU6050 via ESP32)
+    # Provides: orientation (roll, pitch, yaw), angular velocity, linear acceleration
+    imu0: /imu/data
+    imu0_config: [false, false, false,     # x, y, z
+                  true, true, true,         # roll, pitch, yaw
+                  false, false, false,      # vx, vy, vz
+                  true, true, true,         # vroll, vpitch, vyaw
+                  true, true, true]         # ax, ay, az
+    imu0_differential: false
+    imu0_relative: false
+    imu0_queue_size: 10
+    imu0_remove_gravitational_acceleration: true
+
+    # GPS odometry (converted from NavSatFix by navsat_transform_node)
+    # Provides: x, y position in odom frame
+    odom1: /gps/odom
+    odom1_config: [true, true, false,      # x, y, z
+                   false, false, false,     # roll, pitch, yaw
+                   false, false, false,     # vx, vy, vz
+                   false, false, false,     # vroll, vpitch, vyaw
+                   false, false, false]     # ax, ay, az
+    odom1_differential: true
+    odom1_relative: false
+    odom1_queue_size: 10
+
+    # Process noise covariance - tune based on sensor quality
+    process_noise_covariance: [
+      0.05,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.05,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.06,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.03,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.03,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.06,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.025, 0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.025, 0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.04,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.01,  0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.01,  0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.02,  0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.01,  0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.01,  0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.015
+    ]

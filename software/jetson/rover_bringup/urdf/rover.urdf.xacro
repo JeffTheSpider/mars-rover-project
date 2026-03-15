@@ -1,0 +1,664 @@
+<?xml version="1.0"?>
+<!--
+  Mars Rover 0.4-Scale Prototype - URDF Xacro
+  =============================================
+  Rocker-bogie suspension, 6 wheels (4 steered), ~1.1kg total.
+
+  Coordinate system (right-hand, origin at ground centre):
+    X = left/right  (positive = right)
+    Y = front/back  (positive = forward)
+    Z = up/down     (positive = up)
+
+  Key dimensions (all converted to metres):
+    Body:          0.440 x 0.260 x 0.080 m
+    Ground clear:  0.060 m  (body bottom at Z=0.060)
+    Wheel:         80mm dia (r=0.040), 32mm wide
+    Axle span:     0.280 m  (left X=-0.140, right X=+0.140)
+    Axle pitch:    front Y=+0.180, mid Y=0, rear Y=-0.180
+
+  Colours: Catppuccin Mocha palette
+    Body    = Surface0  #313244  (0.192 0.196 0.267)
+    Wheels  = Overlay0  #6c7086  (0.424 0.439 0.525)
+    Arms    = Surface1  #45475a  (0.271 0.278 0.353)
+    Sensors = Red       #f38ba8  (0.953 0.545 0.659)
+-->
+<robot name="mars_rover" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ======================================================================
+       PROPERTIES
+       ====================================================================== -->
+
+  <!-- Body -->
+  <xacro:property name="body_length"  value="0.260" />  <!-- Y dimension -->
+  <xacro:property name="body_width"   value="0.440" />  <!-- X dimension -->
+  <xacro:property name="body_height"  value="0.080" />  <!-- Z dimension -->
+  <xacro:property name="body_mass"    value="0.45"  />
+  <xacro:property name="body_z"       value="0.100" />  <!-- centre of body above ground -->
+
+  <!-- Wheels -->
+  <xacro:property name="wheel_radius" value="0.040" />
+  <xacro:property name="wheel_width"  value="0.032" />
+  <xacro:property name="wheel_mass"   value="0.04"  />
+
+  <!-- Axle positions from origin -->
+  <xacro:property name="axle_front_y" value="0.180"  />
+  <xacro:property name="axle_mid_y"   value="0.0"    />
+  <xacro:property name="axle_rear_y"  value="-0.180" />
+  <xacro:property name="axle_left_x"  value="-0.140" />
+  <xacro:property name="axle_right_x" value="0.140"  />
+
+  <!-- Rocker arms: body pivot to front wheel = 180mm -->
+  <xacro:property name="rocker_length"    value="0.180" />
+  <xacro:property name="rocker_width"     value="0.020" />
+  <xacro:property name="rocker_height"    value="0.015" />
+  <xacro:property name="rocker_mass"      value="0.03"  />
+  <xacro:property name="rocker_pivot_x"   value="0.125" />  <!-- body pivot X offset -->
+  <xacro:property name="rocker_pivot_z"   value="0.060" />  <!-- body pivot Z (at body bottom) -->
+
+  <!-- Bogie arms: 120mm total, pivot in middle -->
+  <xacro:property name="bogie_length"     value="0.120" />
+  <xacro:property name="bogie_width"      value="0.018" />
+  <xacro:property name="bogie_height"     value="0.012" />
+  <xacro:property name="bogie_mass"       value="0.02"  />
+  <xacro:property name="bogie_half"       value="0.060" />
+
+  <!-- Differential bar -->
+  <xacro:property name="diff_bar_length"  value="0.200" />
+  <xacro:property name="diff_bar_radius"  value="0.005" />
+  <xacro:property name="diff_bar_mass"    value="0.02"  />
+
+  <!-- Joint limits -->
+  <xacro:property name="rocker_limit"     value="${15.0 * 3.14159265 / 180.0}" />  <!-- +/-15 deg -->
+  <xacro:property name="bogie_limit"      value="${20.0 * 3.14159265 / 180.0}" />  <!-- +/-20 deg -->
+  <xacro:property name="steer_limit"      value="${35.0 * 3.14159265 / 180.0}" />  <!-- +/-35 deg -->
+
+  <!-- Catppuccin Mocha colours (RGBA) -->
+  <xacro:property name="color_body"    value="0.192 0.196 0.267 1.0" />  <!-- Surface0 #313244 -->
+  <xacro:property name="color_wheel"   value="0.424 0.439 0.525 1.0" />  <!-- Overlay0 #6c7086 -->
+  <xacro:property name="color_arm"     value="0.271 0.278 0.353 1.0" />  <!-- Surface1 #45475a -->
+  <xacro:property name="color_sensor"  value="0.953 0.545 0.659 1.0" />  <!-- Red      #f38ba8 -->
+
+  <!-- ======================================================================
+       MATERIALS
+       ====================================================================== -->
+  <material name="surface0">
+    <color rgba="${color_body}" />
+  </material>
+  <material name="overlay0">
+    <color rgba="${color_wheel}" />
+  </material>
+  <material name="surface1">
+    <color rgba="${color_arm}" />
+  </material>
+  <material name="catppuccin_red">
+    <color rgba="${color_sensor}" />
+  </material>
+
+  <!-- ======================================================================
+       INERTIA MACROS
+       ====================================================================== -->
+
+  <!-- Box inertia: mass m, dimensions x y z -->
+  <xacro:macro name="box_inertia" params="m x y z">
+    <inertial>
+      <mass value="${m}" />
+      <inertia ixx="${m*(y*y+z*z)/12.0}" ixy="0" ixz="0"
+               iyy="${m*(x*x+z*z)/12.0}" iyz="0"
+               izz="${m*(x*x+y*y)/12.0}" />
+    </inertial>
+  </xacro:macro>
+
+  <!-- Cylinder inertia: mass m, radius r, length l (along Z) -->
+  <xacro:macro name="cylinder_inertia" params="m r l">
+    <inertial>
+      <mass value="${m}" />
+      <inertia ixx="${m*(3*r*r+l*l)/12.0}" ixy="0" ixz="0"
+               iyy="${m*(3*r*r+l*l)/12.0}" iyz="0"
+               izz="${m*r*r/2.0}" />
+    </inertial>
+  </xacro:macro>
+
+  <!-- ======================================================================
+       WHEEL MACRO
+       Generates a wheel link + continuous rotation joint.
+       Parent is expected to be a steering link or bogie/rocker link.
+       The wheel spins around its local X axis (cylinder axis along X).
+       ====================================================================== -->
+  <xacro:macro name="wheel" params="name parent *origin">
+    <!-- Wheel link -->
+    <link name="${name}">
+      <visual>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}" />
+        </geometry>
+        <material name="overlay0" />
+      </visual>
+      <collision>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}" />
+        </geometry>
+      </collision>
+      <xacro:cylinder_inertia m="${wheel_mass}" r="${wheel_radius}" l="${wheel_width}" />
+    </link>
+
+    <!-- Continuous spinning joint (rotation about cylinder axis) -->
+    <joint name="${name}_spin_joint" type="continuous">
+      <parent link="${parent}" />
+      <child link="${name}" />
+      <xacro:insert_block name="origin" />
+      <axis xyz="0 0 1" />
+      <dynamics damping="0.01" friction="0.005" />
+    </joint>
+  </xacro:macro>
+
+  <!-- ======================================================================
+       STEERED WHEEL MACRO
+       Adds a steering link between the suspension arm and the wheel.
+       Used on FL, FR, RL, RR (4 steered corners).
+       ====================================================================== -->
+  <xacro:macro name="steered_wheel" params="prefix parent x_offset y_offset z_offset">
+    <!-- Steering link (virtual, small box) -->
+    <link name="${prefix}_steer_link">
+      <visual>
+        <geometry>
+          <cylinder radius="0.008" length="0.020" />
+        </geometry>
+        <material name="surface1" />
+      </visual>
+      <collision>
+        <geometry>
+          <cylinder radius="0.008" length="0.020" />
+        </geometry>
+      </collision>
+      <xacro:cylinder_inertia m="0.005" r="0.008" l="0.020" />
+    </link>
+
+    <!-- Steering joint: revolute around Z -->
+    <joint name="${prefix}_steer_joint" type="revolute">
+      <parent link="${parent}" />
+      <child link="${prefix}_steer_link" />
+      <origin xyz="${x_offset} ${y_offset} ${z_offset}" rpy="0 0 0" />
+      <axis xyz="0 0 1" />
+      <limit lower="${-steer_limit}" upper="${steer_limit}" effort="2.0" velocity="1.5" />
+      <dynamics damping="0.01" friction="0.005" />
+    </joint>
+
+    <!-- Wheel on the steering link -->
+    <xacro:wheel name="${prefix}_link" parent="${prefix}_steer_link">
+      <!-- Wheel cylinder axis is along Z in its frame; we rotate so it aligns with X (axle) -->
+      <origin xyz="0 0 0" rpy="${3.14159265/2.0} 0 0" />
+    </xacro:wheel>
+  </xacro:macro>
+
+  <!-- ======================================================================
+       ROCKER ARM MACRO
+       One rocker per side. Pivots at the chassis, carries front wheel
+       directly and bogie arm at the rear.
+       side: "left" or "right", sign: -1 (left) or +1 (right)
+       ====================================================================== -->
+  <xacro:macro name="rocker_arm" params="side sign">
+    <link name="${side}_rocker_link">
+      <visual>
+        <origin xyz="0 ${rocker_length/2.0} 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${rocker_width} ${rocker_length} ${rocker_height}" />
+        </geometry>
+        <material name="surface1" />
+      </visual>
+      <collision>
+        <origin xyz="0 ${rocker_length/2.0} 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${rocker_width} ${rocker_length} ${rocker_height}" />
+        </geometry>
+      </collision>
+      <xacro:box_inertia m="${rocker_mass}" x="${rocker_width}" y="${rocker_length}" z="${rocker_height}" />
+    </link>
+
+    <!--
+      Rocker pivot joint at chassis.
+      Pivot position: X = sign*0.125, Y = 0 (mid axle), Z = 0.060 (body bottom).
+      Relative to chassis (which is at Z=0.100 from base_link):
+        Z offset from chassis centre = 0.060 - 0.100 = -0.040
+      Rocker rotates around the X axis (pitch forward/backward).
+    -->
+    <joint name="${side}_rocker_joint" type="revolute">
+      <parent link="chassis" />
+      <child link="${side}_rocker_link" />
+      <origin xyz="${sign * rocker_pivot_x} ${-axle_front_y} ${-0.040}" rpy="0 0 0" />
+      <axis xyz="1 0 0" />
+      <limit lower="${-rocker_limit}" upper="${rocker_limit}" effort="5.0" velocity="0.5" />
+      <dynamics damping="0.1" friction="0.05" />
+    </joint>
+
+    <!--
+      Front steered wheel: at the forward end of the rocker arm.
+      Rocker link origin is at the pivot (mid axle Y=0 in body frame).
+      Front wheel is at Y=+0.180 from body origin, pivot is at Y=0.
+      So front wheel offset from rocker origin = (0, +0.180, 0).
+      X offset: from rocker pivot (X=0.125) to wheel axle (X=0.140) = sign*0.015.
+      Z offset: wheel centre at ground + radius = 0.040; rocker pivot at 0.060 => -0.020.
+    -->
+    <xacro:steered_wheel prefix="wheel_f${side[0]}"
+                         parent="${side}_rocker_link"
+                         x_offset="${sign * 0.015}"
+                         y_offset="${rocker_length}"
+                         z_offset="-0.020" />
+
+    <!-- ================================================================
+         BOGIE ARM
+         Connects to the rear of the rocker. Carries middle and rear wheels.
+         Bogie pivot is at the rocker's origin (Y=0 in rocker frame),
+         which corresponds to the mid axle position.
+         ================================================================ -->
+    <link name="${side}_bogie_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${bogie_width} ${bogie_length} ${bogie_height}" />
+        </geometry>
+        <material name="surface1" />
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <box size="${bogie_width} ${bogie_length} ${bogie_height}" />
+        </geometry>
+      </collision>
+      <xacro:box_inertia m="${bogie_mass}" x="${bogie_width}" y="${bogie_length}" z="${bogie_height}" />
+    </link>
+
+    <!--
+      Bogie pivot at rear of rocker.
+      The bogie connects where rocker meets mid-axle Y position.
+      X offset from rocker: sign*0.015 (same as front wheel lateral shift).
+      Z offset: slightly below rocker (-0.010).
+    -->
+    <joint name="${side}_bogie_joint" type="revolute">
+      <parent link="${side}_rocker_link" />
+      <child link="${side}_bogie_link" />
+      <origin xyz="${sign * 0.015} 0 -0.010" rpy="0 0 0" />
+      <axis xyz="1 0 0" />
+      <limit lower="${-bogie_limit}" upper="${bogie_limit}" effort="5.0" velocity="0.5" />
+      <dynamics damping="0.1" friction="0.05" />
+    </joint>
+
+    <!--
+      Middle wheel: unsteered, directly on bogie.
+      Bogie origin is at the pivot (mid axle). Middle wheel is at Y=0 from
+      body origin, and bogie pivot is at Y=0 from body origin, so Y offset=0.
+      Z offset: wheel centre at 0.040, bogie at ~0.050 => -0.010.
+    -->
+    <link name="wheel_m${side[0]}_link">
+      <visual>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}" />
+        </geometry>
+        <material name="overlay0" />
+      </visual>
+      <collision>
+        <geometry>
+          <cylinder radius="${wheel_radius}" length="${wheel_width}" />
+        </geometry>
+      </collision>
+      <xacro:cylinder_inertia m="${wheel_mass}" r="${wheel_radius}" l="${wheel_width}" />
+    </link>
+
+    <joint name="wheel_m${side[0]}_spin_joint" type="continuous">
+      <parent link="${side}_bogie_link" />
+      <child link="wheel_m${side[0]}_link" />
+      <origin xyz="0 ${bogie_half} -0.010" rpy="${3.14159265/2.0} 0 0" />
+      <axis xyz="0 0 1" />
+      <dynamics damping="0.01" friction="0.005" />
+    </joint>
+
+    <!--
+      Rear steered wheel: at the rear end of the bogie.
+      Bogie centre is at mid axle (Y=0). Rear wheel at Y=-0.180.
+      But bogie half-length = 0.060, so rear wheel Y offset = -0.060 from bogie origin.
+    -->
+    <xacro:steered_wheel prefix="wheel_r${side[0]}"
+                         parent="${side}_bogie_link"
+                         x_offset="0"
+                         y_offset="${-bogie_half}"
+                         z_offset="-0.010" />
+  </xacro:macro>
+
+  <!-- ======================================================================
+       SENSOR LINK MACRO
+       Empty link with a small visual marker for Phase 2 sensor mounting.
+       ====================================================================== -->
+  <xacro:macro name="sensor_link" params="name parent x y z roll:=0 pitch:=0 yaw:=0">
+    <link name="${name}">
+      <visual>
+        <geometry>
+          <sphere radius="0.008" />
+        </geometry>
+        <material name="catppuccin_red" />
+      </visual>
+      <inertial>
+        <mass value="0.001" />
+        <inertia ixx="1e-7" ixy="0" ixz="0" iyy="1e-7" iyz="0" izz="1e-7" />
+      </inertial>
+    </link>
+
+    <joint name="${name}_joint" type="fixed">
+      <parent link="${parent}" />
+      <child link="${name}" />
+      <origin xyz="${x} ${y} ${z}" rpy="${roll} ${pitch} ${yaw}" />
+    </joint>
+  </xacro:macro>
+
+  <!-- ======================================================================
+       BASE LINK
+       The root of the TF tree, at ground level directly below the chassis
+       centre. This is the reference frame for nav and odometry.
+       ====================================================================== -->
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0.005" rpy="0 0 0" />
+      <geometry>
+        <sphere radius="0.005" />
+      </geometry>
+      <material name="catppuccin_red" />
+    </visual>
+    <inertial>
+      <mass value="0.001" />
+      <inertia ixx="1e-7" ixy="0" ixz="0" iyy="1e-7" iyz="0" izz="1e-7" />
+    </inertial>
+  </link>
+
+  <!-- ======================================================================
+       BASE FOOTPRINT
+       Ground-plane projection of base_link (identity transform).
+       Used by navigation stack for 2D costmap alignment.
+       ====================================================================== -->
+  <link name="base_footprint">
+    <inertial>
+      <mass value="0.001" />
+      <inertia ixx="1e-7" ixy="0" ixz="0" iyy="1e-7" iyz="0" izz="1e-7" />
+    </inertial>
+  </link>
+
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_link" />
+    <child link="base_footprint" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <!-- ======================================================================
+       CHASSIS
+       Main body box, centre at Z=0.100m above ground.
+       Dimensions: 0.440 (X) x 0.260 (Y) x 0.080 (Z).
+       Mass: 0.45 kg (batteries, electronics, structure).
+       ====================================================================== -->
+  <link name="chassis">
+    <visual>
+      <geometry>
+        <box size="${body_width} ${body_length} ${body_height}" />
+      </geometry>
+      <material name="surface0" />
+    </visual>
+    <collision>
+      <geometry>
+        <box size="${body_width} ${body_length} ${body_height}" />
+      </geometry>
+    </collision>
+    <xacro:box_inertia m="${body_mass}" x="${body_width}" y="${body_length}" z="${body_height}" />
+  </link>
+
+  <joint name="chassis_joint" type="fixed">
+    <parent link="base_link" />
+    <child link="chassis" />
+    <origin xyz="0 0 ${body_z}" rpy="0 0 0" />
+  </joint>
+
+  <!-- ======================================================================
+       SUSPENSION: LEFT AND RIGHT ROCKER-BOGIE ASSEMBLIES
+       Each side has: rocker arm -> front wheel (steered)
+                      rocker arm -> bogie arm -> mid wheel + rear wheel (steered)
+       ====================================================================== -->
+  <xacro:rocker_arm side="left"  sign="-1" />
+  <xacro:rocker_arm side="right" sign="1"  />
+
+  <!-- ======================================================================
+       DIFFERENTIAL BAR
+       Connects the two rocker arms at the top of the chassis, ensuring
+       equal and opposite rotation. Modelled as a cylinder across the body.
+       In reality this is a passive mechanical linkage.
+       ====================================================================== -->
+  <link name="differential_bar_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="${3.14159265/2.0} 0 0" />
+      <geometry>
+        <cylinder radius="${diff_bar_radius}" length="${diff_bar_length}" />
+      </geometry>
+      <material name="surface1" />
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="${3.14159265/2.0} 0 0" />
+      <geometry>
+        <cylinder radius="${diff_bar_radius}" length="${diff_bar_length}" />
+      </geometry>
+    </collision>
+    <xacro:cylinder_inertia m="${diff_bar_mass}" r="${diff_bar_radius}" l="${diff_bar_length}" />
+  </link>
+
+  <!--
+    Differential bar sits on top of the chassis, spanning left-right.
+    Z offset: top of body = body_z + body_height/2 = 0.100 + 0.040 = 0.140,
+    relative to chassis (at 0.100): +0.040 + small clearance.
+  -->
+  <joint name="differential_bar_joint" type="fixed">
+    <parent link="chassis" />
+    <child link="differential_bar_link" />
+    <origin xyz="0 0 0.045" rpy="0 0 0" />
+  </joint>
+
+  <!-- ======================================================================
+       SENSOR LINKS (Phase 2)
+       Empty links with static transforms for future sensor mounting.
+       All positions specified relative to base_link.
+       ====================================================================== -->
+
+  <!-- LiDAR: top of body, centre, Z=0.085 from base_link.
+       Relative to chassis (Z=0.100): Z offset = 0.085 - 0.100 = -0.015.
+       Actually, sensor Z is from base_link, so relative to chassis:
+       0.085 - 0.100 = -0.015. But this seems below chassis centre.
+       Per spec: "Z offset +85mm from base_link" = 0.085m from ground.
+       Relative to chassis at 0.100: offset = -0.015. That puts it inside
+       the body. More likely this means 85mm above the chassis top:
+       chassis top = 0.140, sensor at 0.140 + 0.085... No, the spec says
+       "+85mm from base_link" so Z=0.085m absolute. But that is inside
+       the body (body bottom at 0.060). Re-reading: it likely means
+       on top of body = body_top (0.140) + small offset. Using literal spec. -->
+  <xacro:sensor_link name="lidar_link" parent="chassis"
+                     x="0" y="0" z="${0.085 - body_z}" />
+
+  <!-- IMU: centre of body, Z=0.090 from base_link -->
+  <xacro:sensor_link name="imu_link" parent="chassis"
+                     x="0" y="0" z="${0.090 - body_z}" />
+
+  <!-- GPS: top deck rear, Y=-0.100, Z=0.085 from base_link -->
+  <xacro:sensor_link name="gps_link" parent="chassis"
+                     x="0" y="-0.100" z="${0.085 - body_z}" />
+
+  <!-- Front camera: Y=+0.220, Z=0.110 from base_link -->
+  <xacro:sensor_link name="camera_front" parent="chassis"
+                     x="0" y="0.220" z="${0.110 - body_z}" />
+
+  <!-- Rear camera: Y=-0.220, Z=0.110 from base_link -->
+  <xacro:sensor_link name="camera_rear" parent="chassis"
+                     x="0" y="-0.220" z="${0.110 - body_z}"
+                     yaw="${3.14159265}" />
+
+  <!-- Left camera: X=-0.130, Z=0.110 from base_link -->
+  <xacro:sensor_link name="camera_left" parent="chassis"
+                     x="-0.130" y="0" z="${0.110 - body_z}"
+                     yaw="${3.14159265/2.0}" />
+
+  <!-- Right camera: X=+0.130, Z=0.110 from base_link -->
+  <xacro:sensor_link name="camera_right" parent="chassis"
+                     x="0.130" y="0" z="${0.110 - body_z}"
+                     yaw="${-3.14159265/2.0}" />
+
+  <!-- Depth camera (OAK-D Lite): front, Y=+0.200, Z=0.120 from base_link -->
+  <xacro:sensor_link name="depth_camera" parent="chassis"
+                     x="0" y="0.200" z="${0.120 - body_z}" />
+
+  <!-- ======================================================================
+       GAZEBO PLUGINS (commented out for future simulation)
+       Uncomment and configure when setting up Gazebo simulation.
+       ====================================================================== -->
+  <!--
+  <gazebo>
+    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+      <robotNamespace>/mars_rover</robotNamespace>
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="differential_drive" filename="libgazebo_ros_diff_drive.so">
+      <ros>
+        <namespace>/mars_rover</namespace>
+        <remapping>cmd_vel:=cmd_vel</remapping>
+        <remapping>odom:=odom</remapping>
+      </ros>
+      <update_rate>30</update_rate>
+      <num_wheel_pairs>3</num_wheel_pairs>
+      <left_joint>wheel_fl_link_spin_joint</left_joint>
+      <right_joint>wheel_fr_link_spin_joint</right_joint>
+      <left_joint>wheel_ml_spin_joint</left_joint>
+      <right_joint>wheel_mr_spin_joint</right_joint>
+      <left_joint>wheel_rl_link_spin_joint</left_joint>
+      <right_joint>wheel_rr_link_spin_joint</right_joint>
+      <wheel_separation>0.280</wheel_separation>
+      <wheel_diameter>0.080</wheel_diameter>
+      <max_wheel_torque>5.0</max_wheel_torque>
+      <max_wheel_acceleration>2.0</max_wheel_acceleration>
+      <publish_odom>true</publish_odom>
+      <publish_odom_tf>true</publish_odom_tf>
+      <publish_wheel_tf>true</publish_wheel_tf>
+      <odometry_frame>odom</odometry_frame>
+      <robot_base_frame>base_link</robot_base_frame>
+    </plugin>
+  </gazebo>
+
+  <gazebo>
+    <plugin name="joint_state_publisher" filename="libgazebo_ros_joint_state_publisher.so">
+      <ros>
+        <namespace>/mars_rover</namespace>
+        <remapping>joint_states:=joint_states</remapping>
+      </ros>
+      <update_rate>30</update_rate>
+      <joint_name>left_rocker_joint</joint_name>
+      <joint_name>right_rocker_joint</joint_name>
+      <joint_name>left_bogie_joint</joint_name>
+      <joint_name>right_bogie_joint</joint_name>
+      <joint_name>wheel_fl_steer_joint</joint_name>
+      <joint_name>wheel_fr_steer_joint</joint_name>
+      <joint_name>wheel_rl_steer_joint</joint_name>
+      <joint_name>wheel_rr_steer_joint</joint_name>
+      <joint_name>wheel_fl_link_spin_joint</joint_name>
+      <joint_name>wheel_fr_link_spin_joint</joint_name>
+      <joint_name>wheel_ml_spin_joint</joint_name>
+      <joint_name>wheel_mr_spin_joint</joint_name>
+      <joint_name>wheel_rl_link_spin_joint</joint_name>
+      <joint_name>wheel_rr_link_spin_joint</joint_name>
+    </plugin>
+  </gazebo>
+
+  <!- - Gazebo material colours (Gazebo ignores URDF materials) - ->
+  <gazebo reference="chassis">
+    <material>Gazebo/DarkGrey</material>
+  </gazebo>
+  <gazebo reference="wheel_fl_link"><material>Gazebo/Grey</material></gazebo>
+  <gazebo reference="wheel_fr_link"><material>Gazebo/Grey</material></gazebo>
+  <gazebo reference="wheel_ml_link"><material>Gazebo/Grey</material></gazebo>
+  <gazebo reference="wheel_mr_link"><material>Gazebo/Grey</material></gazebo>
+  <gazebo reference="wheel_rl_link"><material>Gazebo/Grey</material></gazebo>
+  <gazebo reference="wheel_rr_link"><material>Gazebo/Grey</material></gazebo>
+  <gazebo reference="left_rocker_link"><material>Gazebo/DarkGrey</material></gazebo>
+  <gazebo reference="right_rocker_link"><material>Gazebo/DarkGrey</material></gazebo>
+  <gazebo reference="left_bogie_link"><material>Gazebo/DarkGrey</material></gazebo>
+  <gazebo reference="right_bogie_link"><material>Gazebo/DarkGrey</material></gazebo>
+  <gazebo reference="lidar_link"><material>Gazebo/Red</material></gazebo>
+
+  <!- - LiDAR sensor plugin - ->
+  <gazebo reference="lidar_link">
+    <sensor type="ray" name="lidar">
+      <pose>0 0 0 0 0 0</pose>
+      <visualize>true</visualize>
+      <update_rate>10</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <samples>360</samples>
+            <resolution>1</resolution>
+            <min_angle>-3.14159</min_angle>
+            <max_angle>3.14159</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.10</min>
+          <max>12.0</max>
+          <resolution>0.01</resolution>
+        </range>
+      </ray>
+      <plugin name="gazebo_ros_lidar" filename="libgazebo_ros_ray_sensor.so">
+        <ros>
+          <namespace>/mars_rover</namespace>
+          <remapping>~/out:=scan</remapping>
+        </ros>
+        <output_type>sensor_msgs/LaserScan</output_type>
+        <frame_name>lidar_link</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!- - IMU sensor plugin - ->
+  <gazebo reference="imu_link">
+    <sensor type="imu" name="imu">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <plugin name="gazebo_ros_imu" filename="libgazebo_ros_imu_sensor.so">
+        <ros>
+          <namespace>/mars_rover</namespace>
+          <remapping>~/out:=imu/data</remapping>
+        </ros>
+        <frame_name>imu_link</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!- - Depth camera (OAK-D Lite) plugin - ->
+  <gazebo reference="depth_camera">
+    <sensor type="depth" name="depth_camera">
+      <always_on>true</always_on>
+      <update_rate>15</update_rate>
+      <camera>
+        <horizontal_fov>1.20428</horizontal_fov>
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.2</near>
+          <far>10.0</far>
+        </clip>
+      </camera>
+      <plugin name="gazebo_ros_depth_camera" filename="libgazebo_ros_camera.so">
+        <ros>
+          <namespace>/mars_rover</namespace>
+          <remapping>~/image_raw:=depth/image_raw</remapping>
+          <remapping>~/depth/image_raw:=depth/depth_image</remapping>
+          <remapping>~/camera_info:=depth/camera_info</remapping>
+          <remapping>~/points:=depth/points</remapping>
+        </ros>
+        <frame_name>depth_camera</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+  -->
+
+</robot>

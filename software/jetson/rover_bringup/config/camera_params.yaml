@@ -1,0 +1,26 @@
+# Camera intrinsic parameters
+# Placeholder values for 640x480 - calibrate with actual cameras
+
+camera_manager:
+  ros__parameters:
+    front_camera:
+      width: 640
+      height: 480
+      fps: 30
+      # Intrinsic matrix (placeholder - calibrate with checkerboard)
+      camera_matrix: [500.0, 0.0, 320.0,
+                      0.0, 500.0, 240.0,
+                      0.0, 0.0, 1.0]
+      # Distortion coefficients [k1, k2, p1, p2, k3]
+      distortion_coefficients: [0.0, 0.0, 0.0, 0.0, 0.0]
+      frame_id: "front_camera_optical"
+
+    rear_camera:
+      width: 640
+      height: 480
+      fps: 15
+      camera_matrix: [500.0, 0.0, 320.0,
+                      0.0, 500.0, 240.0,
+                      0.0, 0.0, 1.0]
+      distortion_coefficients: [0.0, 0.0, 0.0, 0.0, 0.0]
+      frame_id: "rear_camera_optical"

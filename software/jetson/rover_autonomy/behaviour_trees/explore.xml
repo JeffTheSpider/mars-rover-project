@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Explore Behaviour Tree
+     Autonomous exploration of unknown areas using frontier-based navigation.
+     Periodically checks battery and returns home if low. -->
+<BehaviourTree name="explore">
+  <Fallback name="explore_with_safety">
+    <!-- Primary: explore loop -->
+    <Sequence name="safe_explore">
+      <Condition name="battery_ok" key="battery_ok" expected="true"/>
+      <Action name="log_start" type="log" message="Starting exploration mission"/>
+
+      <Repeat name="explore_loop" num_cycles="-1">
+        <Sequence name="explore_cycle">
+          <!-- Safety check -->
+          <Condition name="battery_check" key="battery_ok" expected="true"/>
+
+          <!-- Navigate towards unexplored frontier -->
+          <Action name="explore_frontier" type="explore_frontier" explore_distance="3.0"/>
+
+          <!-- Pause to observe and map the area -->
+          <Action name="observe" type="wait" seconds="5.0"/>
+
+          <Action name="log_progress" type="log" message="Explored new area"/>
+        </Sequence>
+      </Repeat>
+    </Sequence>
+
+    <!-- Fallback: return home -->
+    <Sequence name="abort_return_home">
+      <Action name="log_abort" type="log" message="Exploration aborted, returning home"/>
+      <Action name="go_home" type="return_home"/>
+    </Sequence>
+  </Fallback>
+</BehaviourTree>

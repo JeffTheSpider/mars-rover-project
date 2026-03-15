@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Return Home Behaviour Tree
+     Navigates the rover back to the home position (0, 0).
+     Handles navigation failures with retry logic. -->
+<BehaviourTree name="return_home">
+  <Sequence name="return_home_sequence">
+    <Action name="log_start" type="log" message="Returning to home position"/>
+
+    <!-- Attempt to navigate home with retries -->
+    <Fallback name="nav_with_retry">
+      <!-- First attempt: direct navigation -->
+      <Action name="go_home_direct" type="return_home"/>
+
+      <!-- Second attempt: wait and retry -->
+      <Sequence name="retry_after_wait">
+        <Action name="log_retry" type="log" message="Direct path failed, retrying..."/>
+        <Action name="wait_before_retry" type="wait" seconds="5.0"/>
+        <Action name="go_home_retry" type="return_home"/>
+      </Sequence>
+
+      <!-- Final fallback: stop and report -->
+      <Action name="log_failure" type="log" message="Failed to return home - stopping"/>
+    </Fallback>
+
+    <Action name="log_arrived" type="log" message="Arrived at home position"/>
+  </Sequence>
+</BehaviourTree>

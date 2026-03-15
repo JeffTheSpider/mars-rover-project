@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Patrol Behaviour Tree
+     Generates circular patrol waypoints and navigates to each one repeatedly.
+     Aborts if battery drops below threshold. -->
+<BehaviourTree name="patrol">
+  <Fallback name="patrol_with_safety">
+    <!-- Primary: patrol loop with battery monitoring -->
+    <Sequence name="safe_patrol">
+      <!-- Pre-flight checks -->
+      <Condition name="battery_ok" key="battery_ok" expected="true"/>
+      <Action name="log_start" type="log" message="Starting patrol mission"/>
+
+      <!-- Generate patrol waypoints -->
+      <Action name="gen_waypoints" type="generate_patrol" radius="5.0" points="8"/>
+
+      <!-- Main patrol loop -->
+      <Repeat name="patrol_forever" num_cycles="-1">
+        <Sequence name="patrol_cycle">
+          <!-- Check battery each cycle -->
+          <Condition name="battery_check" key="battery_ok" expected="true"/>
+
+          <!-- Navigate to next waypoint -->
+          <Action name="goto_waypoint" type="navigate_to" use_patrol_queue="true"/>
+
+          <!-- Brief pause at each waypoint -->
+          <Action name="pause" type="wait" seconds="3.0"/>
+
+          <!-- Re-generate waypoints when queue empty -->
+          <Action name="refill_patrol" type="generate_patrol" radius="5.0" points="8"/>
+        </Sequence>
+      </Repeat>
+    </Sequence>
+
+    <!-- Fallback: return home on failure -->
+    <Sequence name="abort_return_home">
+      <Action name="log_abort" type="log" message="Patrol aborted, returning home"/>
+      <Action name="go_home" type="return_home"/>
+    </Sequence>
+  </Fallback>
+</BehaviourTree>
