@@ -1,0 +1,30 @@
+# EditorConfig — consistent formatting across editors
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+trim_trailing_whitespace = true
+
+[*.{py,yaml,yml}]
+indent_style = space
+indent_size = 4
+
+[*.{js,json,html,css}]
+indent_style = space
+indent_size = 2
+
+[*.{xml,xacro,urdf,sdf,world,launch.py}]
+indent_style = space
+indent_size = 2
+
+[*.{h,ino,cpp,c}]
+indent_style = space
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
+
+[Makefile]
+indent_style = tab
