@@ -1052,8 +1052,10 @@ All design decisions in this document are backed by detailed engineering analyse
 | EA-13 | ROS2 Architecture | Node graph, Nav2 config, SLAM, EKF fusion, YOLO pipeline, behaviour trees, ~56% CPU / ~50% GPU |
 | EA-14 | Weatherproofing | IP44 Phase 2 / IP54 Phase 3, zone-based protection, cable glands, thermal management |
 | EA-15 | Safety Systems | 4-layer safety (HW/FW/SW/OPS), fault handling, anti-theft, human detection limits |
+| EA-16 | PWA App Design | Catppuccin Mocha phone UI, D-pad + joystick, camera streaming, navigation map |
+| EA-17 | Phase 1 Build Guide | Step-by-step from ordering to first drive, ~14 day timeline, troubleshooting |
 
 ---
 
-*Document generated 2026-03-14. Updated to v1.2 on 2026-03-15 with EA-01 through EA-15 and Phase 1 firmware.*
+*Document generated 2026-03-14. Updated to v1.2 on 2026-03-15 with EA-01 through EA-17 and Phase 1 firmware.*
 *This is a living document — will be updated as the design evolves.*
