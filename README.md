@@ -2,7 +2,7 @@
 
 A Mars rover-inspired outdoor robot designed for garden and park use. Features NASA-style rocker-bogie suspension, Ackermann steering, AI-powered navigation, robotic arms, solar charging, and a coffee table mode for stationary use.
 
-**Status:** Design phase complete (18 engineering analyses). Phase 1 prototype implementation underway.
+**Status:** Design phase complete (22 engineering analyses, EA-00 through EA-21). All software scaffolded, awaiting hardware for validation.
 
 ## Key Specifications
 
@@ -55,7 +55,7 @@ The ESP32-S3 handles real-time motor control and sensor reading. The Jetson runs
 ```
 Mars Rover Project/
   docs/
-    engineering/          # 18 engineering analysis documents (EA-01 to EA-18)
+    engineering/          # 22 engineering analysis documents (EA-00 to EA-21)
     plans/                # Master design document, task tracking
     references/           # Research notes (3D printing, ROS2)
     datasheets/           # Component datasheets
@@ -66,7 +66,10 @@ Mars Rover Project/
       motors.h            #   4-channel L298N motor control
       steering.h          #   Ackermann / point turn / crab walk
       sensors.h           #   Battery ADC, encoders, E-stop
-      webserver.h         #   HTTP + WebSocket embedded UI
+      rover_webserver.h   #   HTTP + WebSocket embedded UI
+      ota.h               #   ArduinoOTA firmware updates
+      uart_nmea.h         #   NMEA text UART protocol (Phase 1)
+      uart_binary.h       #   COBS binary UART protocol (Phase 2)
   software/
     jetson/               # ROS2 Humble packages
       rover_bringup/      #   Launch files, config, URDF
@@ -85,6 +88,7 @@ Mars Rover Project/
 
 | ID | Title |
 |----|-------|
+| EA-00 | Master Engineering Handbook (compiled reference to all EAs) |
 | EA-01 | Suspension Analysis (rocker-bogie geometry, NASA scaling, 608ZZ bearings) |
 | EA-02 | Drivetrain Analysis (torque calculations, motor selection, driver selection) |
 | EA-03 | Power System Analysis (LiPo sizing, solar charging, BMS, wire gauge) |
@@ -103,6 +107,9 @@ Mars Rover Project/
 | EA-16 | PWA App Design (Catppuccin Mocha, D-pad, camera feed, nav map) |
 | EA-17 | Phase 1 Build Guide (step-by-step, ~14 day timeline, troubleshooting) |
 | EA-18 | Binary UART Protocol (COBS + CRC-16, 460800 baud, 12% utilisation) |
+| EA-19 | Phase 1 Wiring (complete wiring reference, connector strategy) |
+| EA-20 | CAD Preparation Guide (parametric dimensions, Fusion 360 assembly) |
+| EA-21 | Test Procedures (acceptance criteria, firmware/electronics/integration) |
 
 ## Key Features
 
