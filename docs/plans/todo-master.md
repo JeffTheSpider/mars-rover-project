@@ -327,7 +327,7 @@
 - [x] Write ROS2 unit tests for each Python node (pytest: Ackermann, geofence, waypoints, camera, mission)
 - [x] Write ESP32 firmware unit tests (42 pytest tests: NMEA, Ackermann, battery, COBS, CRC-16)
 - [x] Create simulation test suite (21 Gazebo scenarios: mobility, sensors, nav, terrain, safety)
-- [ ] Create integration test: UART bridge round-trip latency
+- [x] Create integration test: UART bridge round-trip (30 tests: NMEA codec, commands, odometry, streams)
 - [ ] Create integration test: full Nav2 stack in simulation
 - [x] Set up CI/CD for ROS2 packages (GitHub Actions: ESP32 compile, ROS2 build, lint, docs check)
 - [ ] Performance benchmarks: YOLO FPS, EKF update rate, UART throughput
