@@ -1049,8 +1049,11 @@ All design decisions in this document are backed by detailed engineering analyse
 | EA-10 | Ackermann Steering | Steering angle calculations, min turn radius 993mm, point turn, crab walk, servo mapping |
 | EA-11 | 3D Printing Strategy | PETG/ASA material selection, print settings, heat-set inserts, part segmentation, ~317hr Phase 2 |
 | EA-12 | UART Protocol | Text-based NMEA-style protocol, 115200 baud, 50Hz control loop, 18 message types |
+| EA-13 | ROS2 Architecture | Node graph, Nav2 config, SLAM, EKF fusion, YOLO pipeline, behaviour trees, ~56% CPU / ~50% GPU |
+| EA-14 | Weatherproofing | IP44 Phase 2 / IP54 Phase 3, zone-based protection, cable glands, thermal management |
+| EA-15 | Safety Systems | 4-layer safety (HW/FW/SW/OPS), fault handling, anti-theft, human detection limits |
 
 ---
 
-*Document generated 2026-03-14. Updated to v1.1 on 2026-03-15 with research-backed values from EA-01 through EA-07.*
+*Document generated 2026-03-14. Updated to v1.2 on 2026-03-15 with EA-01 through EA-15 and Phase 1 firmware.*
 *This is a living document — will be updated as the design evolves.*
