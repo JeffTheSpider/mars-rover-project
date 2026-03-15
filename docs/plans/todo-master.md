@@ -318,7 +318,7 @@
 - [ ] Implement firmware update trigger (OTA from PWA via Jetson)
 - [x] Implement diagnostic log viewer (color-coded, 200 entries, auto-scroll)
 - [x] Add PWA install prompt and offline indicator
-- [ ] Dark/light theme toggle (currently Catppuccin Mocha only)
+- [x] Dark/light theme toggle (Catppuccin Mocha ↔ Latte, saved to localStorage)
 
 ---
 

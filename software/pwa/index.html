@@ -79,6 +79,123 @@
 }
 
 /* ============================================================
+   Catppuccin Latte Palette (Light Theme)
+   ============================================================ */
+[data-theme="latte"] {
+    --ctp-rosewater: #dc8a78;
+    --ctp-flamingo: #dd7878;
+    --ctp-pink: #ea76cb;
+    --ctp-mauve: #8839ef;
+    --ctp-red: #d20f39;
+    --ctp-maroon: #e64553;
+    --ctp-peach: #fe640b;
+    --ctp-yellow: #df8e1d;
+    --ctp-green: #40a02b;
+    --ctp-teal: #179299;
+    --ctp-sky: #04a5e5;
+    --ctp-sapphire: #209fb5;
+    --ctp-blue: #1e66f5;
+    --ctp-lavender: #7287fd;
+    --ctp-text: #4c4f69;
+    --ctp-subtext1: #5c5f77;
+    --ctp-subtext0: #6c6f85;
+    --ctp-overlay2: #7c7f93;
+    --ctp-overlay1: #8c8fa1;
+    --ctp-overlay0: #9ca0b0;
+    --ctp-surface2: #acb0be;
+    --ctp-surface1: #bcc0cc;
+    --ctp-surface0: #ccd0da;
+    --ctp-base: #eff1f5;
+    --ctp-mantle: #e6e9ef;
+    --ctp-crust: #dce0e8;
+
+    --accent: var(--ctp-red);
+    --accent-hover: var(--ctp-maroon);
+    --secondary: var(--ctp-yellow);
+    --success: var(--ctp-green);
+    --warning: var(--ctp-peach);
+    --danger: var(--ctp-red);
+    --info: var(--ctp-blue);
+
+    --bg: var(--ctp-base);
+    --bg-card: var(--ctp-surface0);
+    --bg-input: var(--ctp-surface1);
+    --text: var(--ctp-text);
+    --text-muted: var(--ctp-subtext0);
+    --border: var(--ctp-surface2);
+
+    --glass-bg: rgba(204, 208, 218, 0.7);
+    --glass-border: rgba(172, 176, 190, 0.5);
+}
+
+/* ============================================================
+   Theme Toggle Switch
+   ============================================================ */
+.theme-toggle {
+    position: relative;
+    width: 52px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.theme-toggle__input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.theme-toggle__track {
+    position: absolute;
+    inset: 0;
+    background: var(--ctp-surface1);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.3s, border-color 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 6px;
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
+.theme-toggle__track::before {
+    content: '\2600';
+    opacity: 0.5;
+}
+
+.theme-toggle__track::after {
+    content: '\1F319';
+    opacity: 0.5;
+    font-size: 0.625rem;
+}
+
+.theme-toggle__knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 22px;
+    height: 22px;
+    background: var(--accent);
+    border-radius: 50%;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s;
+    pointer-events: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    z-index: 1;
+}
+
+.theme-toggle__input:checked + .theme-toggle__track .theme-toggle__knob {
+    transform: translateX(24px);
+}
+
+.theme-toggle__input:focus-visible + .theme-toggle__track {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* ============================================================
    Reset & Base
    ============================================================ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1268,6 +1385,15 @@ select:focus {
     border-width: 0;
 }
 </style>
+<script>
+// Apply saved theme immediately to prevent flash of wrong theme
+(function() {
+    try {
+        var s = JSON.parse(localStorage.getItem('rover_settings'));
+        if (s && s.theme === 'latte') document.documentElement.setAttribute('data-theme', 'latte');
+    } catch (_) {}
+})();
+</script>
 </head>
 <body>
     <!-- ============================================================
@@ -1557,6 +1683,18 @@ select:focus {
             <div class="settings-group">
                 <div class="settings-group__title">Appearance</div>
                 <div class="setting-row">
+                    <span class="setting-row__label">Theme</span>
+                    <div class="setting-row__control" style="justify-content: flex-end;">
+                        <span class="setting-row__value" id="set-theme-label">Dark</span>
+                        <label class="theme-toggle">
+                            <input type="checkbox" class="theme-toggle__input" id="set-theme-toggle">
+                            <span class="theme-toggle__track">
+                                <span class="theme-toggle__knob"></span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+                <div class="setting-row">
                     <span class="setting-row__label">LED Colour</span>
                     <div class="setting-row__control">
                         <input type="color" id="set-led-color" value="#f38ba8">
@@ -1823,6 +1961,7 @@ select:focus {
         geofenceRadius: 50,
         estopTimeout: 30,
         ledColor: '#f38ba8',
+        theme: 'mocha',
         trimFL: 0,
         trimFR: 0,
         trimRL: 0,
@@ -2502,6 +2641,38 @@ select:focus {
                 saveSettings(settings);
                 conn.send({ cmd: 'cfg', key: 'led_color', value: colorInput.value });
             });
+        }
+
+        // Theme toggle
+        var themeToggle = document.getElementById('set-theme-toggle');
+        var themeLabel = document.getElementById('set-theme-label');
+        if (themeToggle && themeLabel) {
+            // checked = light (Latte), unchecked = dark (Mocha)
+            var isLight = settings.theme === 'latte';
+            themeToggle.checked = isLight;
+            themeLabel.textContent = isLight ? 'Light' : 'Dark';
+            applyTheme(isLight ? 'latte' : 'mocha');
+
+            themeToggle.addEventListener('change', function() {
+                var theme = themeToggle.checked ? 'latte' : 'mocha';
+                themeLabel.textContent = themeToggle.checked ? 'Light' : 'Dark';
+                settings.theme = theme;
+                saveSettings(settings);
+                applyTheme(theme);
+            });
+        }
+    }
+
+    function applyTheme(theme) {
+        if (theme === 'latte') {
+            document.documentElement.setAttribute('data-theme', 'latte');
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+        }
+        // Update meta theme-color for browser chrome
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) {
+            meta.setAttribute('content', theme === 'latte' ? '#d20f39' : '#f38ba8');
         }
     }
 
