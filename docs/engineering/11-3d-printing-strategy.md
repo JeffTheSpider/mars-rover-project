@@ -4,6 +4,7 @@
 **Date**: 2026-03-15
 **Purpose**: Define material selection, print settings, part segmentation, print orientation, heat-set insert specifications, and post-processing for all 3D printed rover components across all build phases.
 **Depends on**: EA-01 (Suspension), EA-05 (Weight), EA-08 (Phase 1 Spec)
+**See also**: `docs/references/3d-printing-strategy.md` — supplementary research with community project data and additional Ender 3 tips
 
 ---
 
@@ -347,6 +348,10 @@ Cross-section:
     └───────────────────┘
 ```
 
+**Spoke pattern options**:
+- **Straight radial spokes** (simplest): 6-8 rectangular spokes (4mm wide × 6mm tall). Prints flat with no supports. Adequate for Phase 1.
+- **Curved/swept spokes** (recommended for Mars aesthetic): Spokes curve in one direction like a turbine. Curvature is in X/Y plane so prints without support. Better at absorbing lateral impacts. Looks like Curiosity/Perseverance wheels.
+
 Grouser pattern: **Chevron** (V-shaped, point facing forward)
 - 12 grousers evenly spaced (30° apart)
 - 3mm depth, 3mm wide at base, 2mm wide at tip
@@ -368,7 +373,7 @@ Grouser pattern: **Chevron** (V-shaped, point facing forward)
 - Thickness: 8mm
 - Chevron grousers: 5mm deep, 4mm wide
 - Printed flat as a ring (180mm ID, 200mm OD)
-- Stretches over hub rim — friction fit + optional CA glue
+- Stretches over hub rim — interference fit (0.3mm Phase 1, 0.5mm Phase 2) + optional CA glue
 
 **TPU printing notes**:
 - TPU requires direct drive extruder (Bowden tube has too much flex)
@@ -463,6 +468,12 @@ At an average of 6-8 hours of printing per day (overnight prints), Phase 1 print
 | **TOTAL** | **~141** | **~317 hrs** |
 
 At 8 hours printing per day: **~40 days of printing**.
+
+### 8.4 Community Benchmarks
+
+These open-source rover builds provide useful reference points:
+- **Sawppy** (Roger Cheng): ~3 kg filament, 3 spools. PLA prototyped then reprinted in PETG. 3 perimeters, 0.4mm nozzle. Wheels print outer-face-down without supports.
+- **ExoMy** (ESA): 1.5 kg PLA, 0.15mm layers, 20% infill. ~2 weeks print time for all structural parts. 2.5 kg total rover weight.
 
 ### 8.3 Filament Budget (Phase 2)
 
