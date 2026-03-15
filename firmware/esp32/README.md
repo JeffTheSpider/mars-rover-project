@@ -1,6 +1,6 @@
 # ESP32-S3 Motor Controller Firmware
 
-Low-level brain for the Mars Rover. Version 0.1.0 (Phase 1 prototype).
+Low-level brain for the Mars Rover. Version 0.2.0 (Phase 1 prototype).
 
 ## Phase 1 Features
 - 4-channel motor control (6 motors as 4 groups via 2× L298N)
@@ -22,7 +22,10 @@ Same proven pattern as Clock/Lamp ESP8266 projects.
 - `motors.h` — L298N motor control (PWM + direction)
 - `steering.h` — Servo control, Ackermann geometry calculations
 - `sensors.h` — Battery ADC, encoder ISRs, E-stop
-- `webserver.h` — WiFi web UI + WebSocket for phone control
+- `rover_webserver.h` — WiFi web UI + WebSocket for phone control
+- `ota.h` — ArduinoOTA wireless firmware updates
+- `uart_nmea.h` — NMEA text UART protocol for Jetson (Phase 1)
+- `uart_binary.h` — COBS binary UART protocol for Jetson (Phase 2)
 
 ## Dependencies
 - ESP32 Arduino Core (v3.x)
@@ -34,7 +37,7 @@ arduino-cli compile --fqbn esp32:esp32:esp32s3 --build-property "build.extra_fla
 ```
 
 ## Phase 2 Additions (planned)
-- UART communication with Jetson Orin Nano (EA-12)
+- Binary UART protocol (EA-18, COBS + CRC-16, 460800 baud)
 - PCA9685 I2C PWM driver for 14 servos
 - BNO055 IMU via I2C
 - 6 individual motor channels (Cytron MDD10A)

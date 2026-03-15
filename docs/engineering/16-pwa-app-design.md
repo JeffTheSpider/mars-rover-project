@@ -210,7 +210,7 @@ Always visible at top of screen:
 
 ### 4.1 WebSocket Protocol
 
-Phase 1 uses the same JSON-over-WebSocket as the firmware's `webserver.h`:
+Phase 1 uses the same JSON-over-WebSocket as the firmware's `rover_webserver.h`:
 
 ```javascript
 // Send command
