@@ -1,9 +1,10 @@
 # Mars Rover Garden Robot — Complete Design Document
 
 **Project**: Charlie's Mars Rover
-**Date**: 2026-03-14
-**Version**: 1.0
-**Status**: Design Phase
+**Date**: 2026-03-14 (updated 2026-03-15)
+**Version**: 1.1
+**Status**: Design Phase — Engineering Analysis Complete
+**Engineering References**: EA-01 through EA-07 in `docs/engineering/`
 
 ---
 
@@ -35,14 +36,18 @@ A Mars rover-inspired outdoor robot that serves as a functional vehicle, AI-powe
 |-----------|-------|
 | Size (LxWxH driving) | 1100mm x 650mm x 1050mm |
 | Size (coffee table) | 1100mm x 650mm x 450mm |
-| Weight target (metal) | 25-35 kg |
-| Budget | ~1,500-2,000 |
-| Top speed target | 3-5 km/h |
-| Runtime (driving) | ~2 hours |
-| Runtime (stationary) | ~6 hours |
+| Weight (Phase 2, 3D printed) | ~16.7 kg (EA-05) |
+| Weight (Phase 3, metal) | ~20.8 kg (EA-05) |
+| Budget | $1,933.75 total (within $1,500-2,000 target) (EA-06) |
+| Top speed target | 5 km/h (132.8 wheel RPM) (EA-02) |
+| Runtime (driving, all systems) | ~4.0 hours (EA-03) |
+| Runtime (driving, no fridge) | ~6.4 hours (EA-03) |
+| Runtime (stationary) | ~12+ hours (EA-03) |
+| Typical power draw | 97.5W (5.17A at battery) (EA-03) |
 | Terrain | All surfaces — grass, gravel, slopes, pavement |
+| Max slope | 30° (33.5 kg·cm torque/wheel worst case) (EA-02) |
 | Control modes | Manual, autonomous, hybrid |
-| Compute | Jetson Orin Nano + ESP32-S3 |
+| Compute | Jetson Orin Nano Super ($249) + ESP32-S3 (EA-04) |
 | CAD | Fusion 360 |
 | 3D Printer | Ender 3 (220x220x250mm) |
 
@@ -63,10 +68,10 @@ A Mars rover-inspired outdoor robot that serves as a functional vehicle, AI-powe
 | # | Subsystem | Description |
 |---|-----------|-------------|
 | 1 | Chassis & Suspension | Rocker-bogie linkage, body frame, coffee table conversion |
-| 2 | Drivetrain | 6 DC motors (drive) + 4 servo motors (steering corners) |
-| 3 | Power | LiPo batteries, solar panels, BMS, charging systems |
-| 4 | Compute & Networking | Jetson Orin Nano + ESP32-S3, WiFi/4G, phone app |
-| 5 | Vision & Sensors | Cameras, LIDAR, depth sensor, GPS, IMU, ultrasonics |
+| 2 | Drivetrain | 6× Chihai 37mm 80RPM DC gearmotors + 4× MG996R steering servos (EA-02) |
+| 3 | Power | 2× 6S 10Ah LiPo (444Wh), 100W solar, BMS, buck converters (EA-03) |
+| 4 | Compute & Networking | Jetson Orin Nano Super (67 TOPS) + ESP32-S3 + PCA9685 PWM driver (EA-04) |
+| 5 | Vision & Sensors | 4× Arducam 120° + ELP 10× zoom + OAK-D Lite + Pi NoIR + RPLidar A1 (EA-04) |
 | 6 | Robotic Arms & Mast | Folding camera mast, articulated arms with grippers |
 | 7 | Software | ROS2, AI vision, navigation, phone PWA, firmware |
 | 8 | Accessories | Mini fridge, phone charging, LEDs, weather station, speaker, display |
@@ -74,20 +79,24 @@ A Mars rover-inspired outdoor robot that serves as a functional vehicle, AI-powe
 ### Dual-Controller Architecture
 
 ```
-[Jetson Orin Nano]                    [ESP32-S3]
-  - AI vision                          - Motor PWM control (6x)
-  - Path planning                      - Servo steering (4x)
-  - Camera streams                     - Battery monitoring (ADC)
-  - GPS navigation                     - Sensor polling
-  - Phone app server                   - Watchdog / safety
-  - ROS2 nodes                        - LED control
-  - Voice commands                     - Weather station
-  - LIDAR SLAM                        - E-stop monitor
+[Jetson Orin Nano Super]              [ESP32-S3]
+  - AI vision (67 TOPS)               - Motor PWM control (6×)
+  - Path planning (Nav2)              - Sensor polling (6× ultrasonic)
+  - Camera streams (7×)               - Wheel encoder reading (6×)
+  - GPS navigation                     - Battery monitoring (ADC)
+  - Phone app server                   - IMU polling (BNO055, I2C)
+  - ROS2 Isaac nodes                  - Watchdog / safety
+  - Voice commands                     - LED control (WS2812B)
+  - LIDAR SLAM                        - Weather station sensors
         |                                    |
-        +------------- UART/I2C ------------+
+        +------------- UART 115200 ---------+
+                                             |
+                                      [PCA9685 I2C]
+                                        - 14× servo PWM
+                                        (4 steering + 8 arm + 2 mast)
 ```
 
-The Jetson handles all "smart" processing. The ESP32-S3 handles real-time motor/sensor control. If the Jetson crashes, the ESP32 safely stops all motors (watchdog pattern, proven on Clock/Lamp projects).
+The Jetson handles all "smart" processing. The ESP32-S3 handles real-time motor/sensor control via PCA9685 I2C PWM driver (solves GPIO pin shortage — 50 pins needed, 36 available, EA-04). If the Jetson crashes, the ESP32 safely stops all motors (watchdog pattern, proven on Clock/Lamp projects).
 
 ---
 
@@ -124,18 +133,26 @@ Top View (1100mm x 650mm):
 
 ### Dimensions
 
-| Parameter | Value | Reasoning |
+| Parameter | Value | Reasoning / Source |
 |-----------|-------|-----------|
 | Overall length | 1100mm | Coffee table proportions |
 | Overall width | 650mm | Fits through standard doorways |
-| Ground clearance | 150mm | Clears park terrain, kerbs |
-| Wheel diameter | 200mm | Large enough for rough ground |
+| Track width (wheel-to-wheel) | 700mm | NASA ratio 0.82× wheelbase, adjusted for body (EA-01) |
+| Wheelbase (W1-W3) | 900mm | Front to rear wheel per side (EA-01) |
+| Rocker arm length | 450mm | NASA ratio 0.50× wheelbase (EA-01) |
+| Bogie arm length | 300mm (150+150) | NASA ratio 0.32× wheelbase, 1.50:1 rocker:bogie (EA-01) |
+| Ground clearance | 150mm | Adequate for park terrain, kerbs |
+| Wheel diameter | 200mm | Max obstacle climb ~150mm practical (EA-01) |
 | Wheel width | 80mm | Good traction, not too heavy |
 | Body height (wheels to deck) | 300mm | Room for electronics bay |
 | Mast height (extended) | 600mm above deck | Good camera vantage |
 | Total height (mast up) | ~1050mm | Practical standing height |
 | Total height (mast down) | ~450mm | Standard coffee table height |
-| Weight target | 25-35kg (metal version) | Carriable by two people |
+| Weight (Phase 2) | 16.7 kg | Component-by-component estimate (EA-05) |
+| Weight (Phase 3) | 20.8 kg | +4.1 kg for metal panels/hubs (EA-05) |
+| Centre of gravity | 232mm above ground | Calculated from component positions (EA-05) |
+| Max tilt angle (before tip) | 49° (conservative) | With elevated CoG estimate (EA-01) |
+| Bearings | 19× 608ZZ (8mm bore) | All pivot points + wheel axles (EA-01) |
 
 ### Wheel Design
 
@@ -184,55 +201,69 @@ Phase 3 replaces printed panels with sheet aluminium/steel.
 
 ## 4. Power System
 
-### Power Budget
+### Power Budget (EA-03)
 
-| Consumer | Voltage | Peak Draw | Typical Draw |
-|----------|---------|-----------|--------------|
-| 6x Drive motors | 12V | 30A (stall) | 6A (cruising) |
-| 4x Steering servos | 6V | 8A (peak) | 1A (holding) |
-| Jetson Orin Nano | 5V | 3A (15W) | 2A (10W) |
-| ESP32-S3 + sensors | 5V | 0.5A | 0.3A |
-| Cameras (x6) | 5V | 3A total | 2A |
-| LIDAR | 5V | 1A | 0.7A |
-| Mini fridge (Peltier) | 12V | 5A | 3A |
-| LED underglow + lights | 5V | 3A | 1A |
-| Speaker/amp | 12V | 2A | 0.5A |
-| Qi charger | 5V | 2A | 1A |
-| Dashboard display | 5V | 0.5A | 0.3A |
-| Weather station | 3.3V | 0.1A | 0.05A |
-| **Total** | | **~55A peak** | **~17A typical** |
+| Consumer | Voltage | Peak (A) | Typical (A) | Typical (W) |
+|----------|---------|----------|-------------|-------------|
+| 6× Drive motors (Chihai 37mm) | 12V | 24.0 | 1.2 | 14.4 |
+| 4× Steering servos (MG996R) | 6V | 8.0 | 0.2 | 1.2 |
+| Jetson Orin Nano Super | 5V | 3.0 | 2.0 | 10.0 |
+| ESP32-S3 | 3.3V | 0.5 | 0.15 | 0.5 |
+| 6× Cameras | 5V | 3.0 | 1.5 | 7.5 |
+| RPLidar A1 | 5V | 1.0 | 0.7 | 3.5 |
+| OAK-D Lite depth | 5V | 1.0 | 0.8 | 4.0 |
+| Mini fridge (Peltier) | 12V | 5.0 | 3.0 | 36.0 |
+| LED underglow + lights | 5V | 3.0 | 1.0 | 5.0 |
+| Speaker/amp | 12V | 2.0 | 0.3 | 3.6 |
+| Qi charger | 5V | 2.0 | 1.0 | 5.0 |
+| Dashboard display | 5V | 0.3 | 0.2 | 1.0 |
+| GPS + IMU + sensors | 3.3V | 0.2 | 0.1 | 0.3 |
+| 8× Arm servos + 2× Mast servos | 6V | 20.0 | 1.3 | 7.8 |
+| Weather station | 3.3V | 0.1 | 0.05 | 0.2 |
+| 4G modem | 5V | 0.5 | 0.3 | 1.5 |
+| **Total at battery** | | **~50A peak** | **~13A typical** | **97.5W** |
 
-### Battery Design
+Battery current (typical): 97.5W / (22.2V × 0.85 efficiency) = **5.17A**
+
+### Battery Design (EA-03)
 
 ```
 Main Battery Pack: 6S LiPo (22.2V nominal, 25.2V full)
 Capacity: 20Ah (444Wh)
-Config: 2x 6S 10Ah packs in parallel (swappable)
+Config: 2× Turnigy 6S 10000mAh 12C in parallel (swappable)
+Weight: ~1.7 kg total (850g each)
+Dimensions: ~185×70×58mm per pack
+Peak current: 15.9A (trivial for 12C packs — can deliver 120A each)
 
 [Battery Pack A: 6S 10Ah]  [Battery Pack B: 6S 10Ah]
          |                           |
+     [BMS A: 6S 30A]          [BMS B: 6S 30A]
+         |                           |
          +------ Parallel -----------+
                     |
-            [BMS: 6S balance + overcurrent + temp]
+            [E-Stop + Main Relay (30A)]
                     |
             [Power Distribution Board]
                     |
     +---------------+---------------+---------------+
     |               |               |               |
-[12V Buck]      [6V BEC]       [5V Buck]       [3.3V LDO]
-Motors,         Steering        Jetson,         Weather
+[Buck 22V→12V]  [UBEC 22V→6V]  [Buck 22V→5V]  [LDO 5V→3.3V]
+XL4016 10A      Hobbywing 5A    XL4015 8A      AMS1117
+90% eff         85% eff         88% eff         66% eff
+Motors,         Steering+Arm    Jetson,         Weather
 Fridge,         Servos          Cameras,        sensors
 Speaker                         LEDs, Qi,
                                 Display
 ```
 
-### Estimated Runtime
+### Estimated Runtime (EA-03 — calculated with converter efficiencies)
 
-| Mode | Draw | Runtime (444Wh) |
-|------|------|------------------|
-| Driving + all systems | ~204W (17A x 12V) | ~2 hours |
-| Stationary (coffee table, fridge on) | ~72W (6A x 12V) | ~6 hours |
-| Idle (sensors only) | ~12W (1A x 12V) | ~37 hours |
+| Mode | Power Draw | Runtime (444Wh) |
+|------|-----------|------------------|
+| Driving + all systems (incl. fridge) | 97.5W | ~4.0 hours |
+| Driving without fridge | 61.5W | ~6.4 hours |
+| Stationary (coffee table, fridge on) | ~50W | ~8 hours |
+| Idle (sensors + compute only) | ~25W | ~16 hours |
 
 ### Solar Panel Array
 
@@ -245,18 +276,19 @@ Folded (coffee table):        Deployed:
   +----------+               \Panel 2/
 ```
 
-- 4x folding panels, ~25W each = 100W total
-- MPPT charge controller (Victron SmartSolar or similar)
-- Hinged arms with locking detents
-- Full charge from solar: ~4-5 hours in good sun
-- Extends driving runtime significantly when panels deployed while driving
+- 4× 25W monocrystalline panels = 100W total
+- Wired 2S2P (~36V open circuit) — higher than battery voltage for buck MPPT (EA-03)
+- CN3722 solar MPPT charge controller (~$15) (EA-06)
+- Spring-loaded stainless hinges with locking detents
+- Full charge from solar: ~10hrs (summer UK) to ~26hrs (winter UK) (EA-03)
+- Realistic solar contribution: extends runtime by 1-3 hours depending on season
 
 ### Charging Methods
 
 | Method | Details |
 |--------|---------|
-| Solar | 100W panels, MPPT controller, ~4-5hr full charge |
-| Mains | Barrel jack, 24V charger, ~2hr full charge |
+| Solar | 100W panels (2S2P), CN3722 MPPT, ~10-26hr full charge (UK) (EA-03) |
+| Mains | Barrel jack, 24V 5A charger, ~4hr full charge |
 | Docking station | Spring-loaded copper contacts, autonomous dock |
 
 ### Safety Features
@@ -269,19 +301,19 @@ Folded (coffee table):        Deployed:
 
 ---
 
-## 5. Vision & Sensors
+## 5. Compute & Vision & Sensors (EA-04)
 
 ### Camera Array
 
-| Camera | Type | Location | Purpose |
-|--------|------|----------|---------|
-| Front main | Wide-angle RGB (IMX477 or similar) | Front body, below deck | Primary driving view, AI object detection |
-| Rear | Wide-angle RGB | Rear body | Reversing camera, rear obstacle detection |
-| Left | Wide-angle RGB | Left body panel | 360 coverage |
-| Right | Wide-angle RGB | Right body panel | 360 coverage |
-| Mast cam | 30x optical zoom (USB camera module) | Top of mast, pan-tilt mount | Long-range observation, zoom |
-| Depth camera | Intel RealSense D435i or OAK-D Lite | Front body, next to main cam | Depth mapping, obstacle avoidance, 3D scanning |
-| Night vision | IR camera + IR LED array | Mast or front body | Low-light / night operation |
+| Camera | Type | Location | Purpose | Ref |
+|--------|------|----------|---------|-----|
+| Front main | Arducam B0205 120° USB ($15) | Front body, below deck | Primary driving view, AI object detection | EA-04 |
+| Rear | Arducam B0205 120° USB ($15) | Rear body | Reversing camera, rear obstacle detection | EA-04 |
+| Left | Arducam B0205 120° USB ($15) | Left body panel | 360 coverage | EA-04 |
+| Right | Arducam B0205 120° USB ($15) | Right body panel | 360 coverage | EA-04 |
+| Mast cam | ELP 10× optical zoom USB ($50) | Top of mast, pan-tilt mount | Long-range observation, zoom | EA-04 |
+| Depth camera | OAK-D Lite ($89) | Front body, next to main cam | Stereo depth, on-device AI, 86° FOV | EA-04 |
+| Night vision | Pi NoIR Camera v3 CSI ($25) + 4× IR 850nm LEDs ($5) | Mast | Low-light / night operation | EA-04 |
 
 ### 360-Degree View System
 
@@ -301,9 +333,9 @@ Mast cam is independent — zoom/pan controlled separately.
 
 | Sensor | Quantity | Location | Purpose |
 |--------|----------|----------|---------|
-| LIDAR (RPLidar A1/A2) | 1 | Front body, ~20cm height | 2D/360° mapping, SLAM, obstacle detection |
-| GPS (u-blox NEO-M8N) | 1 | Top deck (clear sky view) | Position tracking, waypoint navigation, geofencing |
-| IMU (BNO055) | 1 | Centre of body | Orientation, tilt detection, dead reckoning |
+| RPLidar A1 ($73) | 1 | Front body, ~20cm height | 2D/360° SLAM, 12m range, 8000 samples/s (EA-04) |
+| BN-220 GPS (u-blox M8) ($12) | 1 | Top deck (clear sky view) | Position tracking, waypoints, geofencing (EA-04) |
+| BNO055 IMU ($15) | 1 | Centre of body | 9-DOF orientation, on-chip fusion, tilt detection (EA-04) |
 | Ultrasonic (HC-SR04) | 6 | 2 front, 2 side, 2 rear | Close-range obstacle detection (< 4m) |
 | Wheel encoders | 6 | Each wheel hub | Odometry, speed measurement |
 | Current sensors (INA219) | 4 | Each power rail | Power monitoring, consumption tracking |
@@ -468,7 +500,7 @@ Arms fold flush against the body sides when not in use. Magnets or spring clips 
                           WebSocket / WebRTC
                                |
 +------------------------------+--------------------------------+
-|                     JETSON ORIN NANO                           |
+|                  JETSON ORIN NANO SUPER (67 TOPS)              |
 |  +------------------+  +------------------+  +--------------+ |
 |  | ROS2 Core        |  | Web Server       |  | AI Pipeline  | |
 |  | - Nav2 stack     |  | - Express/Flask  |  | - YOLO v8    | |
@@ -490,9 +522,9 @@ Arms fold flush against the body sides when not in use. Magnets or spring clips 
 |  +------------------+  +------------------+  +--------------+ |
 |  | Motor Controller |  | Sensor Hub       |  | Safety       | |
 |  | - 6x PWM drive   |  | - 6x ultrasonic  |  | - Watchdog   | |
-|  | - 4x servo steer |  | - 6x wheel enc   |  | - E-stop     | |
-|  | - PID speed ctrl |  | - IMU polling    |  | - Tilt limit | |
-|  | - Brake control  |  | - Temp sensors   |  | - Overcurr   | |
+|  | - PCA9685 servos |  | - 6x wheel enc   |  | - E-stop     | |
+|  | - PID speed ctrl |  | - BNO055 IMU     |  | - Tilt limit | |
+|  | - Cytron MDD10A  |  | - Temp sensors   |  | - Overcurr   | |
 |  +------------------+  +------------------+  +--------------+ |
 |  +------------------+  +------------------+                    |
 |  | LED Controller   |  | Power Monitor    |                    |
@@ -827,92 +859,67 @@ Rover underside:
 
 ---
 
-## 9. Bill of Materials (Estimated)
+## 9. Bill of Materials (EA-06 — Research-Backed Costs)
 
-### Phase 1: 0.4 Scale Prototype
+### Phase 1: 0.4 Scale Prototype — $92
 
-| Category | Item | Est. Cost |
-|----------|------|-----------|
-| **Motors** | 6x N20 micro gearmotors (6V, 100RPM) | 18 |
-| **Servos** | 4x SG90 micro servos (steering) | 8 |
-| **Electronics** | ESP32-S3 DevKit | 8 |
-| **Electronics** | Motor driver (2x L298N or DRV8833) | 8 |
-| **Power** | 2S LiPo 2200mAh + charger | 15 |
-| **Sensors** | HC-SR04 ultrasonic (x4) | 6 |
-| **Sensors** | MPU6050 IMU | 3 |
-| **Structure** | PLA/PETG filament (~500g) | 10 |
-| **Hardware** | M3/M4 bolts, nuts, bearings | 10 |
-| **Camera** | ESP32-CAM module (basic testing) | 8 |
-| | **Phase 1 Total** | **~94** |
+| # | Component | Qty | Unit Price | Total |
+|---|-----------|-----|-----------|-------|
+| 1 | ESP32-S3 DevKit (N16R8, USB-C) | 1 | $8 | $8 |
+| 2 | N20 DC gearmotors (6V, 100RPM, with encoder) | 6 | $3 | $18 |
+| 3 | SG90 micro servos (1.8 kg·cm) | 4 | $2 | $8 |
+| 4 | L298N motor drivers (dual H-bridge) | 2 | $3 | $6 |
+| 5 | 2S LiPo 2200mAh (7.4V, XT30) | 1 | $12 | $12 |
+| 6 | LiPo charger (2S balance) | 1 | $8 | $8 |
+| 7 | PLA/PETG filament (500g spool) | 1 | $10 | $10 |
+| 8 | 608ZZ bearings | 10 | $0.50 | $5 |
+| 9 | M3 fastener set + heat-set inserts | 1 set | $9 | $9 |
+| 10 | Breadboard + jumper wires + switch | 1 | $8 | $8 |
+| | **Phase 1 Total** | | | **$92** |
 
-### Phase 2: Full-Scale 3D Printed
+### Phase 2: Full-Scale 3D Printed — $1,402.50 (+10% contingency = $1,542.75)
 
-| Category | Item | Est. Cost |
-|----------|------|-----------|
-| **Compute** | Jetson Orin Nano 8GB | 200 |
-| **Compute** | ESP32-S3 DevKit | 8 |
-| **Motors** | 6x JGB37-520 12V DC gearmotors (60RPM) | 60 |
-| **Servos** | 4x MG996R servos (steering) | 24 |
-| **Servos** | 8x MG996R servos (2 arms, 4 per arm) | 48 |
-| **Servos** | 2x MG996R (mast pan-tilt) | 12 |
-| **Motor drivers** | 3x BTS7960 dual H-bridge (2 motors each) | 18 |
-| **Power** | 2x 6S 10Ah LiPo packs | 120 |
-| **Power** | 6S BMS board | 15 |
-| **Power** | Buck converters (12V, 5V) + BEC (6V) | 20 |
-| **Power** | MPPT charge controller | 25 |
-| **Solar** | 4x 25W folding panels | 80 |
-| **Cameras** | 4x wide-angle USB cameras (body) | 40 |
-| **Cameras** | 1x 30x zoom USB camera (mast) | 35 |
-| **Cameras** | 1x OAK-D Lite depth camera | 80 |
-| **Cameras** | 1x IR camera + IR LEDs | 25 |
-| **LIDAR** | RPLidar A1 | 80 |
-| **GPS** | u-blox NEO-M8N + antenna | 15 |
-| **IMU** | BNO055 9-DOF | 15 |
-| **Sensors** | 6x HC-SR04 ultrasonic | 9 |
-| **Sensors** | 6x wheel encoders (optical) | 12 |
-| **Sensors** | INA219 current sensors (x4) | 8 |
-| **Sensors** | DS18B20 temp sensors (x3) | 4 |
-| **Weather** | BME280 + anemometer + rain + UV + light | 25 |
-| **Fridge** | Peltier TEC1-12706 + heatsink + fan + insulation | 20 |
-| **Charging** | Qi wireless charger module (15W) | 10 |
-| **Charging** | USB-C PD trigger board + USB-A port | 8 |
-| **Audio** | 2x 3W speakers + MAX98357A amp | 10 |
-| **Audio** | 2x MEMS microphones (SPH0645) | 6 |
-| **Display** | 3.5" IPS LCD (SPI) | 12 |
-| **LEDs** | WS2812B strips (2m) + high-power white/red/amber | 15 |
-| **LEDs** | IR LED array (4x 850nm) | 5 |
-| **Networking** | USB 4G modem dongle | 25 |
-| **Structure** | PETG filament (~3-4kg) | 60 |
-| **Structure** | 2020 aluminium extrusion (6m total) | 20 |
-| **Structure** | M3/M4/M5 bolts, nuts, bearings, brackets | 25 |
-| **Structure** | Slip ring (mast 360 rotation) | 8 |
-| **Docking** | Spring copper contacts + 24V PSU | 15 |
-| **Misc** | Wiring, connectors, heatshrink, PCB | 30 |
-| **Misc** | microSD card (128GB) | 10 |
-| | **Phase 2 Total** | **~1,270** |
+| Category | Items | Subtotal |
+|----------|-------|----------|
+| Compute & Electronics | Jetson Orin Nano Super ($249), ESP32-S3, PCA9685, USB hub, 2× microSD | $292 |
+| Cameras & Vision | 4× Arducam 120° ($60), ELP 10× zoom ($50), OAK-D Lite ($89), Pi NoIR ($25), IR LEDs ($5) | $229 |
+| Navigation Sensors | RPLidar A1 ($73), BN-220 GPS ($12), BNO055 IMU ($15), 6× HC-SR04 ($9) | $109 |
+| Drivetrain | 6× Chihai 37mm 80RPM w/encoder ($72), 3× Cytron MDD10A ($45), 4× MG996R ($24) | $141 |
+| Arms & Mast | 8× MG996R arm ($48), 2× MG996R mast ($12), slip ring ($8) | $68 |
+| Power System | 2× Turnigy 6S 10Ah 12C ($100), 2× BMS ($16), charger ($20), converters ($17), wiring ($32) | $185 |
+| Solar | 4× 25W panels ($80), CN3722 MPPT ($15), hinges ($8) | $103 |
+| Accessories | Fridge ($15), Qi charger ($8), USB ports ($6), LEDs ($15), speakers ($10), weather sensors ($20), display ($12), INA219×4 ($8), DS18B20×3 ($4.50) | $96.50 |
+| Structure & Hardware | 4× PETG 1kg ($60), 6× 2020 extrusion ($24), brackets ($10), T-nuts ($7.50), bearings ($9.50), fasteners ($20), connectors ($13), cable ties ($5) | $154 |
+| Docking Station | Copper contacts ($8), 24V PSU ($12), base plate ($5) | $25 |
+| | **Phase 2 Total** | **$1,402.50** |
+| | **+ 10% Contingency** | **$1,542.75** |
 
-### Phase 3: Metal Build (Additional Costs)
+### Phase 3: Metal Build (Additional) — $260 (+15% contingency = $299)
 
-| Category | Item | Est. Cost |
-|----------|------|-----------|
-| **Materials** | Aluminium sheet/bar stock | 100-200 |
-| **Materials** | Steel for axles, shafts | 30-50 |
-| **Servos** | Upgrade to DS3218 (25kg) for arms | 40 |
-| **Hardware** | Bearings, bushings (metal grade) | 30 |
-| **Finishing** | Paint, anodizing, gaskets (IP54) | 40 |
-| **Glass** | Acrylic/tempered glass top panel | 25 |
-| | **Phase 3 Additional** | **~300-400** |
+| Item | Cost |
+|------|------|
+| Aluminium sheet (1.5mm, 2m²) | $60 |
+| Aluminium rectangular tube (rocker/bogie arms) | $25 |
+| Steel rod (axles, differential bar) | $15 |
+| 4× DS3218 upgraded steering servos | $40 |
+| 6001-2RS sealed bearings | $15 |
+| Paint / powder coat / anodising | $30 |
+| Weatherproof gaskets + cable glands (IP54) | $15 |
+| Tempered glass top panel (optional) | $25 |
+| Stainless steel fasteners upgrade | $15 |
+| Machining consumables (drill bits, taps) | $20 |
+| **Phase 3 Additional** | **$260 (+$39 contingency = $299)** |
 
 ### Total Project Budget
 
-| Phase | Cost |
-|-------|------|
-| Phase 1 (0.4 prototype) | ~94 |
-| Phase 2 (full 3D print) | ~1,270 |
-| Phase 3 (metal, additional) | ~350 |
-| **Grand Total** | **~1,714** |
+| Phase | Components | Contingency | Budget Total |
+|-------|-----------|-------------|-------------|
+| Phase 1 (0.4 prototype) | $92 | included | $92 |
+| Phase 2 (full 3D print) | $1,402.50 | $140.25 | $1,542.75 |
+| Phase 3 (metal, additional) | $260 | $39 | $299 |
+| **Grand Total** | **$1,754.50** | **$179.25** | **$1,933.75** |
 
-This fits within the 1,500-2,000 budget. Phase 1 is cheap enough to validate the design before committing to the big spend in Phase 2.
+**$1,933.75 falls within the $1,500-2,000 target budget** with ~$66 headroom. If budget is tight, core rover (compute + cameras + drivetrain + power + structure) works for **$764** — everything else can be added incrementally. See EA-06 for detailed cost reduction options and prioritised build order.
 
 ---
 
@@ -1022,5 +1029,23 @@ This fits within the 1,500-2,000 budget. Phase 1 is cheap enough to validate the
 
 ---
 
-*Document generated 2026-03-14. Version 1.0.*
+---
+
+## 13. Engineering Analysis Documents
+
+All design decisions in this document are backed by detailed engineering analyses:
+
+| Doc | Title | Key Decisions |
+|-----|-------|---------------|
+| EA-01 | Suspension Analysis | Rocker-bogie geometry (NASA ratio scaling), 150mm obstacle climb, 49° tilt limit, 19× 608ZZ bearings |
+| EA-02 | Drivetrain Analysis | 33.5 kg·cm worst-case torque, Chihai 37mm 80RPM motors, Cytron MDD10A drivers, MG996R servos |
+| EA-03 | Power System Analysis | 6S LiPo (444Wh), 97.5W typical draw, 4hr runtime, 2S2P solar config, wire gauge calcs |
+| EA-04 | Compute & Sensors | Jetson Orin Nano Super (67 TOPS), PCA9685 servo driver, full camera/sensor suite |
+| EA-05 | Weight Budget | 16.7 kg Phase 2, 20.8 kg Phase 3, CoG at 232mm above ground |
+| EA-06 | Cost Breakdown | $1,933.75 grand total, prioritised build order, cost reduction options |
+| EA-07 | Open Source Review | Sawppy construction + JPL geometry hybrid approach recommended |
+
+---
+
+*Document generated 2026-03-14. Updated to v1.1 on 2026-03-15 with research-backed values from EA-01 through EA-07.*
 *This is a living document — will be updated as the design evolves.*
