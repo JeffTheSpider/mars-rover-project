@@ -1,0 +1,25 @@
+{
+    "name": "Mars Rover Control",
+    "short_name": "Rover",
+    "description": "Control panel for the Mars Rover garden robot",
+    "start_url": "/",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#1e1e2e",
+    "theme_color": "#f38ba8",
+    "icons": [
+        {
+            "src": "/icons/rover-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icons/rover-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["utilities"]
+}

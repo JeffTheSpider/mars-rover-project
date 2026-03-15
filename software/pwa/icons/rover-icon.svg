@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="#1e1e2e"/>
+  <circle cx="256" cy="256" r="240" fill="#313244"/>
+
+  <!-- Mars surface -->
+  <path d="M80 360 Q150 340 200 350 Q260 360 320 345 Q380 330 432 360 L432 420 Q380 440 256 440 Q132 440 80 420 Z" fill="#45475a"/>
+
+  <!-- Rover body -->
+  <rect x="170" y="210" width="172" height="70" rx="8" fill="#585b70"/>
+  <rect x="180" y="200" width="152" height="15" rx="4" fill="#6c7086"/>
+
+  <!-- Camera mast -->
+  <rect x="250" y="160" width="8" height="50" fill="#6c7086"/>
+  <circle cx="254" cy="155" r="12" fill="#f38ba8"/>
+  <circle cx="254" cy="155" r="6" fill="#1e1e2e"/>
+
+  <!-- Left rocker arm -->
+  <line x1="185" y1="250" x2="140" y2="290" stroke="#6c7086" stroke-width="8" stroke-linecap="round"/>
+  <line x1="185" y1="250" x2="195" y2="310" stroke="#6c7086" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Right rocker arm -->
+  <line x1="327" y1="250" x2="372" y2="290" stroke="#6c7086" stroke-width="8" stroke-linecap="round"/>
+  <line x1="327" y1="250" x2="317" y2="310" stroke="#6c7086" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Wheels (6) -->
+  <!-- Front left -->
+  <circle cx="130" cy="300" r="22" fill="#45475a" stroke="#6c7086" stroke-width="3"/>
+  <circle cx="130" cy="300" r="10" fill="#313244"/>
+  <!-- Mid left -->
+  <circle cx="190" cy="320" r="22" fill="#45475a" stroke="#6c7086" stroke-width="3"/>
+  <circle cx="190" cy="320" r="10" fill="#313244"/>
+  <!-- Rear left -->
+  <circle cx="195" cy="320" r="0" fill="none"/>
+
+  <!-- Front right -->
+  <circle cx="382" cy="300" r="22" fill="#45475a" stroke="#6c7086" stroke-width="3"/>
+  <circle cx="382" cy="300" r="10" fill="#313244"/>
+  <!-- Mid right -->
+  <circle cx="322" cy="320" r="22" fill="#45475a" stroke="#6c7086" stroke-width="3"/>
+  <circle cx="322" cy="320" r="10" fill="#313244"/>
+
+  <!-- Rear wheels (behind body) -->
+  <circle cx="160" cy="335" r="22" fill="#45475a" stroke="#6c7086" stroke-width="3"/>
+  <circle cx="160" cy="335" r="10" fill="#313244"/>
+  <circle cx="352" cy="335" r="22" fill="#45475a" stroke="#6c7086" stroke-width="3"/>
+  <circle cx="352" cy="335" r="10" fill="#313244"/>
+
+  <!-- Solar panel hint -->
+  <rect x="195" y="202" width="40" height="10" rx="2" fill="#89b4fa" opacity="0.6"/>
+  <rect x="280" y="202" width="40" height="10" rx="2" fill="#89b4fa" opacity="0.6"/>
+
+  <!-- Antenna -->
+  <line x1="310" y1="200" x2="320" y2="165" stroke="#a6adc8" stroke-width="2"/>
+  <circle cx="320" cy="162" r="4" fill="#f9e2af"/>
+
+  <!-- Title arc -->
+  <text x="256" y="110" text-anchor="middle" font-family="system-ui, sans-serif" font-size="36" font-weight="700" fill="#f38ba8" letter-spacing="4">ROVER</text>
+</svg>

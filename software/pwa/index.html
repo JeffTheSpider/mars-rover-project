@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#f38ba8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="Mars Rover Control Panel">
+    <title>Mars Rover</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/icons/rover-192.png" type="image/png">
+    <link rel="apple-touch-icon" href="/icons/rover-192.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <!-- ============================================================
+         Header
+         ============================================================ -->
+    <header class="header">
+        <span class="header__title">MARS ROVER</span>
+        <div class="header__status">
+            <span id="status-dot" class="header__dot"></span>
+            <div class="header__battery" id="battery-display">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="10" x2="23" y2="14"/>
+                </svg>
+                <span id="battery-value">--%</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ============================================================
+         Status Bar
+         ============================================================ -->
+    <div class="status-bar">
+        <div class="status-bar__item">
+            <span class="status-bar__value" id="status-voltage">--V</span>
+            <span class="status-bar__label">Battery</span>
+        </div>
+        <div class="status-bar__item">
+            <span class="status-bar__value" id="status-speed">L:0 R:0</span>
+            <span class="status-bar__label">Speed</span>
+        </div>
+        <div class="status-bar__item">
+            <span class="status-bar__value" id="status-mode">Ackermann</span>
+            <span class="status-bar__label">Steering</span>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         Main Layout (responsive: portrait=stack, landscape=grid)
+         ============================================================ -->
+    <div class="main-layout">
+        <!-- Camera Feed -->
+        <div class="main-layout__camera">
+            <div class="camera-section">
+                <div class="camera-feed" id="camera-feed">
+                    <div class="camera-feed__placeholder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+                            <circle cx="12" cy="13" r="4"/>
+                        </svg>
+                        <div>Camera feed</div>
+                        <div>Phase 2</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="main-layout__controls">
+            <!-- D-Pad -->
+            <div class="controls-section">
+                <div class="dpad">
+                    <button class="dpad__btn" data-cmd="fl" aria-label="Forward-left">&#8598;</button>
+                    <button class="dpad__btn" data-cmd="fwd" aria-label="Forward">&#8593;</button>
+                    <button class="dpad__btn" data-cmd="fr" aria-label="Forward-right">&#8599;</button>
+                    <button class="dpad__btn" data-cmd="left" aria-label="Left">&#8592;</button>
+                    <button class="dpad__btn dpad__btn--stop" data-cmd="stop" aria-label="Stop">STP</button>
+                    <button class="dpad__btn" data-cmd="right" aria-label="Right">&#8594;</button>
+                    <button class="dpad__btn" data-cmd="bl" aria-label="Back-left">&#8601;</button>
+                    <button class="dpad__btn" data-cmd="rev" aria-label="Reverse">&#8595;</button>
+                    <button class="dpad__btn" data-cmd="br" aria-label="Back-right">&#8600;</button>
+                </div>
+            </div>
+
+            <!-- Speed Slider -->
+            <div class="speed-section">
+                <div class="speed-control">
+                    <span class="speed-control__label">Speed</span>
+                    <input type="range" id="speed-slider" min="10" max="100" value="50" step="5">
+                    <span class="speed-control__value" id="speed-value">50%</span>
+                </div>
+            </div>
+
+            <!-- Steering Mode -->
+            <div class="mode-section">
+                <button class="mode-btn mode-btn--active" data-mode="0">Ackermann</button>
+                <button class="mode-btn" data-mode="1">Point Turn</button>
+                <button class="mode-btn" data-mode="2">Crab Walk</button>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="actions-section">
+                <button class="action-btn" id="action-lights">
+                    <div class="action-btn__icon">&#128161;</div>
+                    Lights
+                </button>
+                <button class="action-btn" id="action-horn">
+                    <div class="action-btn__icon">&#128266;</div>
+                    Horn
+                </button>
+                <button class="action-btn" id="action-camera" disabled>
+                    <div class="action-btn__icon">&#128247;</div>
+                    Camera
+                </button>
+            </div>
+
+            <!-- ============================================================
+                 Expandable Sections
+                 ============================================================ -->
+
+            <!-- Settings -->
+            <div class="section">
+                <div class="section__header">
+                    <span class="section__title">Settings</span>
+                    <span class="section__arrow">&#9654;</span>
+                </div>
+                <div class="section__body">
+                    <div class="setting-row">
+                        <span class="setting-row__label">Max Speed</span>
+                        <div class="setting-row__control">
+                            <input type="range" min="10" max="100" value="100" step="5"
+                                   oninput="updateSetting('max_speed', this.value)">
+                            <span class="setting-row__value" id="setting-max_speed-value">100</span>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-row__label">LED Colour</span>
+                        <div class="setting-row__control">
+                            <input type="color" value="#f38ba8"
+                                   oninput="updateSetting('led_color', this.value)">
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-row__label">Servo Trim FL</span>
+                        <div class="setting-row__control">
+                            <input type="range" min="-50" max="50" value="0" step="1"
+                                   oninput="updateSetting('trim_fl', this.value)">
+                            <span class="setting-row__value" id="setting-trim_fl-value">0</span>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-row__label">Servo Trim FR</span>
+                        <div class="setting-row__control">
+                            <input type="range" min="-50" max="50" value="0" step="1"
+                                   oninput="updateSetting('trim_fr', this.value)">
+                            <span class="setting-row__value" id="setting-trim_fr-value">0</span>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-row__label">Servo Trim RL</span>
+                        <div class="setting-row__control">
+                            <input type="range" min="-50" max="50" value="0" step="1"
+                                   oninput="updateSetting('trim_rl', this.value)">
+                            <span class="setting-row__value" id="setting-trim_rl-value">0</span>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span class="setting-row__label">Servo Trim RR</span>
+                        <div class="setting-row__control">
+                            <input type="range" min="-50" max="50" value="0" step="1"
+                                   oninput="updateSetting('trim_rr', this.value)">
+                            <span class="setting-row__value" id="setting-trim_rr-value">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation (Phase 2) -->
+            <div class="section">
+                <div class="section__header">
+                    <span class="section__title">Navigation</span>
+                    <span class="section__arrow">&#9654;</span>
+                </div>
+                <div class="section__body">
+                    <div style="color: var(--text-muted); font-size: 0.8125rem; text-align: center; padding: 20px 0;">
+                        Navigation features available in Phase 2<br>
+                        (GPS, SLAM map, waypoints, geofence)
+                    </div>
+                </div>
+            </div>
+
+            <!-- System -->
+            <div class="section">
+                <div class="section__header">
+                    <span class="section__title">System</span>
+                    <span class="section__arrow">&#9654;</span>
+                </div>
+                <div class="section__body">
+                    <div class="health-grid mb-16">
+                        <div class="health-card">
+                            <div class="health-card__label">Uptime</div>
+                            <div class="health-card__value health-card__value--ok" id="health-uptime">--</div>
+                        </div>
+                        <div class="health-card">
+                            <div class="health-card__label">WiFi</div>
+                            <div class="health-card__value" id="health-wifi">-- dBm</div>
+                        </div>
+                        <div class="health-card">
+                            <div class="health-card__label">Battery</div>
+                            <div class="health-card__value" id="health-battery">--V</div>
+                        </div>
+                        <div class="health-card">
+                            <div class="health-card__label">Motors</div>
+                            <div class="health-card__value health-card__value--ok" id="health-motors">OK</div>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">Logs</div>
+                    <div class="log-viewer" id="log-viewer"></div>
+                </div>
+            </div>
+
+            <!-- Spacer for E-stop bar -->
+            <div style="height: 68px;"></div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         E-Stop Bar (always visible at bottom)
+         ============================================================ -->
+    <div class="estop-bar">
+        <button class="estop-btn" id="estop-btn">EMERGENCY STOP</button>
+    </div>
+
+    <!-- ============================================================
+         Connection Dialog (shown on startup)
+         ============================================================ -->
+    <div class="connect-dialog" id="connect-dialog">
+        <div class="connect-card">
+            <div class="connect-card__title">MARS ROVER</div>
+            <input class="connect-card__input" type="text" id="rover-ip"
+                   placeholder="192.168.x.x" inputmode="url" autocomplete="off">
+            <button class="connect-card__btn" id="connect-btn">Connect</button>
+            <div class="connect-card__error" id="connect-error"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/connection.js"></script>
+    <script src="/js/controls.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>
