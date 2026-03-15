@@ -348,9 +348,9 @@
 - [x] Fix launch files (hardware, nav, simulation)
 - [x] Enable Gazebo plugins in URDF
 - [x] Complete uart_bridge_node.cpp (IMU, USS, odometry)
-- [ ] Back up project to C: and E: drives (periodic)
+- [x] Back up project to C: and E: drives (periodic)
 - [ ] Consolidate reference docs' best findings into EAs
-- [ ] Update CLAUDE.md when significant changes happen
+- [x] Update CLAUDE.md when significant changes happen
 - [ ] Maintain this todo list as work progresses
 
 ---
