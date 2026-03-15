@@ -1,0 +1,63 @@
+# Mars Rover Project .gitignore
+
+# === Build artifacts ===
+firmware/esp32/build/
+*.elf
+*.bin
+*.hex
+*.map
+
+# === Arduino/PlatformIO ===
+.pio/
+.vscode/
+*.d
+
+# === Python ===
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# === ROS2 ===
+software/jetson/build/
+software/jetson/install/
+software/jetson/log/
+*.bag
+*.db3
+
+# === Node.js ===
+node_modules/
+
+# === CAD ===
+# Keep exported STLs, ignore Fusion 360 temp files
+*.f3d.bak
+*.step.bak
+
+# === 3D Printing ===
+# Keep STLs and gcode
+*.3mf.bak
+
+# === OS ===
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*.swo
+*~
+
+# === IDE ===
+.idea/
+*.code-workspace
+
+# === Secrets ===
+.env
+*.pem
+*.key
+
+# === Temporary ===
+*.tmp
+*.log
+*.bak

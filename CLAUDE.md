@@ -1,40 +1,99 @@
 # Mars Rover Garden Robot - Project Instructions
 
 ## Overview
-Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspension, 6 wheels, AI vision, robotic arms, solar power, coffee table mode.
+Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspension, 6 wheels (4 steered), AI vision, robotic arms, solar power, coffee table mode.
 
 ## Project Location
 - Root: `D:\Mars Rover Project\`
-- Design doc: `docs/plans/2026-03-14-mars-rover-design.md`
-- CAD files: `cad/` (Fusion 360, to be created)
-- Firmware: `firmware/esp32/` (ESP32-S3 motor controller)
-- Software: `software/jetson/` (ROS2, AI, web server)
-- App: `software/pwa/` (Phone control app)
-- 3D print files: `3d-print/` (STL exports from Fusion 360)
+- Design doc: `docs/plans/2026-03-14-mars-rover-design.md` (v1.2)
+- Engineering analyses: `docs/engineering/` (EA-01 through EA-17)
+- Firmware: `firmware/esp32/` (ESP32-S3 Phase 1 motor controller)
+- ROS2 packages: `software/jetson/` (7 packages)
+- Phone app: `software/pwa/` (Catppuccin Mocha PWA)
+- CAD files: `cad/` (Fusion 360, not yet started)
+- 3D print files: `3d-print/` (STL exports, not yet started)
+
+## Engineering Analysis Documents
+| EA | Topic | Key Content |
+|----|-------|-------------|
+| 01 | Suspension | Rocker-bogie geometry, NASA scaling, 608ZZ bearings |
+| 02 | Drivetrain | Torque calcs, N20/Chihai motors, L298N/Cytron drivers |
+| 03 | Power | 6S LiPo 444Wh, solar 2S2P, BMS, wire gauge |
+| 04 | Compute/Sensors | Jetson Orin Nano, cameras, LIDAR, GPS, IMU |
+| 05 | Weight Budget | 16.7kg Phase 2, 20.8kg Phase 3, CoG analysis |
+| 06 | Cost | $1,933.75 total, phase-by-phase breakdown |
+| 07 | Open Source Review | Sawppy + JPL hybrid approach |
+| 08 | Phase 1 Spec | 22 parts, all CAD dimensions, 65hr print |
+| 09 | GPIO Pin Map | ESP32-S3 N16R8, Phase 1: 20 pins, Phase 2: 28 pins |
+| 10 | Ackermann Steering | 3 modes, min radius 993mm, servo mapping |
+| 11 | 3D Printing | PETG/ASA, settings, heat-set inserts, segmentation |
+| 12 | UART Protocol | NMEA-style, 115200 baud, 18 msg types, 50Hz |
+| 13 | ROS2 Architecture | Node graph, Nav2, SLAM, EKF, YOLO, behaviour trees |
+| 14 | Weatherproofing | IP44/IP54, zones, cable glands, thermal |
+| 15 | Safety Systems | 4-layer, E-stop, fuses, watchdog, geofence |
+| 16 | PWA App Design | Catppuccin Mocha, D-pad, camera, nav map |
+| 17 | Phase 1 Build Guide | Step-by-step, ~14 day timeline, troubleshooting |
 
 ## Key Specs
-- Size: 1100mm x 650mm x 1050mm (driving) / 450mm (coffee table)
-- Weight: 25-35kg (metal version)
-- Suspension: Rocker-bogie (6 wheels, 4 steered)
-- Power: 6S LiPo 20Ah (444Wh) + 100W solar
-- Compute: Jetson Orin Nano (AI) + ESP32-S3 (motors/sensors)
-- Budget: ~1,500-2,000
+- Size: 1100mm x 650mm x 1050mm (full) / 440x260mm (0.4 scale Phase 1)
+- Weight: ~1.1kg (Phase 1) / 16.7kg (Phase 2) / 20.8kg (Phase 3)
+- Suspension: Rocker-bogie, 608ZZ bearings, 8mm shafts
+- Power: 2S LiPo 2200mAh (Phase 1) / 6S 20Ah + 100W solar (Phase 2)
+- Compute: ESP32-S3 DevKitC-1 N16R8 (Phase 1) / + Jetson Orin Nano Super (Phase 2)
+- Motors: N20 100RPM (Phase 1) / Chihai 37mm 80RPM (Phase 2)
+- Drivers: L298N (Phase 1, 3.3V logic concern) / Cytron MDD10A (Phase 2)
+- Servos: SG90 (Phase 1) / MG996R (Phase 2)
+- Steering: Ackermann (4-wheel), point turn, crab walk; ±35° max; min radius 397mm (0.4 scale)
+- Budget: ~$92 (Phase 1) / ~$1,934 total
 
 ## Build Phases
-1. **Phase 1** (0.4 scale): PLA/PETG prototype, ESP32 only, basic driving
-2. **Phase 2** (full scale): 3D printed + aluminium extrusion, all electronics
-3. **Phase 3** (full scale): Machined metal, weatherproof, production quality
+1. **Phase 1** (0.4 scale, current): PETG prototype, ESP32-S3 + 2× L298N, basic driving ($92)
+2. **Phase 2** (full scale): PETG/ASA + aluminium extrusion, all electronics ($1,543)
+3. **Phase 3** (full scale): Machined aluminium/steel, IP54 weatherproof ($299 additional)
+
+## Firmware (`firmware/esp32/`)
+- Arduino framework, ESP32-S3 DevKitC-1
+- `config.h` — Pin defs, geometry constants, timing
+- `motors.h` — 4-channel L298N control with speed ramping
+- `steering.h` — Ackermann/point turn/crab walk via SG90 servos
+- `sensors.h` — Battery ADC (10-sample average), encoders, E-stop
+- `webserver.h` — HTTP + WebSocket, embedded Catppuccin Mocha UI
+- `esp32.ino` — Main loop, WiFi, watchdog, non-blocking timing
+- Compile: `arduino-cli compile --fqbn esp32:esp32:esp32s3`
+- Upload: USB or OTA (espota.py)
+
+## ROS2 Packages (`software/jetson/`)
+- `rover_bringup` — Launch files, config YAML, URDF model
+- `rover_hardware` — UART bridge node (C++, EA-12 protocol)
+- `rover_navigation` — Ackermann controller, waypoint follower, geofence
+- `rover_perception` — YOLO detection, camera manager, depth processor
+- `rover_autonomy` — Behaviour trees (patrol, explore, return home)
+- `rover_teleop` — Web server node (WebSocket for phone PWA)
+- `rover_msgs` — Custom messages (WheelSpeeds, SteeringAngles, RoverStatus, Detection)
+
+## Phone PWA (`software/pwa/`)
+- Catppuccin Mocha dark theme, Mars red accent (#f38ba8)
+- D-pad with touch-and-hold (touchstart/touchend)
+- 3 steering modes, speed slider, E-stop
+- WebSocket JSON protocol
+- Service worker network-first (v1)
+- Responsive: phone portrait/landscape, tablet, desktop
 
 ## Development Environment
 - OS: Windows 11
-- CAD: Fusion 360
-- 3D Printer: Ender 3 (220x220x250mm)
-- Firmware: Arduino/PlatformIO (ESP32-S3)
-- Jetson: Ubuntu + ROS2 Humble
-- Phone app: PWA (HTML/CSS/JS)
+- Arduino CLI: v1.4.1 (`C:\Users\charl\bin\arduino-cli.exe`)
+- ESP32 board: `esp32:esp32:esp32s3` (DevKitC-1 N16R8)
+- Node.js: v24.13.1
+- Python: 3.14
+- CAD: Fusion 360 (to be installed)
+- 3D Printer: Ender 3 (220×220×250mm bed)
+- Jetson: Ubuntu 22.04 + ROS2 Humble (Phase 2)
 
 ## Conventions
-- ESP32 firmware follows same patterns as Clock/Lamp projects (single translation unit, .h includes, non-blocking state machines)
-- Phone PWA follows Hub patterns (Catppuccin Mocha, WebSocket, service worker)
-- All measurements in millimetres unless stated
-- Document all design decisions in design doc
+- ESP32 firmware follows Clock/Lamp project patterns (single translation unit, .h includes, non-blocking state machines)
+- Phone PWA follows Hub project patterns (Catppuccin Mocha, WebSocket, service worker, Plus Jakarta Sans)
+- All physical measurements in millimetres unless stated
+- UART protocol: NMEA-style `$CMD,data*XOR\n`
+- Document all design decisions in engineering analysis documents
+- 100nF ceramic capacitors on all motor terminals (noise suppression)
+- L298N requires 5V logic; ESP32-S3 outputs 3.3V — works in practice but monitor
