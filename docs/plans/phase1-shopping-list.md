@@ -1,6 +1,6 @@
 # Phase 1 Shopping List
 
-**Budget**: ~£75 (EA-06 estimates $92 / ~£75 at current rates)
+**Budget**: ~£80 (EA-06 estimates $102 / ~£80 at current rates)
 **Purpose**: 0.4 scale prototype — basic driving and steering validation
 **Date**: 2026-03-15
 
@@ -171,7 +171,7 @@
 | **Grand Total (everything)** | **~£232** |
 | **Grand Total (core only, have tools)** | **~£149** |
 
-> **Note**: The EA-06 estimate of $92/~£75 assumed AliExpress pricing for most components with 2-4 week shipping and only 1x 500g filament spool. The figures above use Amazon UK pricing (typically 1.5-2x AliExpress) and 2x 1kg PETG spools for realistic print margin. To hit the EA-06 budget, order motors, ESP32, servos, drivers, heat-set inserts, and connectors from AliExpress (~£50 saving) and accept the longer delivery time.
+> **Note**: The EA-06 estimate of $102/~£80 assumes AliExpress pricing for most components with 2-4 week shipping and only 1x 500g filament spool. The figures above use Amazon UK pricing (typically 1.5-2x AliExpress) and 2x 1kg PETG spools for realistic print margin. To hit the EA-06 budget, order motors, ESP32, servos, drivers, heat-set inserts, and connectors from AliExpress (~£50 saving) and accept the longer delivery time.
 
 ---
 

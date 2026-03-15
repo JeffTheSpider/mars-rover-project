@@ -70,7 +70,7 @@ After removing PSRAM/Flash pins (GPIO26-37), the ESP32-S3-DevKitC-1 exposes thes
 
 Phase 1 uses L298N drivers (2× dual H-bridge) and SG90 servos directly on ESP32 GPIO.
 
-### 2.1 Motor Control (L298N)
+### 2.1 Motor Control (L298N) — *Reference only, superseded by Section 2.2*
 
 Each L298N controls 2 motors. Each motor needs: 1 PWM (EN) + 2 DIR (IN1, IN2) = 3 pins.
 6 motors × 3 pins = 18 GPIO pins. This is too many.
@@ -140,12 +140,12 @@ Wiring W2+W3 in parallel from one L298N channel: both motors see the same voltag
 
 | Function | GPIO | Peripheral | Notes |
 |----------|------|------------|-------|
-| Servo FL steering | GPIO1 | LEDC Ch6 | SG90, PWM 50Hz |
-| Servo FR steering | GPIO2 | LEDC Ch7 | SG90, PWM 50Hz |
-| Servo RL steering | GPIO42 | LEDC Ch8* | SG90, PWM 50Hz |
-| Servo RR steering | GPIO41 | LEDC Ch9* | SG90, PWM 50Hz |
+| Servo FL steering | GPIO1 | LEDC Ch4 | SG90, PWM 50Hz |
+| Servo FR steering | GPIO2 | LEDC Ch5 | SG90, PWM 50Hz |
+| Servo RL steering | GPIO42 | LEDC Ch6 | SG90, PWM 50Hz |
+| Servo RR steering | GPIO41 | LEDC Ch7 | SG90, PWM 50Hz |
 
-*ESP32-S3 has 8 LEDC channels. Channels 6-7 use the same timer. For servos (all 50Hz), sharing a timer is fine. The ESP32-S3 actually has 2× 4-channel LEDC groups = 8 channels total, which is exactly enough for 4 PWM motors + 4 servos.
+*ESP32-S3 has 8 LEDC channels (Ch0-Ch7). Phase 1 uses Ch0-Ch3 for 4 motor groups and Ch4-Ch7 for 4 servos (all 50Hz, sharing Timer 1). This matches the allocation in Section 5.3.
 
 ### 2.4 Encoder Inputs (Optional for Phase 1)
 
@@ -356,7 +356,7 @@ The PCA9685 provides 16 PWM channels at 50Hz for all servos:
 **Used: 28 pins | Reserved: 12 pins (PSRAM/Flash) | USB: 2 pins**
 **All 28 available GPIOs are allocated** — zero spare pins in Phase 2.
 
-### 3.3 Phase 2+ GPIO Expansion Strategy
+### 3.8 Phase 2+ GPIO Expansion Strategy
 
 With all 28 native GPIOs consumed by Phase 2, any additional peripherals require I2C GPIO expanders on the existing I2C bus (GPIO1 SDA / GPIO2 SCL shared with PCA9685 servo driver).
 

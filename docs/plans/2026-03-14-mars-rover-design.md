@@ -891,7 +891,7 @@ Rover underside:
 | 10 | Breadboard + jumper wires + switch | 1 | $8 | $8 |
 | | **Phase 1 Total** | | | **$102** |
 
-### Phase 2: Full-Scale 3D Printed — $1,402.50 (+10% contingency = $1,542.75)
+### Phase 2: Full-Scale 3D Printed — $1,482.50 (+10% contingency = $1,630.75)
 
 | Category | Items | Subtotal |
 |----------|-------|----------|
@@ -903,10 +903,10 @@ Rover underside:
 | Power System | 2× Turnigy 6S 10Ah 12C ($100), 2× BMS ($16), charger ($20), converters ($17), wiring ($32) | $185 |
 | Solar | 4× 25W panels ($80), CN3722 MPPT ($15), hinges ($8) | $103 |
 | Accessories | Fridge ($15), Qi charger ($8), USB ports ($6), LEDs ($15), speakers ($10), weather sensors ($20), display ($12), INA219×4 ($8), DS18B20×3 ($4.50) | $96.50 |
-| Structure & Hardware | 4× PETG 1kg ($60), 6× 2020 extrusion ($24), brackets ($10), T-nuts ($7.50), bearings ($9.50), fasteners ($20), connectors ($13), cable ties ($5) | $154 |
+| Structure & Hardware | 4× PETG 1kg ($60), 6× 2020 extrusion ($24), brackets ($10), T-nuts ($7.50), bearings ($9.50), fasteners ($20), connectors ($13), cable ties ($5) | $234 |
 | Docking Station | Copper contacts ($8), 24V PSU ($12), base plate ($5) | $25 |
-| | **Phase 2 Total** | **$1,402.50** |
-| | **+ 10% Contingency** | **$1,542.75** |
+| | **Phase 2 Total** | **$1,482.50** |
+| | **+ 10% Contingency** | **$1,630.75** |
 
 ### Phase 3: Metal Build (Additional) — $260 (+15% contingency = $299)
 

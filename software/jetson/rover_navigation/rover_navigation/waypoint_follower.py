@@ -134,10 +134,12 @@ class WaypointFollowerNode(Node):
 
         if self.current_wp_index >= len(self.waypoints) or self.current_wp_index < 0:
             if self.patrol_mode:
-                # Reverse direction and bounce back through waypoints
+                # Reverse direction and clamp to valid range
                 self.direction *= -1
-                self.current_wp_index += self.direction * 2  # step back into valid range
-                self.current_wp_index = max(0, min(self.current_wp_index, len(self.waypoints) - 1))
+                if self.current_wp_index >= len(self.waypoints):
+                    self.current_wp_index = len(self.waypoints) - 1
+                elif self.current_wp_index < 0:
+                    self.current_wp_index = 0
                 self.get_logger().info(
                     f'Patrol: reversing direction at waypoint boundary'
                 )

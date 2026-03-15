@@ -222,7 +222,6 @@ size_t cobsEncode(const uint8_t* input, size_t length, uint8_t* output) {
 
 size_t cobsDecode(const uint8_t* input, size_t length, uint8_t* output) {
   size_t readIdx = 0, writeIdx = 0;
-  bool lastGroupAddedZero = false;
 
   while (readIdx < length) {
     uint8_t code = input[readIdx++];
@@ -234,16 +233,9 @@ size_t cobsDecode(const uint8_t* input, size_t length, uint8_t* output) {
     }
     if (code < 0xFF && readIdx < length) {
       output[writeIdx++] = 0x00;
-      lastGroupAddedZero = true;
-    } else {
-      lastGroupAddedZero = false;
     }
   }
 
-  // Remove trailing implicit zero only if the last group boundary added one
-  if (lastGroupAddedZero && writeIdx > 0) {
-    writeIdx--;
-  }
   return writeIdx;
 }
 
@@ -530,8 +522,8 @@ void setupBinaryUart(BinaryMsgCallback callback) {
   binRxTail = 0;
 
   // Initialise UART1 on GPIO43(TX)/GPIO44(RX) at 460800 baud
-  Serial1.begin(UART1_BAUD, SERIAL_8N1, UART1_RX_PIN, UART1_TX_PIN);
   Serial1.setRxBufferSize(BIN_RX_RING_SIZE);
+  Serial1.begin(UART1_BAUD, SERIAL_8N1, UART1_RX_PIN, UART1_TX_PIN);
 
   Serial.printf("[BIN] Binary UART protocol initialised at %d baud\n", UART1_BAUD);
   Serial.printf("[BIN] TX=GPIO%d RX=GPIO%d\n", UART1_TX_PIN, UART1_RX_PIN);

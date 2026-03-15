@@ -164,7 +164,7 @@ void handleRoot() {
 
 void handleStatus() {
   char buf[256];
-  snprintf(buf, sizeof(buf),
+  int len = snprintf(buf, sizeof(buf),
     "{\"version\":\"%s\",\"battery\":%.2f,\"percent\":%d,\"motors\":[%d,%d,%d,%d],"
     "\"steering\":[%.1f,%.1f,%.1f,%.1f],\"estop\":%s,\"uptime\":%lu}",
     FW_VERSION, batteryVoltage, batteryPercent,
@@ -173,6 +173,10 @@ void handleStatus() {
     isEStopPressed() ? "true" : "false",
     millis() / 1000
   );
+  if (len >= (int)sizeof(buf)) {
+    server.send(500, "application/json", "{\"error\":\"buffer overflow\"}");
+    return;
+  }
   server.send(200, "application/json", buf);
 }
 

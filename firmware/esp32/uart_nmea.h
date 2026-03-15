@@ -189,6 +189,7 @@ void parseNMEACommand(const char* msg) {
   } else if (strcmp(cmd, "RSM") == 0) {
     // $RSM*XX — Resume from E-stop
     estopActive = false;
+    lastCommandTime = millis();
     sendAck("RSM");
     Serial.println("[UART] Resume received from Jetson");
 

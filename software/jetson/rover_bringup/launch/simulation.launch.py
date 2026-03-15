@@ -17,6 +17,7 @@ from launch.actions import (
     IncludeLaunchDescription,
     RegisterEventHandler,
 )
+from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import Command, LaunchConfiguration
@@ -141,6 +142,15 @@ def generate_launch_description():
         ],
     )
 
+    # Navigation stack (conditionally included when enable_nav:=true)
+    pkg_share = get_package_share_directory('rover_bringup')
+    nav_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_share, 'launch', 'nav.launch.py')
+        ),
+        condition=IfCondition(LaunchConfiguration('enable_nav')),
+    )
+
     return LaunchDescription([
         world_arg,
         enable_nav_arg,
@@ -151,4 +161,5 @@ def generate_launch_description():
         ackermann_node,
         geofence_node,
         ekf_local_node,
+        nav_launch,
     ])

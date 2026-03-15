@@ -15,6 +15,7 @@ from geometry_msgs.msg import PoseStamped, Twist
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Bool, String
 from rover_msgs.msg import RoverStatus
+from sensor_msgs.msg import BatteryState
 from typing import Optional, List, Dict, Tuple
 from enum import Enum
 from ament_index_python.packages import get_package_share_directory
@@ -176,6 +177,8 @@ class MissionPlannerNode(Node):
             Odometry, '/odom', self.odom_callback, 10)
         self.status_sub = self.create_subscription(
             RoverStatus, '/rover/status', self.status_callback, 10)
+        self.battery_sub = self.create_subscription(
+            BatteryState, '/battery', self.battery_callback, 10)
         self.activate_sub = self.create_subscription(
             Bool, '/mission/activate', self.activate_callback, 10)
         self.load_bt_sub = self.create_subscription(
@@ -205,12 +208,15 @@ class MissionPlannerNode(Node):
         self.blackboard['pose'] = self.current_pose
 
     def status_callback(self, msg: RoverStatus):
-        """Update rover status."""
+        """Update rover status (battery_pct from RoverStatus may not be populated)."""
         self.rover_state = msg.state
-        self.battery_pct = msg.battery_pct
-        self.blackboard['battery_pct'] = msg.battery_pct
         self.blackboard['rover_state'] = msg.state
-        self.blackboard['battery_ok'] = msg.battery_pct > self.safety_battery_min
+
+    def battery_callback(self, msg: BatteryState):
+        """Update battery percentage from BatteryState topic."""
+        self.battery_pct = int(msg.percentage * 100)
+        self.blackboard['battery_pct'] = self.battery_pct
+        self.blackboard['battery_ok'] = self.battery_pct > self.safety_battery_min
 
     def activate_callback(self, msg: Bool):
         """Activate or deactivate autonomous mode."""

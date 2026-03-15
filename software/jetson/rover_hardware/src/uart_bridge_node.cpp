@@ -575,6 +575,7 @@ void UartBridgeNode::handle_ultrasonic_msg(const std::string & data)
   }
 }
 
+// NOTE: Caller must hold data_mutex_
 void UartBridgeNode::compute_odometry(double left_ticks, double right_ticks)
 {
   if (!odom_initialized_) {
@@ -604,10 +605,11 @@ void UartBridgeNode::compute_odometry(double left_ticks, double right_ticks)
   double d_centre = (dist_left + dist_right) / 2.0;
   double d_theta = (dist_right - dist_left) / TRACK_WIDTH_M;
 
-  // Update pose
+  // Update pose (midpoint yaw for better integration accuracy)
+  double mid_yaw = odom_yaw_ + d_theta / 2.0;
+  odom_x_ += d_centre * std::cos(mid_yaw);
+  odom_y_ += d_centre * std::sin(mid_yaw);
   odom_yaw_ += d_theta;
-  odom_x_ += d_centre * std::cos(odom_yaw_);
-  odom_y_ += d_centre * std::sin(odom_yaw_);
 
   // Velocities
   double vx = d_centre / dt;

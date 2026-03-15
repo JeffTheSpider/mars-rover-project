@@ -27,7 +27,7 @@ void setupOTA() {
   });
 
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    Serial.printf("[OTA] Progress: %u%%\r", progress * 100 / total);
+    if (total > 0) Serial.printf("[OTA] Progress: %u%%\r", progress * 100 / total);
     esp_task_wdt_reset();  // Feed watchdog during long upload
   });
 

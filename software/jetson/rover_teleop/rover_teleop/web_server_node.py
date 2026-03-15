@@ -103,6 +103,8 @@ class WebServerNode(Node):
 
     def broadcast_status(self):
         """Broadcast status to all connected WebSocket clients."""
+        with self.ws_clients_lock:
+            client_count = len(self.ws_clients)
         status = {
             'type': 'status',
             'battery': self.battery_pct,
@@ -110,7 +112,7 @@ class WebServerNode(Node):
             'state': self.rover_state,
             'speed': round(self.current_speed, 2),
             'mode': self.current_mode,
-            'clients': len(self.ws_clients),
+            'clients': client_count,
         }
         # Status is sent via the WebSocket event loop
         self._ws_broadcast(json.dumps(status))

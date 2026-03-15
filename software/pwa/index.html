@@ -1148,6 +1148,7 @@ select:focus {
 .log-entry--warn { color: var(--warning); }
 .log-entry--info { color: var(--info); }
 .log-entry--ws { color: var(--ctp-teal); }
+.log-entry--cmd { color: var(--secondary); }
 
 /* Log toggle (floating) */
 .log-toggle {
@@ -1719,7 +1720,7 @@ select:focus {
                 <div class="setting-row">
                     <span class="setting-row__label">Speed Limit</span>
                     <div class="setting-row__control">
-                        <input type="range" id="set-speed-limit" min="0" max="100" value="100" step="5">
+                        <input type="range" id="set-speed-limit" min="10" max="100" value="100" step="5">
                         <span class="setting-row__value" id="set-speed-limit-val">100%</span>
                     </div>
                 </div>
@@ -2324,6 +2325,13 @@ select:focus {
                 errorEl.textContent = 'Invalid IP address or hostname';
                 return;
             }
+            if (ipRegex.test(ip)) {
+                var parts = ip.split('.');
+                if (parts.some(function(p) { return parseInt(p, 10) > 255; })) {
+                    errorEl.textContent = 'Invalid IP: octets must be 0-255';
+                    return;
+                }
+            }
             errorEl.textContent = 'Connecting...';
             btn.disabled = true;
             conn.connect(ip);
@@ -2761,6 +2769,10 @@ select:focus {
             hornBtn.addEventListener('mousedown', function() { conn.send({ cmd: 'buzzer', state: 1 }); });
             hornBtn.addEventListener('mouseup', function() { conn.send({ cmd: 'buzzer', state: 0 }); });
             hornBtn.addEventListener('mouseleave', function() { conn.send({ cmd: 'buzzer', state: 0 }); });
+            hornBtn.addEventListener('touchcancel', function(e) {
+                e.preventDefault();
+                conn.send({ cmd: 'buzzer', state: 0 });
+            }, { passive: false });
         }
 
         // Snapshot button
@@ -3015,6 +3027,7 @@ select:focus {
     }
 
     function applySpeedLimit(limit) {
+        limit = Math.max(10, limit);
         var slider = document.getElementById('speed-slider');
         var valEl = document.getElementById('speed-value');
         if (!slider) return;
@@ -3251,6 +3264,10 @@ select:focus {
             addLog('info', 'Gamepad disconnected');
             updateGamepadUI(false, '');
             stopGamepadPoll();
+            if (gamepadDriving) {
+                conn.send({ cmd: 'gamepad', linear: 0, angular: 0 });
+                gamepadDriving = false;
+            }
         });
     }
 

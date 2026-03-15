@@ -127,16 +127,6 @@ class GeofenceNode(Node):
                     f'GEOFENCE BREACH! Distance: {self.current_distance:.1f}m '
                     f'(limit: {self.fence_radius:.1f}m)'
                 )
-                # Send e-stop
-                estop = Bool()
-                estop.data = True
-                self.estop_pub.publish(estop)
-
-                # Signal violation (controller should stop motion)
-                violation = Bool()
-                violation.data = True
-                self.violation_pub.publish(violation)
-
             elif self.current_zone == self.ZONE_WARNING:
                 self.get_logger().warn(
                     f'Approaching geofence boundary: {self.current_distance:.1f}m / '
@@ -144,14 +134,22 @@ class GeofenceNode(Node):
                 )
             elif self.current_zone == self.ZONE_SAFE and prev_zone != self.ZONE_SAFE:
                 self.get_logger().info('Returned to safe zone')
-                # Release e-stop
-                estop = Bool()
-                estop.data = False
-                self.estop_pub.publish(estop)
-                # Clear violation
-                violation = Bool()
-                violation.data = False
-                self.violation_pub.publish(violation)
+
+        # Publish e-stop and violation every tick based on current zone
+        if self.current_zone == self.ZONE_BREACH:
+            estop = Bool()
+            estop.data = True
+            self.estop_pub.publish(estop)
+            violation = Bool()
+            violation.data = True
+            self.violation_pub.publish(violation)
+        else:
+            estop = Bool()
+            estop.data = False
+            self.estop_pub.publish(estop)
+            violation = Bool()
+            violation.data = False
+            self.violation_pub.publish(violation)
 
         # Publish zone status
         status = {

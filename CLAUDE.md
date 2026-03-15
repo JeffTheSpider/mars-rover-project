@@ -49,7 +49,7 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 - Motors: N20 100RPM (Phase 1) / Chihai 37mm 80RPM (Phase 2)
 - Drivers: L298N (Phase 1, 3.3V logic concern) / Cytron MDD10A (Phase 2)
 - Servos: SG90 (Phase 1) / MG996R (Phase 2)
-- Steering: Ackermann (4-wheel), point turn, crab walk; ±35° max; min radius 397mm (0.4 scale)
+- Steering: Ackermann (4-wheel), point turn, crab walk; ±35° max; min radius 397mm (Phase 1) / 993mm (full scale) (0.4 scale)
 - Budget: ~$102 (Phase 1) / ~$2,032 total
 
 ## Build Phases

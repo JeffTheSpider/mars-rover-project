@@ -158,13 +158,13 @@
   **Note**: Some items below are Phase 2 components, not Phase 1. Per EA-08, Phase 1 uses N20 motors (not Chihai), SG90 servos (not MG996R), 2S LiPo (not 3S), and L298N drivers. Chihai motors, MG996R servos, 3S LiPo, and buck converters are Phase 2 items. See `docs/plans/phase1-shopping-list.md` for the correct Phase 1 list.
   - [ ] ESP32-S3 DevKitC-1 N16R8
   - [ ] L298N motor drivers (x2, for 4 motor channels + 2 spare)
-  - [ ] N20 or Chihai 12V DC gear motors (x6)
-  - [ ] MG996R steering servos (x4)
+  - [ ] N20 6V 100RPM gear motors (x6)
+  - [ ] SG90 micro servos (x4)
   - [ ] Hall effect encoders (x6, or motors with built-in encoders)
   - [ ] BNO055 IMU breakout
   - [ ] HC-SR04 ultrasonic sensors (x6)
-  - [ ] 3S LiPo battery (for Phase 1 testing)
-  - [ ] LM2596 buck converters (12V→5V, 12V→3.3V)
+  - [ ] 2S LiPo battery (7.4V, for Phase 1)
+  - [ ] LM2596 buck converters (Phase 2 only — not needed for Phase 1)
   - [ ] 608ZZ bearings (x10+)
   - [ ] M3 heat-set inserts (CNC Kitchen style, 100-pack)
   - [ ] M3 screws assorted (M3x8, M3x12, M3x16, M3x20)

@@ -162,11 +162,11 @@ class YoloDetectorNode(Node):
         if msg.encoding == 'rgb8':
             image = np.frombuffer(msg.data, dtype=np.uint8).reshape(
                 msg.height, msg.width, 3
-            )
+            ).copy()
         elif msg.encoding == 'bgr8':
             image = np.frombuffer(msg.data, dtype=np.uint8).reshape(
                 msg.height, msg.width, 3
-            )
+            ).copy()
             image = image[:, :, ::-1]  # BGR to RGB
         elif msg.encoding == 'mono8':
             grey = np.frombuffer(msg.data, dtype=np.uint8).reshape(
