@@ -5,8 +5,10 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 
 ## Project Location
 - Root: `D:\Mars Rover Project\`
-- Design doc: `docs/plans/2026-03-14-mars-rover-design.md` (v1.2)
-- Engineering analyses: `docs/engineering/` (EA-01 through EA-18)
+- Design doc: `docs/plans/2026-03-14-mars-rover-design.md` (v1.3)
+- Engineering analyses: `docs/engineering/` (EA-01 through EA-19)
+- Shopping list: `docs/plans/phase1-shopping-list.md`
+- Master todo: `docs/plans/todo-master.md`
 - Firmware: `firmware/esp32/` (ESP32-S3 Phase 1 motor controller)
 - ROS2 packages: `software/jetson/` (7 packages)
 - Phone app: `software/pwa/` (Catppuccin Mocha PWA)
@@ -34,6 +36,7 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 | 16 | PWA App Design | Catppuccin Mocha, D-pad, camera, nav map |
 | 17 | Phase 1 Build Guide | Step-by-step, ~14 day timeline, troubleshooting |
 | 18 | Binary UART Protocol | COBS + CRC-16, 460800 baud, binary structs, 12% utilisation (Phase 2) |
+| 19 | Wiring Diagram | Phase 1 complete wiring reference, ASCII diagrams, connector strategy |
 
 ## Key Specs
 - Size: 1100mm x 650mm x 1050mm (full) / 440x260mm (0.4 scale Phase 1)
@@ -98,3 +101,17 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 - Document all design decisions in engineering analysis documents
 - 100nF ceramic capacitors on all motor terminals (noise suppression)
 - L298N requires 5V logic; ESP32-S3 outputs 3.3V — works in practice but monitor
+- Nav2: Use RegulatedPurePursuit (not DWB) for Ackermann rovers — cannot spin in place
+- Nav2: DUBIN motion model (forward-only), not REEDS_SHEPP (allows reverse planning)
+- Nav2: `use_rotate_to_heading: false` is CRITICAL for Ackermann
+- Dual EKF: local (odom frame, smooth, no GPS) + global (map frame, with GPS, may jump)
+- Gazebo diff_drive plugin: set `publish_odom_tf: false` when EKF publishes odom→base_link TF
+- UK magnetic declination: -0.0175 rad (for navsat_transform)
+
+## Project Status (as of 2026-03-15)
+- All 19 engineering analyses complete
+- All ROS2 nodes scaffolded (10 nodes across 7 packages)
+- All ESP32 firmware modules scaffolded (6 modules)
+- PWA phone app scaffolded
+- All config/launch files corrected to match EA research
+- **Next step**: Fusion 360 CAD design + order Phase 1 components

@@ -13,6 +13,7 @@ namespace rover_hardware
 {
 
 constexpr const char * UartBridgeNode::JOINT_NAMES[];
+constexpr const char * UartBridgeNode::US_FRAME_NAMES[];
 
 UartBridgeNode::UartBridgeNode(const rclcpp::NodeOptions & options)
 : Node("uart_bridge", options),
@@ -38,10 +39,21 @@ UartBridgeNode::UartBridgeNode(const rclcpp::NodeOptions & options)
   // Publishers
   encoder_pub_ = this->create_publisher<sensor_msgs::msg::JointState>(
     "/encoders", 10);
+  imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>(
+    "/imu/data", 10);
+  odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>(
+    "/wheel_odom", 10);
   battery_pub_ = this->create_publisher<sensor_msgs::msg::BatteryState>(
     "/battery", 10);
   status_pub_ = this->create_publisher<rover_msgs::msg::RoverStatus>(
     "/rover/status", 10);
+
+  // Ultrasonic publishers (6 sensors)
+  for (int i = 0; i < 6; i++) {
+    char topic[64];
+    snprintf(topic, sizeof(topic), "/ultrasonic/%d", i);
+    ultrasonic_pubs_[i] = this->create_publisher<sensor_msgs::msg::Range>(topic, 10);
+  }
 
   // Subscribers
   wheel_speeds_sub_ = this->create_subscription<rover_msgs::msg::WheelSpeeds>(
@@ -353,6 +365,10 @@ void UartBridgeNode::serial_read_callback()
 
   if (cmd == "ENC") {
     handle_encoder_msg(data);
+  } else if (cmd == "IMU") {
+    handle_imu_msg(data);
+  } else if (cmd == "USS") {
+    handle_ultrasonic_msg(data);
   } else if (cmd == "BAT") {
     handle_battery_msg(data);
   } else if (cmd == "STS") {
@@ -459,6 +475,159 @@ void UartBridgeNode::handle_status_msg(const std::string & data)
   }
 
   status_pub_->publish(msg);
+}
+
+void UartBridgeNode::handle_imu_msg(const std::string & data)
+{
+  // Expected: qw,qx,qy,qz,gx,gy,gz,ax,ay,az
+  // Quaternion orientation, gyro (rad/s), accelerometer (m/s^2)
+  std::vector<float> values;
+  std::stringstream ss(data);
+  std::string token;
+  while (std::getline(ss, token, ',')) {
+    try {
+      values.push_back(std::stof(token));
+    } catch (...) {
+      return;
+    }
+  }
+
+  if (values.size() < 10) {
+    RCLCPP_WARN(this->get_logger(), "Expected 10 IMU values, got %zu", values.size());
+    return;
+  }
+
+  auto msg = sensor_msgs::msg::Imu();
+  msg.header.stamp = this->now();
+  msg.header.frame_id = "imu_link";
+
+  // Orientation quaternion
+  msg.orientation.w = values[0];
+  msg.orientation.x = values[1];
+  msg.orientation.y = values[2];
+  msg.orientation.z = values[3];
+
+  // Angular velocity (rad/s)
+  msg.angular_velocity.x = values[4];
+  msg.angular_velocity.y = values[5];
+  msg.angular_velocity.z = values[6];
+
+  // Linear acceleration (m/s^2)
+  msg.linear_acceleration.x = values[7];
+  msg.linear_acceleration.y = values[8];
+  msg.linear_acceleration.z = values[9];
+
+  // Covariance: unknown = -1 in first element, or set diagonal
+  msg.orientation_covariance[0] = 0.01;
+  msg.orientation_covariance[4] = 0.01;
+  msg.orientation_covariance[8] = 0.01;
+  msg.angular_velocity_covariance[0] = 0.001;
+  msg.angular_velocity_covariance[4] = 0.001;
+  msg.angular_velocity_covariance[8] = 0.001;
+  msg.linear_acceleration_covariance[0] = 0.1;
+  msg.linear_acceleration_covariance[4] = 0.1;
+  msg.linear_acceleration_covariance[8] = 0.1;
+
+  imu_pub_->publish(msg);
+}
+
+void UartBridgeNode::handle_ultrasonic_msg(const std::string & data)
+{
+  // Expected: d0,d1,d2,d3,d4,d5 (distances in mm, 0 = no reading)
+  std::vector<float> distances;
+  std::stringstream ss(data);
+  std::string token;
+  while (std::getline(ss, token, ',')) {
+    try {
+      distances.push_back(std::stof(token));
+    } catch (...) {
+      return;
+    }
+  }
+
+  if (distances.size() != 6) {
+    return;
+  }
+
+  auto stamp = this->now();
+  for (int i = 0; i < 6; i++) {
+    auto msg = sensor_msgs::msg::Range();
+    msg.header.stamp = stamp;
+    msg.header.frame_id = US_FRAME_NAMES[i];
+    msg.radiation_type = sensor_msgs::msg::Range::ULTRASOUND;
+    msg.field_of_view = 0.26;  // ~15 degrees
+    msg.min_range = 0.02;      // 2cm
+    msg.max_range = 4.0;       // 4m
+    msg.range = distances[i] / 1000.0f;  // mm to metres
+
+    if (msg.range < msg.min_range || msg.range > msg.max_range) {
+      msg.range = std::numeric_limits<float>::infinity();
+    }
+
+    ultrasonic_pubs_[i]->publish(msg);
+  }
+}
+
+void UartBridgeNode::compute_odometry(double left_ticks, double right_ticks)
+{
+  if (!odom_initialized_) {
+    prev_ticks_left_ = left_ticks;
+    prev_ticks_right_ = right_ticks;
+    last_odom_time_ = this->now();
+    odom_initialized_ = true;
+    return;
+  }
+
+  auto now = this->now();
+  double dt = (now - last_odom_time_).seconds();
+  if (dt <= 0.0) return;
+
+  // Tick deltas
+  double d_left = left_ticks - prev_ticks_left_;
+  double d_right = right_ticks - prev_ticks_right_;
+  prev_ticks_left_ = left_ticks;
+  prev_ticks_right_ = right_ticks;
+  last_odom_time_ = now;
+
+  // Convert ticks to metres
+  double dist_left = (d_left / TICKS_PER_REV) * 2.0 * M_PI * WHEEL_RADIUS_M;
+  double dist_right = (d_right / TICKS_PER_REV) * 2.0 * M_PI * WHEEL_RADIUS_M;
+
+  // Differential drive kinematics
+  double d_centre = (dist_left + dist_right) / 2.0;
+  double d_theta = (dist_right - dist_left) / TRACK_WIDTH_M;
+
+  // Update pose
+  odom_yaw_ += d_theta;
+  odom_x_ += d_centre * std::cos(odom_yaw_);
+  odom_y_ += d_centre * std::sin(odom_yaw_);
+
+  // Velocities
+  double vx = d_centre / dt;
+  double vyaw = d_theta / dt;
+
+  // Publish odometry
+  auto odom = nav_msgs::msg::Odometry();
+  odom.header.stamp = now;
+  odom.header.frame_id = "odom";
+  odom.child_frame_id = "base_link";
+
+  odom.pose.pose.position.x = odom_x_;
+  odom.pose.pose.position.y = odom_y_;
+  odom.pose.pose.orientation.z = std::sin(odom_yaw_ / 2.0);
+  odom.pose.pose.orientation.w = std::cos(odom_yaw_ / 2.0);
+
+  odom.twist.twist.linear.x = vx;
+  odom.twist.twist.angular.z = vyaw;
+
+  // Covariance (diagonal, increases with speed/rotation)
+  odom.pose.covariance[0] = 0.01;   // x
+  odom.pose.covariance[7] = 0.01;   // y
+  odom.pose.covariance[35] = 0.02;  // yaw
+  odom.twist.covariance[0] = 0.01;
+  odom.twist.covariance[35] = 0.02;
+
+  odom_pub_->publish(odom);
 }
 
 void UartBridgeNode::ping_callback()

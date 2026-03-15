@@ -9,6 +9,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(rover_msgs REQUIRED)
 
 add_executable(uart_bridge_node src/uart_bridge_node.cpp)
@@ -22,6 +23,7 @@ ament_target_dependencies(uart_bridge_node
   rclcpp
   std_msgs
   sensor_msgs
+  nav_msgs
   rover_msgs
 )
 
