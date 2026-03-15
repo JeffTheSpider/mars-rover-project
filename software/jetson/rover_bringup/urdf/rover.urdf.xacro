@@ -513,14 +513,14 @@
 
   <gazebo>
     <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
-      <robotNamespace>/mars_rover</robotNamespace>
+      <robotNamespace>/</robotNamespace>
     </plugin>
   </gazebo>
 
   <gazebo>
     <plugin name="differential_drive" filename="libgazebo_ros_diff_drive.so">
       <ros>
-        <namespace>/mars_rover</namespace>
+        <namespace>/</namespace>
         <remapping>cmd_vel:=cmd_vel</remapping>
         <remapping>odom:=wheel_odom</remapping>
       </ros>
@@ -547,7 +547,7 @@
   <gazebo>
     <plugin name="joint_state_publisher" filename="libgazebo_ros_joint_state_publisher.so">
       <ros>
-        <namespace>/mars_rover</namespace>
+        <namespace>/</namespace>
         <remapping>joint_states:=joint_states</remapping>
       </ros>
       <update_rate>30</update_rate>
@@ -607,7 +607,7 @@
       </ray>
       <plugin name="gazebo_ros_lidar" filename="libgazebo_ros_ray_sensor.so">
         <ros>
-          <namespace>/mars_rover</namespace>
+          <namespace>/</namespace>
           <remapping>~/out:=scan</remapping>
         </ros>
         <output_type>sensor_msgs/LaserScan</output_type>
@@ -623,7 +623,7 @@
       <update_rate>100</update_rate>
       <plugin name="gazebo_ros_imu" filename="libgazebo_ros_imu_sensor.so">
         <ros>
-          <namespace>/mars_rover</namespace>
+          <namespace>/</namespace>
           <remapping>~/out:=imu/data</remapping>
         </ros>
         <frame_name>imu_link</frame_name>
@@ -650,7 +650,7 @@
       </camera>
       <plugin name="gazebo_ros_depth_camera" filename="libgazebo_ros_camera.so">
         <ros>
-          <namespace>/mars_rover</namespace>
+          <namespace>/</namespace>
           <remapping>~/image_raw:=depth/image_raw</remapping>
           <remapping>~/depth/image_raw:=depth/depth_image</remapping>
           <remapping>~/camera_info:=depth/camera_info</remapping>

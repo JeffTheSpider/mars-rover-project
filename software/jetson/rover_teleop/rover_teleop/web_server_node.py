@@ -67,6 +67,8 @@ class WebServerNode(Node):
         self.current_mode = 0
         self.current_speed = 0.0
         self.ws_clients: Set = set()
+        self.ws_clients_lock = threading.Lock()
+        self._ws_loop: Optional[asyncio.AbstractEventLoop] = None
 
         # Command timeout timer
         self.last_cmd_time = self.get_clock().now()
@@ -175,11 +177,22 @@ class WebServerNode(Node):
         self.cmd_vel_pub.publish(twist)
 
     def _ws_broadcast(self, message: str):
-        """Broadcast message to all WebSocket clients (placeholder)."""
-        # This is called from the ROS thread. The actual sending happens
-        # in the asyncio event loop thread. We store the message for the
-        # next event loop iteration.
-        self._pending_broadcast = message
+        """Broadcast message to all connected WebSocket clients.
+
+        Called from the ROS thread; schedules sends on the asyncio event loop.
+        """
+        loop = self._ws_loop
+        if loop is None or loop.is_closed():
+            return
+
+        with self.ws_clients_lock:
+            clients = list(self.ws_clients)
+
+        for client in clients:
+            try:
+                asyncio.run_coroutine_threadsafe(client.send(message), loop)
+            except Exception:
+                pass
 
     def _run_ws_server(self):
         """Run the WebSocket server in a background thread."""
@@ -188,7 +201,8 @@ class WebServerNode(Node):
             import websockets.asyncio.server
 
             async def handler(websocket):
-                self.ws_clients.add(websocket)
+                with self.ws_clients_lock:
+                    self.ws_clients.add(websocket)
                 client_addr = websocket.remote_address
                 self.get_logger().info(f'Client connected: {client_addr}')
 
@@ -202,10 +216,12 @@ class WebServerNode(Node):
                 except Exception:
                     pass
                 finally:
-                    self.ws_clients.discard(websocket)
+                    with self.ws_clients_lock:
+                        self.ws_clients.discard(websocket)
                     self.get_logger().info(f'Client disconnected: {client_addr}')
 
             async def serve():
+                self._ws_loop = asyncio.get_running_loop()
                 async with websockets.asyncio.server.serve(handler, "0.0.0.0", self.ws_port):
                     self.get_logger().info(f'WebSocket server listening on port {self.ws_port}')
                     await asyncio.Future()  # Run forever

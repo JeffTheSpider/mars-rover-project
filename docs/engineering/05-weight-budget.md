@@ -34,7 +34,7 @@ This is the primary weight estimate. Phase 2 is the first fully-featured build.
 | Cytron MDD10A motor driver modules | 3 | 55g | 165g | Dual H-bridge per module |
 | MG996R steering servos | 4 | 55g | 220g | Datasheet |
 | Steering linkage brackets (3D printed) | 4 | 25g | 100g | PETG |
-| Wheel encoders (optical) | 6 | 5g | 30g | Small PCB + disc |
+| Wheel encoders (hall effect) | 6 | 5g | 30g | Built into Chihai motors |
 | Motor mounting hardware | 6 | 10g | 60g | Bolts, spacers |
 | **Subtotal: Drivetrain** | | | **1,685g** | |
 

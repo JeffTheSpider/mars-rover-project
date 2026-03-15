@@ -24,7 +24,7 @@
 | Ground clearance | 150mm | 60mm | Under body frame |
 | Target weight | — | ~1.1 kg | EA-05 estimate |
 | Target speed | 5 km/h | 2 km/h | Reduced for safety at scale |
-| Budget | — | $92 | EA-06 |
+| Budget | — | $102 | EA-06 |
 
 ---
 

@@ -17,6 +17,7 @@ extern bool batteryCritical;
 extern int8_t motorTarget[];
 extern float batteryVoltage;
 extern uint8_t batteryPercent;
+extern unsigned long lastCommandTime;
 void stopAllMotors();
 void setDrive(int8_t leftSpeed, int8_t rightSpeed);
 void setServoAngle(uint8_t idx, float angleDeg);
@@ -155,6 +156,7 @@ void parseNMEACommand(const char* msg) {
   if (strcmp(cmd, "MOT") == 0 && data) {
     // $MOT,w1,w2,w3,w4,w5,w6*XX
     // Phase 1: 4 motor groups (LF, LR, RF, RR)
+    lastCommandTime = millis();
     int w1, w2, w3, w4, w5, w6;
     if (sscanf(data, ",%d,%d,%d,%d,%d,%d", &w1, &w2, &w3, &w4, &w5, &w6) >= 4) {
       if (!estopActive && !batteryCritical) {
@@ -167,6 +169,7 @@ void parseNMEACommand(const char* msg) {
 
   } else if (strcmp(cmd, "STR") == 0 && data) {
     // $STR,fl,fr,rl,rr*XX
+    lastCommandTime = millis();
     float fl, fr, rl, rr;
     if (sscanf(data, ",%f,%f,%f,%f", &fl, &fr, &rl, &rr) == 4) {
       setServoAngle(0, fl);

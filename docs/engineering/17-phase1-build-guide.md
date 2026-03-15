@@ -36,7 +36,7 @@
 
 ---
 
-## Step 1: Order Parts (~$92, delivery 1-3 weeks)
+## Step 1: Order Parts (~$102, delivery 1-3 weeks)
 
 ### 1.1 First Order (Start Immediately)
 
@@ -80,7 +80,7 @@ Order these first — filament arrives first so you can start printing while wai
 
 **Subtotal: ~$30**
 
-**Grand total: ~$109** (slightly over $92 budget due to larger filament spool — worth the extra margin for reprints).
+**Grand total: ~$109** (slightly over $102 budget due to larger filament spool — worth the extra margin for reprints).
 
 ---
 

@@ -4,7 +4,7 @@
 // ============================================================
 // Mars Rover Phase 1 — Configuration
 // ESP32-S3 DevKitC-1 (N16R8)
-// Version: 0.1.0
+// Version: 0.2.0
 // See EA-09 for full GPIO pin map
 // ============================================================
 

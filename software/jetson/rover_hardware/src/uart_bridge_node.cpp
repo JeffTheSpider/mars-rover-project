@@ -384,6 +384,7 @@ void UartBridgeNode::serial_read_callback()
 
 void UartBridgeNode::handle_encoder_msg(const std::string & data)
 {
+  std::lock_guard<std::mutex> lock(data_mutex_);
   // Expected: tick0,tick1,tick2,tick3,tick4,tick5
   std::vector<double> ticks;
   std::stringstream ss(data);
@@ -412,6 +413,11 @@ void UartBridgeNode::handle_encoder_msg(const std::string & data)
   }
 
   encoder_pub_->publish(msg);
+
+  // Compute and publish wheel odometry from left/right encoder averages
+  double left_avg = (ticks[0] + ticks[1] + ticks[2]) / 3.0;
+  double right_avg = (ticks[3] + ticks[4] + ticks[5]) / 3.0;
+  compute_odometry(left_avg, right_avg);
 }
 
 void UartBridgeNode::handle_battery_msg(const std::string & data)
@@ -479,6 +485,7 @@ void UartBridgeNode::handle_status_msg(const std::string & data)
 
 void UartBridgeNode::handle_imu_msg(const std::string & data)
 {
+  std::lock_guard<std::mutex> lock(data_mutex_);
   // Expected: qw,qx,qy,qz,gx,gy,gz,ax,ay,az
   // Quaternion orientation, gyro (rad/s), accelerometer (m/s^2)
   std::vector<float> values;

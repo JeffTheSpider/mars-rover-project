@@ -12,7 +12,6 @@ from rclpy.node import Node
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import NavSatFix
 from std_msgs.msg import Bool, String
-from geometry_msgs.msg import Twist
 import json
 from typing import Optional, Tuple
 
@@ -64,7 +63,7 @@ class GeofenceNode(Node):
         # Publishers
         self.estop_pub = self.create_publisher(Bool, '/estop', 10)
         self.zone_pub = self.create_publisher(String, '/geofence/zone', 10)
-        self.cmd_vel_override_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.violation_pub = self.create_publisher(Bool, '/geofence/violation', 10)
 
         # Check timer
         self.check_timer = self.create_timer(1.0 / check_rate, self.check_fence)
@@ -133,8 +132,10 @@ class GeofenceNode(Node):
                 estop.data = True
                 self.estop_pub.publish(estop)
 
-                # Send zero velocity
-                self.cmd_vel_override_pub.publish(Twist())
+                # Signal violation (controller should stop motion)
+                violation = Bool()
+                violation.data = True
+                self.violation_pub.publish(violation)
 
             elif self.current_zone == self.ZONE_WARNING:
                 self.get_logger().warn(
@@ -147,6 +148,10 @@ class GeofenceNode(Node):
                 estop = Bool()
                 estop.data = False
                 self.estop_pub.publish(estop)
+                # Clear violation
+                violation = Bool()
+                violation.data = False
+                self.violation_pub.publish(violation)
 
         # Publish zone status
         status = {

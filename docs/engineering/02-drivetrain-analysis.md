@@ -311,6 +311,8 @@ Minimum turning radius (servo max 60° from centre):
   R_min = 900 / 1.732 + 350
   R_min = 520 + 350 = 870mm
 
+Note: EA-10 calculates a more precise minimum turn radius of 993mm using the full 3-axle Ackermann model with ±35° servo limits. EA-10's value supersedes this simplified calculation.
+
 Point turn (opposite steering):
   R_min = 0 (rotates on the spot)
 ```

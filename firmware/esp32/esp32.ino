@@ -101,14 +101,29 @@ void loop() {
   // Feed watchdog
   esp_task_wdt_reset();
 
-  // Handle WiFi reconnection
+  // Handle WiFi reconnection (non-blocking)
+  static bool wifiReconnecting = false;
+  static unsigned long wifiReconnectStart = 0;
   if (WiFi.status() != WL_CONNECTED) {
     if (wifiConnected) {
       Serial.println("[WIFI] Disconnected — attempting reconnect");
       wifiConnected = false;
       stopAllMotors();
     }
-    connectWiFi();
+    if (!wifiReconnecting) {
+      WiFi.begin(WIFI_SSID, WIFI_PASS);
+      wifiReconnecting = true;
+      wifiReconnectStart = millis();
+    } else if (millis() - wifiReconnectStart > WIFI_RECONNECT_INTERVAL_MS) {
+      wifiReconnecting = false; // will retry next loop
+    }
+  } else {
+    wifiReconnecting = false;
+    if (!wifiConnected) {
+      wifiConnected = true;
+      String ip = WiFi.localIP().toString();
+      Serial.printf("[WIFI] Reconnected! IP: %s\n", ip.c_str());
+    }
   }
 
   // Handle OTA updates
@@ -122,14 +137,18 @@ void loop() {
   handleUartNMEA();
 #endif
 
-  // Check E-stop
-  if (isEStopPressed() && !estopActive) {
-    estopActive = true;
-    stopAllMotors();
-    Serial.println("[ESTOP] Activated — all motors stopped");
-  } else if (!isEStopPressed() && estopActive) {
-    estopActive = false;
-    Serial.println("[ESTOP] Released — ready to drive");
+  // Check E-stop (debounced)
+  static unsigned long lastEstopChange = 0;
+  bool raw = isEStopPressed();
+  if (raw != estopActive && (now - lastEstopChange > 50)) {
+    lastEstopChange = now;
+    estopActive = raw;
+    if (estopActive) {
+      stopAllMotors();
+      Serial.println("[ESTOP] Activated — all motors stopped");
+    } else {
+      Serial.println("[ESTOP] Released — ready to drive");
+    }
   }
 
   // Motor speed ramping (50 Hz)
@@ -154,7 +173,7 @@ void loop() {
 
   // Command timeout: stop motors if no command for 2 seconds
   // (WebSocket disconnect already stops, but this catches other cases)
-  if (now - lastCommandTime > 2000 && (motorTarget[0] != 0 || motorTarget[2] != 0)) {
+  if (now - lastCommandTime > 2000 && (motorTarget[0] != 0 || motorTarget[1] != 0 || motorTarget[2] != 0 || motorTarget[3] != 0)) {
     stopAllMotors();
     Serial.println("[MAIN] Command timeout — motors stopped");
   }

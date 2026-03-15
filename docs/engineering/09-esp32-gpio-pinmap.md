@@ -358,7 +358,7 @@ The PCA9685 provides 16 PWM channels at 50Hz for all servos:
 
 ### 3.3 Phase 2+ GPIO Expansion Strategy
 
-With all 28 native GPIOs consumed by Phase 2, any additional peripherals require I2C GPIO expanders on the existing I2C bus (GPIO3 SDA / GPIO8 SCL shared with PCA9685 servo driver).
+With all 28 native GPIOs consumed by Phase 2, any additional peripherals require I2C GPIO expanders on the existing I2C bus (GPIO1 SDA / GPIO2 SCL shared with PCA9685 servo driver).
 
 **Recommended: PCA9535 16-bit I2C GPIO Expander**
 
@@ -391,8 +391,8 @@ With all 28 native GPIOs consumed by Phase 2, any additional peripherals require
 |---|---|
 | 0x20 | PCA9535 GPIO expander |
 | 0x40 | PCA9685 servo driver |
-| 0x68 | MPU-6050 IMU |
-| 0x76 | BMP280 barometer (if added) |
+| 0x28 | BNO055 IMU |
+| 0x76 | BME280 environment sensor (if added) |
 
 ---
 

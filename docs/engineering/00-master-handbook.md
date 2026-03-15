@@ -2,7 +2,7 @@
 
 **Document**: EA-00
 **Date**: 2026-03-15
-**Purpose**: Comprehensive reference compiling all engineering analyses (EA-01 through EA-19) into one authoritative document. Summarises key specifications, decisions, and cross-references for the Mars Rover Garden Robot project.
+**Purpose**: Comprehensive reference compiling all engineering analyses (EA-01 through EA-21) into one authoritative document. Summarises key specifications, decisions, and cross-references for the Mars Rover Garden Robot project.
 **Status**: Living document -- updated as EAs are revised.
 
 ---
@@ -88,7 +88,7 @@ The rocker-bogie is a passive, linkage-based suspension with no springs or dampe
 | Wheelbase (front to rear) | 900 mm | EA-01 s2.1 |
 | Track width (left to right) | 700 mm | EA-01 s2.1 |
 | Wheel diameter | 200 mm | EA-01 s2.2 |
-| Wheel width | 100 mm | EA-01 s2.2 |
+| Wheel width | 80 mm | EA-01 s2.2 |
 | Rocker arm length | 450 mm | EA-01 s2.3 |
 | Bogie arm length | 300 mm | EA-01 s2.3 |
 | Ground clearance | 150 mm | EA-01 s2.4 |
@@ -571,7 +571,7 @@ Comprehensive table of every key specification, its value, and the source EA.
 | Spec | Value | Phase | Source EA |
 |------|-------|-------|----------|
 | Wheel diameter | 80 mm / 200 mm | P1 / P2 | EA-01 s2.2 |
-| Wheel width | 40 mm / 100 mm | P1 / P2 | EA-01 s2.2 |
+| Wheel width | 32 mm / 80 mm | P1 / P2 | EA-01 s2.2 |
 | Wheelbase | 360 mm / 900 mm | P1 / P2 | EA-01 s2.1 |
 | Track width | 280 mm / 700 mm | P1 / P2 | EA-01 s2.1 |
 | Rocker arm length | 180 mm / 450 mm | P1 / P2 | EA-01 s2.3 |
@@ -755,6 +755,8 @@ Comprehensive table of every key specification, its value, and the source EA.
 | EA-18 | Binary UART Protocol | `18-binary-uart-protocol.md` | Phase 2 COBS+CRC-16 protocol, 460800 baud, packed C structs, integer-only encoding, 14 message types, 500ms timeout | EA-09, EA-12 |
 | EA-19 | Phase 1 Wiring Guide | `19-phase1-wiring.md` | Complete wiring reference, power distribution diagram, L298N config, motor/servo/sensor connections, E-stop circuit, test procedures, checklist | EA-03, EA-08, EA-09, EA-15 |
 | EA-19 | Wiring Diagram (alt) | `19-wiring-diagram.md` | Extended wiring reference with master connection table, ASCII circuit diagrams, connector strategy, assembly order, cable routing | EA-03, EA-09, EA-15 |
+| EA-20 | CAD Preparation Guide | `20-cad-preparation.md` | Parametric dimensions from EA-08, Fusion 360 assembly structure, component reference for CAD modelling | EA-08, EA-11 |
+| EA-21 | Test Procedures & Acceptance Criteria | `21-test-procedures.md` | Acceptance criteria for firmware, electronics, integration, and autonomy testing across all phases | EA-08, EA-09, EA-15, EA-17 |
 
 **Note**: EA-19 exists as two complementary documents. `19-phase1-wiring.md` is the step-by-step guide with checklists. `19-wiring-diagram.md` is the extended reference with full connection tables and detailed diagrams. Both cover the same system; use whichever format suits the task.
 
@@ -867,6 +869,7 @@ EA-01 (Suspension)
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2026-03-15 | Initial release compiling EA-01 through EA-19 |
+| 1.1 | 2026-03-15 | Added EA-20 (CAD Preparation) and EA-21 (Test Procedures) to Document Index |
 
 ---
 

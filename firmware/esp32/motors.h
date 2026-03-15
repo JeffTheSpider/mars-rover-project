@@ -72,13 +72,13 @@ void stopAllMotors() {
 void updateMotors() {
   for (int i = 0; i < 4; i++) {
     if (motorSpeed[i] < motorTarget[i]) {
-      int8_t newSpeed = motorSpeed[i] + RAMP_RATE;
+      int newSpeed = (int)motorSpeed[i] + RAMP_RATE;
       if (newSpeed > motorTarget[i]) newSpeed = motorTarget[i];
-      setMotor(i, newSpeed);
+      setMotor(i, (int8_t)newSpeed);
     } else if (motorSpeed[i] > motorTarget[i]) {
-      int8_t newSpeed = motorSpeed[i] - RAMP_RATE;
+      int newSpeed = (int)motorSpeed[i] - RAMP_RATE;
       if (newSpeed < motorTarget[i]) newSpeed = motorTarget[i];
-      setMotor(i, newSpeed);
+      setMotor(i, (int8_t)newSpeed);
     }
   }
 }

@@ -17,8 +17,8 @@ A Mars rover-inspired outdoor robot designed for garden and park use. Features N
 | Servos | SG90 | MG996R | MG996R |
 | Top Speed | ~2 km/h | 5 km/h | 5 km/h |
 | Runtime | ~30 min | 4 hr driving | 4 hr driving |
-| Budget | ~$92 | ~$1,543 | +$299 |
-| Total Budget | | **$1,933** | |
+| Budget | ~$102 | ~$1,631 | +$299 |
+| Total Budget | | **$2,032** | |
 
 ## Build Phases
 
@@ -94,7 +94,7 @@ Mars Rover Project/
 | EA-03 | Power System Analysis (LiPo sizing, solar charging, BMS, wire gauge) |
 | EA-04 | Compute and Sensors (Jetson Orin Nano, cameras, LIDAR, GPS, IMU) |
 | EA-05 | Weight Budget (per-component breakdown, centre of gravity analysis) |
-| EA-06 | Cost Breakdown (phase-by-phase BOM, $1,933 total) |
+| EA-06 | Cost Breakdown (phase-by-phase BOM, $2,032 total) |
 | EA-07 | Open Source Review (Sawppy + JPL hybrid design approach) |
 | EA-08 | Phase 1 Prototype Spec (22 parts, all CAD dimensions, 65 hr print) |
 | EA-09 | ESP32-S3 GPIO Pin Map (N16R8, Phase 1: 20 pins, Phase 2: 28 pins) |

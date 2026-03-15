@@ -34,17 +34,20 @@ class WaypointFollowerNode(Node):
         self.declare_parameter('max_linear_speed', 0.4)
         self.declare_parameter('max_angular_speed', 1.0)
         self.declare_parameter('control_rate', 20.0)
+        self.declare_parameter('patrol_mode', False)
 
         self.waypoint_tolerance = self.get_parameter('waypoint_tolerance').get_parameter_value().double_value
         self.lookahead = self.get_parameter('lookahead_distance').get_parameter_value().double_value
         self.max_linear = self.get_parameter('max_linear_speed').get_parameter_value().double_value
         self.max_angular = self.get_parameter('max_angular_speed').get_parameter_value().double_value
         control_rate = self.get_parameter('control_rate').get_parameter_value().double_value
+        self.patrol_mode = self.get_parameter('patrol_mode').get_parameter_value().bool_value
 
         # State
         self.state = self.STATE_IDLE
         self.waypoints: List[Tuple[float, float]] = []
         self.current_wp_index = 0
+        self.direction = 1  # 1 = forward through list, -1 = reverse (patrol only)
         self.current_pose: Optional[Tuple[float, float, float]] = None  # x, y, yaw
 
         # Subscribers
@@ -92,6 +95,7 @@ class WaypointFollowerNode(Node):
             for pose in msg.poses
         ]
         self.current_wp_index = 0
+        self.direction = 1
         self.state = self.STATE_FOLLOWING
         self.get_logger().info(f'Received {len(self.waypoints)} waypoints, starting navigation')
         self._publish_path()
@@ -102,6 +106,7 @@ class WaypointFollowerNode(Node):
             data = json.loads(msg.data)
             self.waypoints = [(wp['x'], wp['y']) for wp in data]
             self.current_wp_index = 0
+            self.direction = 1
             self.state = self.STATE_FOLLOWING
             self.get_logger().info(f'Received {len(self.waypoints)} waypoints from JSON')
             self._publish_path()
@@ -127,11 +132,22 @@ class WaypointFollowerNode(Node):
             self.get_logger().warn_once('Waiting for odometry...')
             return
 
-        if self.current_wp_index >= len(self.waypoints):
-            self.state = self.STATE_COMPLETED
-            self._stop()
-            self.get_logger().info('All waypoints reached!')
-            return
+        if self.current_wp_index >= len(self.waypoints) or self.current_wp_index < 0:
+            if self.patrol_mode:
+                # Reverse direction and bounce back through waypoints
+                self.direction *= -1
+                self.current_wp_index += self.direction * 2  # step back into valid range
+                self.current_wp_index = max(0, min(self.current_wp_index, len(self.waypoints) - 1))
+                self.get_logger().info(
+                    f'Patrol: reversing direction at waypoint boundary'
+                )
+                return
+            else:
+                # Single-run mission: stop at the last waypoint
+                self.state = self.STATE_COMPLETED
+                self._stop()
+                self.get_logger().info('All waypoints reached!')
+                return
 
         x, y, yaw = self.current_pose
         wp_x, wp_y = self.waypoints[self.current_wp_index]
@@ -146,7 +162,7 @@ class WaypointFollowerNode(Node):
             self.get_logger().info(
                 f'Reached waypoint {self.current_wp_index + 1}/{len(self.waypoints)}'
             )
-            self.current_wp_index += 1
+            self.current_wp_index += self.direction
             return
 
         # Pure pursuit: compute steering towards lookahead point

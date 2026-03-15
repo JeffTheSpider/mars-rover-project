@@ -1920,6 +1920,8 @@ select:focus {
             this.heartbeatTimer = null;
             this.connected = false;
             this._listeners = new Map();
+            this.maxReconnectAttempts = 10;
+            this.reconnectAttempts = 0;
         }
 
         on(event, callback) {
@@ -1947,6 +1949,7 @@ select:focus {
             this.ws.onopen = function() {
                 self.connected = true;
                 self.reconnectDelay = 1000;
+                self.reconnectAttempts = 0;
                 self.emit('connected', self.ip);
                 self.startHeartbeat();
                 try { localStorage.setItem('rover_ip', ip); } catch (_) {}
@@ -1986,6 +1989,13 @@ select:focus {
 
         scheduleReconnect() {
             clearTimeout(this.reconnectTimer);
+            this.reconnectAttempts++;
+            if (this.reconnectAttempts > this.maxReconnectAttempts) {
+                this.reconnectAttempts = 0;
+                this.reconnectDelay = 1000;
+                this.emit('reconnect_failed');
+                return;
+            }
             var self = this;
             this.reconnectTimer = setTimeout(function() {
                 if (self.ip) self.connect(self.ip);
@@ -2134,6 +2144,7 @@ select:focus {
     var gamepadSpeedFactors = [0.3, 0.6, 1.0];
     var gamepadPollTimer = null;
     var prevGamepadButtons = new Array(17).fill(false);
+    var gamepadDriving = false;
 
     // Map state
     var map = null;
@@ -2145,6 +2156,7 @@ select:focus {
     var geofenceCircle = null;
     var addWaypointMode = false;
     var mapInitialized = false;
+    var mapTileLayer = null;
 
     // ============================================================
     // DOM Ready
@@ -2171,6 +2183,7 @@ select:focus {
         conn.on('disconnected', onDisconnected);
         conn.on('message', onMessage);
         conn.on('error', onError);
+        conn.on('reconnect_failed', onReconnectFailed);
 
         // Restore saved IP
         var lastIP = conn.getLastIP();
@@ -2306,6 +2319,11 @@ select:focus {
                 errorEl.textContent = 'Enter the rover IP address';
                 return;
             }
+            var ipRegex = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
+            if (!ipRegex.test(ip) && !ip.match(/^[a-zA-Z][a-zA-Z0-9.\-]+$/)) {
+                errorEl.textContent = 'Invalid IP address or hostname';
+                return;
+            }
             errorEl.textContent = 'Connecting...';
             btn.disabled = true;
             conn.connect(ip);
@@ -2343,6 +2361,16 @@ select:focus {
         addLog('error', msg);
         var errorEl = document.getElementById('connect-error');
         if (errorEl) errorEl.textContent = msg;
+    }
+
+    function onReconnectFailed() {
+        addLog('error', 'Max reconnect attempts reached');
+        var dialog = document.getElementById('connect-dialog');
+        if (dialog) dialog.classList.remove('connect-dialog--hidden');
+        var errorEl = document.getElementById('connect-error');
+        if (errorEl) errorEl.textContent = 'Connection lost. Please reconnect.';
+        var btn = document.getElementById('connect-btn');
+        if (btn) btn.disabled = false;
     }
 
     function updateConnectionDot(connected) {
@@ -2487,13 +2515,19 @@ select:focus {
         if (er) er.textContent = 'R: ' + right;
     }
 
+    var prevCompassHeading = 0;
+
     function updateHeadingUI(heading) {
         var el = document.getElementById('telem-heading');
         if (el) el.textContent = heading.toFixed(1) + '\u00B0';
 
         var needle = document.getElementById('compass-needle');
         if (needle) {
-            needle.style.transform = 'translate(-50%, -100%) rotate(' + heading + 'deg)';
+            var delta = heading - prevCompassHeading;
+            if (delta > 180) delta -= 360;
+            if (delta < -180) delta += 360;
+            prevCompassHeading += delta;
+            needle.style.transform = 'translate(-50%, -100%) rotate(' + prevCompassHeading + 'deg)';
         }
     }
 
@@ -2609,7 +2643,8 @@ select:focus {
             conn.sendStop();
             activeCmd = null;
         } else {
-            conn.sendDrive(cmd, speed, steeringMode);
+            var cappedSpeed = Math.min(speed, settings.speedLimit);
+            conn.sendDrive(cmd, cappedSpeed, steeringMode);
         }
     }
 
@@ -2725,6 +2760,7 @@ select:focus {
             }, { passive: false });
             hornBtn.addEventListener('mousedown', function() { conn.send({ cmd: 'buzzer', state: 1 }); });
             hornBtn.addEventListener('mouseup', function() { conn.send({ cmd: 'buzzer', state: 0 }); });
+            hornBtn.addEventListener('mouseleave', function() { conn.send({ cmd: 'buzzer', state: 0 }); });
         }
 
         // Snapshot button
@@ -2850,6 +2886,9 @@ select:focus {
         bindSetting('set-trim-rl', 'set-trim-rl-val', 'trimRL', '');
         bindSetting('set-trim-rr', 'set-trim-rr-val', 'trimRR', '');
 
+        // Apply speed limit to drive slider on init
+        applySpeedLimit(settings.speedLimit);
+
         // Steering mode select
         var modeSelect = document.getElementById('set-steer-mode');
         if (modeSelect) {
@@ -2901,6 +2940,7 @@ select:focus {
                     addLog('warn', 'Not connected — cannot trigger OTA');
                     return;
                 }
+                if (!confirm('Start firmware update? The rover will be unavailable during the update.')) return;
                 otaBtn.textContent = 'Updating...';
                 otaBtn.disabled = true;
                 conn.send({ cmd: 'ota', target: 'esp32' });
@@ -2920,6 +2960,7 @@ select:focus {
                     addLog('warn', 'Not connected — cannot restart');
                     return;
                 }
+                if (!confirm('Restart ESP32? The rover will disconnect temporarily.')) return;
                 conn.send({ cmd: 'restart', target: 'esp32' });
                 addLog('cmd', 'ESP32 restart requested');
             });
@@ -2936,6 +2977,15 @@ select:focus {
         var meta = document.querySelector('meta[name="theme-color"]');
         if (meta) {
             meta.setAttribute('content', theme === 'latte' ? '#d20f39' : '#f38ba8');
+        }
+        // Swap map tile layer to match theme
+        if (map && mapTileLayer) {
+            map.removeLayer(mapTileLayer);
+            var isDark = theme !== 'latte';
+            var tileUrl = isDark
+                ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+                : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+            mapTileLayer = L.tileLayer(tileUrl, { maxZoom: 20 }).addTo(map);
         }
     }
 
@@ -2957,7 +3007,23 @@ select:focus {
             settings[key] = parseInt(input.value, 10);
             saveSettings(settings);
             conn.send({ cmd: 'cfg', key: key, value: settings[key] });
+            // When speedLimit changes, cap the drive speed slider
+            if (key === 'speedLimit') {
+                applySpeedLimit(settings[key]);
+            }
         });
+    }
+
+    function applySpeedLimit(limit) {
+        var slider = document.getElementById('speed-slider');
+        var valEl = document.getElementById('speed-value');
+        if (!slider) return;
+        slider.max = limit;
+        if (speed > limit) {
+            speed = limit;
+            slider.value = limit;
+            if (valEl) valEl.textContent = speed + '%';
+        }
     }
 
     // ============================================================
@@ -3054,8 +3120,12 @@ select:focus {
             attributionControl: false
         }).setView([defaultLat, defaultLon], 18);
 
-        // Dark tile layer
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        // Tile layer (theme-aware)
+        var isDark = settings.theme !== 'latte';
+        var tileUrl = isDark
+            ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+            : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+        mapTileLayer = L.tileLayer(tileUrl, {
             maxZoom: 20
         }).addTo(map);
 
@@ -3250,9 +3320,9 @@ select:focus {
             updateGamepadSpeedModeUI();
         }
 
-        // A button (0) = E-stop toggle
-        var aBtn = gp.buttons[0] ? gp.buttons[0].pressed : false;
-        if (aBtn && !prevGamepadButtons[0]) {
+        // Back/Select button (8) = E-stop toggle
+        var backBtn = gp.buttons[8] ? gp.buttons[8].pressed : false;
+        if (backBtn && !prevGamepadButtons[8]) {
             // Toggle E-stop
             document.getElementById('estop-btn').click();
         }
@@ -3267,8 +3337,9 @@ select:focus {
         linear *= factor;
         angular *= factor;
 
-        // Send if any input active
+        // Send if any input active, stop on release
         if (Math.abs(linear) > 0.01 || Math.abs(angular) > 0.01) {
+            gamepadDriving = true;
             if (!estopEngaged) {
                 conn.send({
                     cmd: 'gamepad',
@@ -3276,6 +3347,9 @@ select:focus {
                     angular: Math.round(angular * 100) / 100
                 });
             }
+        } else if (gamepadDriving) {
+            gamepadDriving = false;
+            conn.send({ cmd: 'gamepad', linear: 0, angular: 0 });
         }
 
         // Camera pan/tilt

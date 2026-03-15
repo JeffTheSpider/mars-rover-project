@@ -95,7 +95,11 @@ private:
   std::atomic<rclcpp::Time> last_esp_time_;
   std::atomic<bool> estop_active_;
 
-  // Odometry state
+  // Mutex protecting shared sensor/odometry state between UART read thread
+  // and main ROS thread (if using multi-threaded executor)
+  std::mutex data_mutex_;
+
+  // Odometry state (protected by data_mutex_)
   double odom_x_{0.0};
   double odom_y_{0.0};
   double odom_yaw_{0.0};

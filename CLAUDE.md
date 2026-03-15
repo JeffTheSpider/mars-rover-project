@@ -23,7 +23,7 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 | 03 | Power | 6S LiPo 444Wh, solar 2S2P, BMS, wire gauge |
 | 04 | Compute/Sensors | Jetson Orin Nano, cameras, LIDAR, GPS, IMU |
 | 05 | Weight Budget | 16.7kg Phase 2, 20.8kg Phase 3, CoG analysis |
-| 06 | Cost | $1,933.75 total, phase-by-phase breakdown |
+| 06 | Cost | $2,031.75 total, phase-by-phase breakdown |
 | 07 | Open Source Review | Sawppy + JPL hybrid approach |
 | 08 | Phase 1 Spec | 22 parts, all CAD dimensions, 65hr print |
 | 09 | GPIO Pin Map | ESP32-S3 N16R8, Phase 1: 20 pins, Phase 2: 28 pins |
@@ -50,11 +50,11 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 - Drivers: L298N (Phase 1, 3.3V logic concern) / Cytron MDD10A (Phase 2)
 - Servos: SG90 (Phase 1) / MG996R (Phase 2)
 - Steering: Ackermann (4-wheel), point turn, crab walk; ±35° max; min radius 397mm (0.4 scale)
-- Budget: ~$92 (Phase 1) / ~$1,934 total
+- Budget: ~$102 (Phase 1) / ~$2,032 total
 
 ## Build Phases
-1. **Phase 1** (0.4 scale, current): PETG prototype, ESP32-S3 + 2× L298N, basic driving ($92)
-2. **Phase 2** (full scale): PETG/ASA + aluminium extrusion, all electronics ($1,543)
+1. **Phase 1** (0.4 scale, current): PETG prototype, ESP32-S3 + 2× L298N, basic driving ($102)
+2. **Phase 2** (full scale): PETG/ASA + aluminium extrusion, all electronics ($1,631)
 3. **Phase 3** (full scale): Machined aluminium/steel, IP54 weatherproof ($299 additional)
 
 ## Firmware (`firmware/esp32/`)

@@ -139,7 +139,7 @@ struct __attribute__((packed)) HeartbeatRsp {
 // Polynomial: 0x1021, Init: 0xFFFF
 // ============================================================
 
-static const uint16_t PROGMEM crc16_table[256] = {
+static const uint16_t crc16_table[256] = {
   0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7,
   0x8108, 0x9129, 0xA14A, 0xB16B, 0xC18C, 0xD1AD, 0xE1CE, 0xF1EF,
   0x1231, 0x0210, 0x3273, 0x2252, 0x52B5, 0x4294, 0x72F7, 0x62D6,
@@ -182,7 +182,7 @@ uint16_t binaryCrc16(const uint8_t* data, size_t length) {
   uint16_t crc = 0xFFFF;
   for (size_t i = 0; i < length; i++) {
     uint8_t idx = (uint8_t)((crc >> 8) ^ data[i]);
-    crc = (crc << 8) ^ pgm_read_word(&crc16_table[idx]);
+    crc = (crc << 8) ^ crc16_table[idx];
   }
   return crc;
 }
@@ -222,6 +222,7 @@ size_t cobsEncode(const uint8_t* input, size_t length, uint8_t* output) {
 
 size_t cobsDecode(const uint8_t* input, size_t length, uint8_t* output) {
   size_t readIdx = 0, writeIdx = 0;
+  bool lastGroupAddedZero = false;
 
   while (readIdx < length) {
     uint8_t code = input[readIdx++];
@@ -233,11 +234,14 @@ size_t cobsDecode(const uint8_t* input, size_t length, uint8_t* output) {
     }
     if (code < 0xFF && readIdx < length) {
       output[writeIdx++] = 0x00;
+      lastGroupAddedZero = true;
+    } else {
+      lastGroupAddedZero = false;
     }
   }
 
-  // Remove trailing implicit zero if present
-  if (writeIdx > 0 && output[writeIdx - 1] == 0x00) {
+  // Remove trailing implicit zero only if the last group boundary added one
+  if (lastGroupAddedZero && writeIdx > 0) {
     writeIdx--;
   }
   return writeIdx;

@@ -39,7 +39,7 @@ A Mars rover-inspired outdoor robot that serves as a functional vehicle, AI-powe
 | Size (coffee table) | 1100mm x 650mm x 450mm |
 | Weight (Phase 2, 3D printed) | ~16.7 kg (EA-05) |
 | Weight (Phase 3, metal) | ~20.8 kg (EA-05) |
-| Budget | $1,933.75 total (within $1,500-2,000 target) (EA-06) |
+| Budget | $2,031.75 total (EA-06) |
 | Top speed target | 5 km/h (132.8 wheel RPM) (EA-02) |
 | Runtime (driving, all systems) | ~4.0 hours (EA-03) |
 | Runtime (driving, no fridge) | ~6.4 hours (EA-03) |
@@ -875,7 +875,7 @@ Rover underside:
 
 ## 9. Bill of Materials (EA-06 — Research-Backed Costs)
 
-### Phase 1: 0.4 Scale Prototype — $92
+### Phase 1: 0.4 Scale Prototype — $102
 
 | # | Component | Qty | Unit Price | Total |
 |---|-----------|-----|-----------|-------|
@@ -885,11 +885,11 @@ Rover underside:
 | 4 | L298N motor drivers (dual H-bridge) | 2 | $3 | $6 |
 | 5 | 2S LiPo 2200mAh (7.4V, XT30) | 1 | $12 | $12 |
 | 6 | LiPo charger (2S balance) | 1 | $8 | $8 |
-| 7 | PLA/PETG filament (500g spool) | 1 | $10 | $10 |
+| 7 | PETG filament (1kg spool) | 1 | $20 | $20 |
 | 8 | 608ZZ bearings | 10 | $0.50 | $5 |
 | 9 | M3 fastener set + heat-set inserts | 1 set | $9 | $9 |
 | 10 | Breadboard + jumper wires + switch | 1 | $8 | $8 |
-| | **Phase 1 Total** | | | **$92** |
+| | **Phase 1 Total** | | | **$102** |
 
 ### Phase 2: Full-Scale 3D Printed — $1,402.50 (+10% contingency = $1,542.75)
 
@@ -928,12 +928,12 @@ Rover underside:
 
 | Phase | Components | Contingency | Budget Total |
 |-------|-----------|-------------|-------------|
-| Phase 1 (0.4 prototype) | $92 | included | $92 |
-| Phase 2 (full 3D print) | $1,402.50 | $140.25 | $1,542.75 |
+| Phase 1 (0.4 prototype) | $102 | included | $102 |
+| Phase 2 (full 3D print) | $1,482.50 | $148.25 | $1,630.75 |
 | Phase 3 (metal, additional) | $260 | $39 | $299 |
-| **Grand Total** | **$1,754.50** | **$179.25** | **$1,933.75** |
+| **Grand Total** | **$1,844.50** | **$187.25** | **$2,031.75** |
 
-**$1,933.75 falls within the $1,500-2,000 target budget** with ~$66 headroom. If budget is tight, core rover (compute + cameras + drivetrain + power + structure) works for **$764** — everything else can be added incrementally. See EA-06 for detailed cost reduction options and prioritised build order.
+**$2,031.75 slightly exceeds the $1,500-2,000 target budget** by ~$32. This is due to revised filament estimates (EA-08, EA-11, EA-17). Consider the cost reduction options in EA-06 or a modest budget adjustment. If budget is tight, core rover (compute + cameras + drivetrain + power + structure) works for **$764** — everything else can be added incrementally.
 
 ---
 
@@ -1037,7 +1037,7 @@ Rover underside:
 2. **Design Phase 1 prototype in CAD** — use dimensions from EA-08, rocker-bogie geometry first
 3. **Simulate suspension** — test articulation range in Fusion 360
 4. **Print Phase 1 parts** — follow EA-08 §13.3 print order, EA-11 for settings
-5. **Order Phase 1 electronics** — ESP32-S3, N20 motors, SG90 servos, L298N drivers ($92, EA-06)
+5. **Order Phase 1 electronics** — ESP32-S3, N20 motors, SG90 servos, L298N drivers ($102, EA-06)
 6. ~~**Write ESP32 firmware**~~ — ✅ DONE: `firmware/esp32/` — motor control + WiFi web server + Ackermann steering
 7. **Assemble and test** — follow EA-08 §14 assembly sequence, calibrate servos
 
@@ -1056,7 +1056,7 @@ All design decisions in this document are backed by detailed engineering analyse
 | EA-03 | Power System Analysis | 6S LiPo (444Wh), 97.5W typical draw, 4hr runtime, 2S2P solar config, wire gauge calcs |
 | EA-04 | Compute & Sensors | Jetson Orin Nano Super (67 TOPS), PCA9685 servo driver, full camera/sensor suite |
 | EA-05 | Weight Budget | 16.7 kg Phase 2, 20.8 kg Phase 3, CoG at 232mm above ground |
-| EA-06 | Cost Breakdown | $1,933.75 grand total, prioritised build order, cost reduction options |
+| EA-06 | Cost Breakdown | $2,031.75 grand total, prioritised build order, cost reduction options |
 | EA-07 | Open Source Review | Sawppy construction + JPL geometry hybrid approach recommended |
 | EA-08 | Phase 1 Prototype Spec | All parts dimensioned for CAD, 22 printed parts, 65hr print time, assembly sequence |
 | EA-09 | ESP32-S3 GPIO Pin Map | Complete pin assignment for Phase 1 (20 pins) and Phase 2 (28 pins), wiring diagrams |

@@ -44,7 +44,7 @@ void IRAM_ATTR encoderISR_W6() {
 void setupSensors() {
   // Battery ADC
   analogReadResolution(12);  // 12-bit ADC (0-4095)
-  analogSetAttenuation(ADC_11db);  // Full 0-3.3V range
+  analogSetPinAttenuation(BATT_ADC_PIN, ADC_11db);  // Full 0-3.3V range
   pinMode(BATT_ADC_PIN, INPUT);
 
   // Fill battery samples with initial reading
@@ -88,10 +88,8 @@ void updateBattery() {
   batteryVoltage = sum / BATT_SAMPLES;
 
   // Calculate percentage (linear approximation: 6.4V=0%, 8.4V=100%)
-  batteryPercent = constrain(
-    (uint8_t)((batteryVoltage - BATT_CUTOFF_V) / (BATT_FULL_V - BATT_CUTOFF_V) * 100),
-    0, 100
-  );
+  int pct = (int)((batteryVoltage - BATT_CUTOFF_V) / (BATT_FULL_V - BATT_CUTOFF_V) * 100.0f);
+  batteryPercent = constrain(pct, 0, 100);
 
   // Warnings
   batteryWarning = (batteryVoltage <= BATT_WARN_V);

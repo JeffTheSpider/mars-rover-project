@@ -6,6 +6,7 @@
 
 // Forward declarations
 void processCommand(String cmd, int speed, int mode);
+extern unsigned long lastCommandTime;
 
 // ============================================================
 // WiFi Web Server + WebSocket for Phase 1 control
@@ -140,9 +141,12 @@ document.getElementById('speedSlider').oninput = function() {
 };
 
 function log(msg) {
-  const el = document.getElementById('log');
-  const t = new Date().toLocaleTimeString();
-  el.innerHTML += t + ' ' + msg + '<br>';
+  var el = document.getElementById('log');
+  var t = new Date().toLocaleTimeString();
+  var line = document.createElement('div');
+  line.textContent = t + ' ' + msg;
+  el.appendChild(line);
+  if (el.children.length > 200) el.removeChild(el.firstChild);
   el.scrollTop = el.scrollHeight;
 }
 
@@ -227,6 +231,7 @@ void onWebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t lengt
 // --- Command Processing ---
 
 void processCommand(String cmd, int speed, int mode) {
+  lastCommandTime = millis();
   speed = constrain(speed, 0, 100);
 
   if (cmd == "stop") {
@@ -277,22 +282,22 @@ void processCommand(String cmd, int speed, int mode) {
     setDrive(-speed, -speed);
   } else if (cmd == "left") {
     applyAckermann(-1500);  // ~1.5m turn radius left
-    setDrive(speed * 0.7, speed);
+    setDrive(speed * 7 / 10, speed);
   } else if (cmd == "right") {
     applyAckermann(1500);   // ~1.5m turn radius right
-    setDrive(speed, speed * 0.7);
+    setDrive(speed, speed * 7 / 10);
   } else if (cmd == "fl") {
     applyAckermann(-1000);  // Tight left
-    setDrive(speed * 0.5, speed);
+    setDrive(speed * 5 / 10, speed);
   } else if (cmd == "fr") {
     applyAckermann(1000);   // Tight right
-    setDrive(speed, speed * 0.5);
+    setDrive(speed, speed * 5 / 10);
   } else if (cmd == "bl") {
     applyAckermann(-1500);
-    setDrive(-speed * 0.7, -speed);
+    setDrive(-speed * 7 / 10, -speed);
   } else if (cmd == "br") {
     applyAckermann(1500);
-    setDrive(-speed, -speed * 0.7);
+    setDrive(-speed, -speed * 7 / 10);
   }
 }
 

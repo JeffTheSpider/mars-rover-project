@@ -54,8 +54,9 @@ void setupSteering() {
 
 void setServoUS(uint8_t idx, float us) {
   if (idx >= 4) return;
-  us = constrain(us, SERVO_MIN_US, SERVO_MAX_US);
-  uint16_t duty = usToDuty(us + servoTrim[idx]);
+  us += servoTrim[idx];  // Apply trim first
+  us = constrain(us, SERVO_MIN_US, SERVO_MAX_US);  // Then constrain
+  uint16_t duty = usToDuty(us);
   ledcWrite(servoPin[idx], duty);
 }
 

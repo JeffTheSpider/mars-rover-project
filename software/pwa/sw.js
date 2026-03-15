@@ -2,7 +2,7 @@
 // Network-first strategy (proven pattern from Hub project)
 // Bump CACHE_VERSION when changing index.html
 
-const CACHE_VERSION = 'rover-v2';
+const CACHE_VERSION = 'rover-v3';
 const CACHE_FILES = [
     '/',
     '/index.html',

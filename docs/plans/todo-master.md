@@ -155,6 +155,7 @@
 
 ### 4.1 Phase 1 Component Procurement
 - [x] Create Phase 1 shopping list with specific UK supplier links (see `docs/plans/phase1-shopping-list.md`)
+  **Note**: Some items below are Phase 2 components, not Phase 1. Per EA-08, Phase 1 uses N20 motors (not Chihai), SG90 servos (not MG996R), 2S LiPo (not 3S), and L298N drivers. Chihai motors, MG996R servos, 3S LiPo, and buck converters are Phase 2 items. See `docs/plans/phase1-shopping-list.md` for the correct Phase 1 list.
   - [ ] ESP32-S3 DevKitC-1 N16R8
   - [ ] L298N motor drivers (x2, for 4 motor channels + 2 spare)
   - [ ] N20 or Chihai 12V DC gear motors (x6)
