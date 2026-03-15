@@ -1,0 +1,360 @@
+# ============================================================
+# Gazebo Simulation Test Scenarios
+# Mars Rover Phase 2 — Validation in simulation
+#
+# Run with: ros2 launch rover_bringup simulation.launch.py
+# Then execute scenarios manually or via test_sim_runner.py
+# ============================================================
+
+scenarios:
+  # ----------------------------------------------------------
+  # 1. Basic Mobility
+  # ----------------------------------------------------------
+  - name: "drive_straight_3m"
+    description: "Drive straight 3m and verify odometry distance"
+    category: mobility
+    commands:
+      - topic: /cmd_vel
+        type: geometry_msgs/Twist
+        linear_x: 0.3
+        duration_s: 10.0
+      - topic: /cmd_vel
+        type: geometry_msgs/Twist
+        linear_x: 0.0
+        duration_s: 1.0
+    assertions:
+      - source: /odom
+        field: pose.pose.position.x
+        expected: 3.0
+        tolerance: 0.3
+      - source: /odom
+        field: pose.pose.position.y
+        expected: 0.0
+        tolerance: 0.2
+
+  - name: "drive_reverse_2m"
+    description: "Reverse 2m and verify negative odometry"
+    category: mobility
+    commands:
+      - topic: /cmd_vel
+        type: geometry_msgs/Twist
+        linear_x: -0.2
+        duration_s: 10.0
+      - topic: /cmd_vel
+        type: geometry_msgs/Twist
+        linear_x: 0.0
+        duration_s: 1.0
+    assertions:
+      - source: /odom
+        field: pose.pose.position.x
+        expected: -2.0
+        tolerance: 0.3
+
+  - name: "ackermann_right_turn"
+    description: "Execute right Ackermann turn, verify heading change"
+    category: mobility
+    commands:
+      - topic: /cmd_vel
+        type: geometry_msgs/Twist
+        linear_x: 0.2
+        angular_z: -0.3
+        duration_s: 5.0
+      - topic: /cmd_vel
+        type: geometry_msgs/Twist
+        linear_x: 0.0
+        duration_s: 1.0
+    assertions:
+      - source: /odom
+        field: pose.pose.orientation
+        check: heading_changed
+        direction: clockwise
+
+  - name: "ackermann_left_turn"
+    description: "Execute left Ackermann turn"
+    category: mobility
+    commands:
+      - topic: /cmd_vel
+        type: geometry_msgs/Twist
+        linear_x: 0.2
+        angular_z: 0.3
+        duration_s: 5.0
+    assertions:
+      - source: /odom
+        field: pose.pose.orientation
+        check: heading_changed
+        direction: counterclockwise
+
+  - name: "point_turn_360"
+    description: "Point turn 360 degrees, verify return to original heading"
+    category: mobility
+    commands:
+      - topic: /cmd_vel
+        type: geometry_msgs/Twist
+        angular_z: 0.5
+        duration_s: 12.6  # ~2*pi / 0.5
+    assertions:
+      - source: /odom
+        field: pose.pose.position.x
+        expected: 0.0
+        tolerance: 0.3
+      - source: /odom
+        field: pose.pose.position.y
+        expected: 0.0
+        tolerance: 0.3
+
+  # ----------------------------------------------------------
+  # 2. Obstacle Avoidance
+  # ----------------------------------------------------------
+  - name: "stop_before_wall"
+    description: "Drive toward wall, verify Nav2 stops before collision"
+    category: obstacle_avoidance
+    requires: enable_nav
+    setup:
+      spawn_position: [0, 0, 0.1]
+      goal_position: [5, 0, 0]  # Wall is at ~4m in garden world
+    assertions:
+      - check: no_collision
+      - source: /odom
+        field: pose.pose.position.x
+        check: less_than
+        value: 3.8
+
+  - name: "avoid_garden_bench"
+    description: "Navigate past garden bench obstacle"
+    category: obstacle_avoidance
+    requires: enable_nav
+    setup:
+      spawn_position: [0, 0, 0.1]
+      goal_position: [3, 3, 0]
+    assertions:
+      - check: goal_reached
+        tolerance: 0.5
+      - check: no_collision
+
+  - name: "ultrasonic_emergency_stop"
+    description: "Place obstacle <0.3m from ultrasonic, verify emergency stop"
+    category: obstacle_avoidance
+    setup:
+      spawn_obstacle:
+        model: box_0.3m
+        position: [0.25, 0, 0.15]  # 25cm in front of rover
+    commands:
+      - topic: /cmd_vel
+        type: geometry_msgs/Twist
+        linear_x: 0.2
+        duration_s: 3.0
+    assertions:
+      - source: /ultrasonic/front_center
+        field: range
+        check: less_than
+        value: 0.3
+      - check: motors_stopped
+
+  # ----------------------------------------------------------
+  # 3. Sensor Validation
+  # ----------------------------------------------------------
+  - name: "lidar_360_scan"
+    description: "Verify LiDAR publishes 360-degree scan"
+    category: sensors
+    timeout_s: 10
+    assertions:
+      - source: /scan
+        check: topic_active
+        min_rate_hz: 4.0
+      - source: /scan
+        field: angle_min
+        expected: -3.14159
+        tolerance: 0.01
+      - source: /scan
+        field: angle_max
+        expected: 3.14159
+        tolerance: 0.01
+      - source: /scan
+        field: ranges
+        check: array_not_empty
+
+  - name: "imu_data_published"
+    description: "Verify IMU publishes orientation and angular velocity"
+    category: sensors
+    timeout_s: 10
+    assertions:
+      - source: /imu/data
+        check: topic_active
+        min_rate_hz: 50.0
+      - source: /imu/data
+        field: orientation.w
+        check: not_zero
+
+  - name: "depth_camera_pointcloud"
+    description: "Verify OAK-D depth camera publishes pointcloud"
+    category: sensors
+    timeout_s: 10
+    assertions:
+      - source: /oakd/pointcloud
+        check: topic_active
+        min_rate_hz: 10.0
+      - source: /oakd/depth/image_raw
+        check: topic_active
+
+  - name: "gps_fix"
+    description: "Verify GPS publishes NavSatFix with valid coordinates"
+    category: sensors
+    timeout_s: 15
+    assertions:
+      - source: /gps/fix
+        check: topic_active
+      - source: /gps/fix
+        field: status.status
+        check: greater_than_or_equal
+        value: 0  # STATUS_FIX
+
+  # ----------------------------------------------------------
+  # 4. Navigation Stack
+  # ----------------------------------------------------------
+  - name: "nav2_waypoint_square"
+    description: "Navigate a 2m square (4 waypoints), return to start"
+    category: navigation
+    requires: enable_nav
+    waypoints:
+      - [2, 0, 0]
+      - [2, 2, 0]
+      - [0, 2, 0]
+      - [0, 0, 0]
+    assertions:
+      - check: all_waypoints_reached
+        tolerance: 0.5
+      - source: /odom
+        field: pose.pose.position
+        check: near_origin
+        tolerance: 0.5
+
+  - name: "nav2_replan_on_obstacle"
+    description: "Place obstacle on planned path, verify replanning"
+    category: navigation
+    requires: enable_nav
+    setup:
+      spawn_position: [0, 0, 0.1]
+      goal_position: [4, 0, 0]
+    commands:
+      - wait_for: plan_active
+      - spawn_obstacle:
+          model: box_1m
+          position: [2, 0, 0.5]  # Block the direct path
+    assertions:
+      - check: goal_reached
+        tolerance: 0.5
+      - check: path_replanned
+
+  - name: "costmap_inflation"
+    description: "Verify costmap inflation around obstacles"
+    category: navigation
+    requires: enable_nav
+    assertions:
+      - source: /local_costmap/costmap
+        check: topic_active
+      - source: /global_costmap/costmap
+        check: topic_active
+
+  # ----------------------------------------------------------
+  # 5. Terrain & Slope
+  # ----------------------------------------------------------
+  - name: "climb_15deg_slope"
+    description: "Drive up 15° slope in garden world"
+    category: terrain
+    setup:
+      spawn_position: [-2, 5, 0.1]  # Near slope area in garden world
+    commands:
+      - topic: /cmd_vel
+        type: geometry_msgs/Twist
+        linear_x: 0.2
+        duration_s: 10.0
+    assertions:
+      - source: /odom
+        field: pose.pose.position.z
+        check: increased
+      - source: /imu/data
+        field: orientation
+        check: pitch_angle_degrees
+        expected: 15.0
+        tolerance: 5.0
+
+  - name: "gravel_path_friction"
+    description: "Drive on gravel path, verify reduced speed (higher friction)"
+    category: terrain
+    setup:
+      spawn_position: [3, -1, 0.1]  # Gravel path area
+    commands:
+      - topic: /cmd_vel
+        type: geometry_msgs/Twist
+        linear_x: 0.3
+        duration_s: 5.0
+    assertions:
+      - check: no_wheel_slip
+      - check: rover_moving
+
+  # ----------------------------------------------------------
+  # 6. Geofence
+  # ----------------------------------------------------------
+  - name: "geofence_warning"
+    description: "Drive toward geofence boundary, verify warning published"
+    category: safety
+    setup:
+      geofence_center: [0, 0]
+      geofence_radius: 5.0
+    commands:
+      - topic: /cmd_vel
+        type: geometry_msgs/Twist
+        linear_x: 0.3
+        duration_s: 12.0  # Should reach ~3.6m
+    assertions:
+      - source: /geofence/status
+        field: status
+        expected: "WARNING"
+
+  - name: "geofence_stop"
+    description: "Attempt to cross geofence, verify hard stop"
+    category: safety
+    setup:
+      geofence_center: [0, 0]
+      geofence_radius: 3.0
+    commands:
+      - topic: /cmd_vel
+        type: geometry_msgs/Twist
+        linear_x: 0.3
+        duration_s: 15.0
+    assertions:
+      - source: /odom
+        field: pose.pose.position
+        check: within_radius
+        center: [0, 0]
+        radius: 3.5  # Should not exceed fence + small buffer
+
+  # ----------------------------------------------------------
+  # 7. EKF Sensor Fusion
+  # ----------------------------------------------------------
+  - name: "ekf_odom_published"
+    description: "Verify EKF publishes filtered odometry"
+    category: localization
+    timeout_s: 10
+    assertions:
+      - source: /odom
+        check: topic_active
+        min_rate_hz: 20.0
+
+  - name: "tf_tree_complete"
+    description: "Verify all required TF frames exist"
+    category: localization
+    timeout_s: 10
+    assertions:
+      - check: tf_exists
+        frames:
+          - parent: odom
+            child: base_link
+          - parent: base_link
+            child: base_footprint
+          - parent: base_link
+            child: lidar_link
+          - parent: base_link
+            child: imu_link
+          - parent: base_link
+            child: camera_link

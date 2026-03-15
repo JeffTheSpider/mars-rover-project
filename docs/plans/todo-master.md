@@ -315,7 +315,7 @@
 - [x] Implement D-pad touch control for manual driving (in PWA and ESP32 embedded web UI)
 - [x] Implement mission planner UI (patrol/explore/return home, status indicator)
 - [x] Implement settings page (speed limit, sensitivity, steering mode, geofence, servo trim)
-- [ ] Implement firmware update trigger (OTA from PWA via Jetson)
+- [x] Implement firmware update trigger (OTA from PWA via Jetson, progress bar, restart button)
 - [x] Implement diagnostic log viewer (color-coded, 200 entries, auto-scroll)
 - [x] Add PWA install prompt and offline indicator
 - [x] Dark/light theme toggle (Catppuccin Mocha ↔ Latte, saved to localStorage)
@@ -325,8 +325,8 @@
 ## 9. TESTING & QUALITY (Ongoing)
 
 - [x] Write ROS2 unit tests for each Python node (pytest: Ackermann, geofence, waypoints, camera, mission)
-- [ ] Write ESP32 firmware unit tests (Unity framework or similar)
-- [ ] Create simulation test suite (Gazebo scenarios)
+- [x] Write ESP32 firmware unit tests (42 pytest tests: NMEA, Ackermann, battery, COBS, CRC-16)
+- [x] Create simulation test suite (21 Gazebo scenarios: mobility, sensors, nav, terrain, safety)
 - [ ] Create integration test: UART bridge round-trip latency
 - [ ] Create integration test: full Nav2 stack in simulation
 - [x] Set up CI/CD for ROS2 packages (GitHub Actions: ESP32 compile, ROS2 build, lint, docs check)
