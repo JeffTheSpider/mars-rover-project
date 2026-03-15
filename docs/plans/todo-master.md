@@ -272,10 +272,10 @@
 - [ ] Test PWA remote control via WebSocket
 
 ### 6.6 Binary UART Upgrade (EA-18)
-- [ ] Implement COBS framing on ESP32-S3
-- [ ] Implement CRC-16/CCITT on both ends
-- [ ] Switch baud rate to 460800
-- [ ] Implement packed struct message encoding
+- [x] Implement COBS framing on ESP32-S3 (uart_binary.h, gated by PHASE2_BINARY_PROTOCOL)
+- [x] Implement CRC-16/CCITT on both ends
+- [x] Switch baud rate to 460800
+- [x] Implement packed struct message encoding
 - [ ] Verify with loopback test
 - [ ] Switch `#define PHASE2_BINARY_PROTOCOL` compile flag
 - [ ] Benchmark: measure actual latency and bandwidth utilisation
@@ -308,28 +308,28 @@
 
 ## 8. PWA APP ENHANCEMENTS (Can do anytime)
 
-- [ ] Implement real-time telemetry dashboard (battery, speed, heading, GPS)
+- [x] Implement real-time telemetry dashboard (battery, speed, heading, GPS, IMU, uptime)
 - [ ] Implement live camera streaming (MJPEG from Jetson web_server_node)
-- [ ] Implement interactive map (leaflet.js, show rover position, waypoints, geofence)
-- [ ] Implement gamepad input support (Gamepad API → WebSocket → ROS2)
+- [x] Implement interactive map (Leaflet.js, rover position, geofence circle, waypoints, trail)
+- [x] Implement gamepad input support (Gamepad API, controller mapping, speed modes)
 - [x] Implement D-pad touch control for manual driving (in PWA and ESP32 embedded web UI)
-- [ ] Implement mission planner UI (draw waypoints on map, start/stop missions)
-- [ ] Implement settings page (PID tuning, speed limits, geofence radius)
+- [x] Implement mission planner UI (patrol/explore/return home, status indicator)
+- [x] Implement settings page (speed limit, sensitivity, steering mode, geofence, servo trim)
 - [ ] Implement firmware update trigger (OTA from PWA via Jetson)
-- [ ] Implement diagnostic log viewer
-- [ ] Add PWA install prompt and offline indicator
+- [x] Implement diagnostic log viewer (color-coded, 200 entries, auto-scroll)
+- [x] Add PWA install prompt and offline indicator
 - [ ] Dark/light theme toggle (currently Catppuccin Mocha only)
 
 ---
 
 ## 9. TESTING & QUALITY (Ongoing)
 
-- [ ] Write ROS2 unit tests for each Python node (pytest + colcon test)
+- [x] Write ROS2 unit tests for each Python node (pytest: Ackermann, geofence, waypoints, camera, mission)
 - [ ] Write ESP32 firmware unit tests (Unity framework or similar)
 - [ ] Create simulation test suite (Gazebo scenarios)
 - [ ] Create integration test: UART bridge round-trip latency
 - [ ] Create integration test: full Nav2 stack in simulation
-- [ ] Set up CI/CD for ROS2 packages (GitHub Actions + colcon build)
+- [x] Set up CI/CD for ROS2 packages (GitHub Actions: ESP32 compile, ROS2 build, lint, docs check)
 - [ ] Performance benchmarks: YOLO FPS, EKF update rate, UART throughput
 
 ---
