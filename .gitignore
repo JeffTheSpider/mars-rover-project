@@ -27,6 +27,8 @@ software/jetson/install/
 software/jetson/log/
 *.bag
 *.db3
+*.db3-wal
+*.db3-shm
 
 # === Node.js ===
 node_modules/
@@ -35,6 +37,10 @@ node_modules/
 # Keep exported STLs, ignore Fusion 360 temp files
 *.f3d.bak
 *.step.bak
+*.f3z
+
+# === Gazebo ===
+.gazebo/
 
 # === 3D Printing ===
 # Keep STLs and gcode
