@@ -534,6 +534,21 @@ body {
     position: relative;
 }
 
+.camera-feed img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: none;
+}
+
+.camera-feed--active img {
+    display: block;
+}
+
+.camera-feed--active .camera-feed__placeholder {
+    display: none;
+}
+
 .camera-feed__placeholder {
     color: var(--ctp-overlay0);
     font-size: 0.875rem;
@@ -545,6 +560,41 @@ body {
     height: 48px;
     margin-bottom: 8px;
     opacity: 0.5;
+}
+
+.camera-controls {
+    display: flex;
+    gap: 8px;
+    padding: 4px 16px 0;
+    align-items: center;
+}
+
+.camera-controls select {
+    flex: 1;
+    padding: 6px 8px;
+    background: var(--bg-input);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-family: inherit;
+}
+
+.camera-controls__toggle {
+    padding: 6px 12px;
+    background: var(--bg-input);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.camera-controls__toggle--active {
+    background: var(--secondary);
+    color: var(--ctp-base);
+    border-color: var(--secondary);
 }
 
 .controls-section {
@@ -1509,14 +1559,24 @@ select:focus {
         <!-- Camera Feed -->
         <div class="camera-section">
             <div class="camera-feed" id="camera-feed">
+                <img id="camera-stream" alt="Camera feed" />
                 <div class="camera-feed__placeholder">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
                         <circle cx="12" cy="13" r="4"/>
                     </svg>
                     <div>Camera feed</div>
-                    <div>Phase 2</div>
+                    <div>Connect to start</div>
                 </div>
+            </div>
+            <div class="camera-controls">
+                <select id="camera-source">
+                    <option value="front">Front Camera</option>
+                    <option value="rear">Rear Camera</option>
+                    <option value="mast">Mast Camera</option>
+                    <option value="depth">Depth (OAK-D)</option>
+                </select>
+                <button class="camera-controls__toggle" id="camera-toggle">Stream</button>
             </div>
         </div>
 
@@ -1561,9 +1621,9 @@ select:focus {
                 <div class="action-btn__icon">&#128266;</div>
                 Horn
             </button>
-            <button class="action-btn" id="action-camera" disabled>
+            <button class="action-btn" id="action-camera">
                 <div class="action-btn__icon">&#128247;</div>
-                Camera
+                Snapshot
             </button>
         </div>
 
@@ -2043,6 +2103,7 @@ select:focus {
         initModeButtons();
         initEstop();
         initActionButtons();
+        initCameraControls();
         initLogPanel();
         initSettings();
         initMissionButtons();
@@ -2209,6 +2270,12 @@ select:focus {
 
     function onDisconnected(reason) {
         updateConnectionDot(false);
+        stopCameraStream();
+        var toggleBtn = document.getElementById('camera-toggle');
+        if (toggleBtn) {
+            toggleBtn.classList.remove('camera-controls__toggle--active');
+            toggleBtn.textContent = 'Stream';
+        }
         if (reason === 'lost') {
             addLog('warn', 'Connection lost - reconnecting...');
         } else if (reason === 'failed') {
@@ -2573,6 +2640,84 @@ select:focus {
             hornBtn.addEventListener('mousedown', function() { conn.send({ cmd: 'buzzer', state: 1 }); });
             hornBtn.addEventListener('mouseup', function() { conn.send({ cmd: 'buzzer', state: 0 }); });
         }
+
+        // Snapshot button
+        var snapBtn = document.getElementById('action-camera');
+        if (snapBtn) {
+            snapBtn.addEventListener('click', function() {
+                conn.send({ cmd: 'snapshot', camera: cameraSource });
+                addLog('cmd', 'Snapshot: ' + cameraSource);
+            });
+        }
+    }
+
+    // ============================================================
+    // Camera Streaming
+    // ============================================================
+    var cameraStreaming = false;
+    var cameraSource = 'front';
+    var cameraStreamPort = 8080;
+
+    function initCameraControls() {
+        var toggleBtn = document.getElementById('camera-toggle');
+        var sourceSelect = document.getElementById('camera-source');
+        var feedEl = document.getElementById('camera-feed');
+        var streamImg = document.getElementById('camera-stream');
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function() {
+                cameraStreaming = !cameraStreaming;
+                if (cameraStreaming && conn.isConnected) {
+                    startCameraStream();
+                    toggleBtn.classList.add('camera-controls__toggle--active');
+                    toggleBtn.textContent = 'Stop';
+                } else {
+                    stopCameraStream();
+                    toggleBtn.classList.remove('camera-controls__toggle--active');
+                    toggleBtn.textContent = 'Stream';
+                }
+            });
+        }
+
+        if (sourceSelect) {
+            sourceSelect.addEventListener('change', function() {
+                cameraSource = sourceSelect.value;
+                if (cameraStreaming) {
+                    startCameraStream();
+                }
+            });
+        }
+
+        if (streamImg) {
+            streamImg.addEventListener('error', function() {
+                stopCameraStream();
+                addLog('warn', 'Camera stream lost');
+                if (toggleBtn) {
+                    toggleBtn.classList.remove('camera-controls__toggle--active');
+                    toggleBtn.textContent = 'Stream';
+                }
+            });
+        }
+    }
+
+    function startCameraStream() {
+        var feedEl = document.getElementById('camera-feed');
+        var streamImg = document.getElementById('camera-stream');
+        if (!conn.ip || !streamImg) return;
+
+        // MJPEG stream URL from Jetson web_server_node
+        var url = 'http://' + conn.ip + ':' + cameraStreamPort + '/stream/' + cameraSource + '?t=' + Date.now();
+        streamImg.src = url;
+        if (feedEl) feedEl.classList.add('camera-feed--active');
+        addLog('info', 'Camera stream: ' + cameraSource);
+    }
+
+    function stopCameraStream() {
+        var feedEl = document.getElementById('camera-feed');
+        var streamImg = document.getElementById('camera-stream');
+        cameraStreaming = false;
+        if (streamImg) streamImg.src = '';
+        if (feedEl) feedEl.classList.remove('camera-feed--active');
     }
 
     // ============================================================
