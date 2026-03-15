@@ -47,14 +47,17 @@ def generate_launch_description():
     )
 
     # Robot state publisher - broadcasts URDF transforms
-    # TODO: Replace with actual URDF file path once CAD model is exported
+    bringup_dir = get_package_share_directory('rover_bringup')
+    xacro_file = os.path.join(bringup_dir, 'urdf', 'rover.urdf.xacro')
+    robot_description = Command(['xacro ', xacro_file])
+
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
         name='robot_state_publisher',
         output='screen',
         parameters=[{
-            'robot_description': '<robot name="rover"><link name="base_link"/></robot>',
+            'robot_description': robot_description,
             'publish_frequency': 50.0,
         }],
     )

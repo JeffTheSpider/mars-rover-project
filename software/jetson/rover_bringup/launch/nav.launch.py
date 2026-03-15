@@ -34,15 +34,43 @@ def generate_launch_description():
         ),
     )
 
-    # EKF node - fuses IMU + wheel odometry + GPS
-    ekf_node = Node(
+    # Dual EKF architecture (see EA-13, ros2-architecture-research.md)
+    # Local EKF: odom→base_link, smooth, no GPS — used by controllers
+    ekf_local_node = Node(
         package='robot_localization',
         executable='ekf_node',
-        name='ekf_filter_node',
+        name='ekf_local',
         output='screen',
         parameters=[ekf_params_file],
         remappings=[
             ('odometry/filtered', '/odom'),
+        ],
+    )
+
+    # Global EKF: map→odom, includes GPS — may jump on GPS correction
+    ekf_global_node = Node(
+        package='robot_localization',
+        executable='ekf_node',
+        name='ekf_global',
+        output='screen',
+        parameters=[ekf_params_file],
+        remappings=[
+            ('odometry/filtered', '/odom/global'),
+        ],
+    )
+
+    # NavSat transform: converts GPS NavSatFix → odometry for ekf_global
+    navsat_transform_node = Node(
+        package='robot_localization',
+        executable='navsat_transform_node',
+        name='navsat_transform',
+        output='screen',
+        parameters=[ekf_params_file],
+        remappings=[
+            ('imu', '/imu/data'),
+            ('gps/fix', '/gps/fix'),
+            ('odometry/filtered', '/odom/global'),
+            ('odometry/gps', '/odometry/gps'),
         ],
     )
 
@@ -76,7 +104,9 @@ def generate_launch_description():
         use_slam_arg,
         map_file_arg,
         teleop_launch,
-        ekf_node,
+        ekf_local_node,
+        ekf_global_node,
+        navsat_transform_node,
         geofence_node,
         waypoint_follower_node,
     ])

@@ -2,9 +2,10 @@
 
 **Project**: Charlie's Mars Rover
 **Date**: 2026-03-14 (updated 2026-03-15)
-**Version**: 1.2
+**Version**: 1.3
 **Status**: Design Phase — Engineering Analysis Complete, Phase 1 Firmware Started
-**Engineering References**: EA-01 through EA-12 in `docs/engineering/`
+**Engineering References**: EA-01 through EA-18 in `docs/engineering/`
+**Research References**: `docs/references/` (3D printing materials, ROS2 architecture)
 
 ---
 
@@ -550,10 +551,13 @@ Arms fold flush against the body sides when not in use. Magnets or spring clips 
                         /amcl_node --> /robot_pose
 
 /gps_node ------+
-/imu_node ------+--> /ekf_filter --> /odom_fused --> /nav2_controller
-/wheel_odom ----+
+/imu_node ------+--> /ekf_local  --> /odom (smooth, no GPS jumps)
+/wheel_odom ----+        |
+                    /ekf_global --> /odom/global (with GPS)
+                    /navsat_transform (GPS NavSatFix → odom)
 
-/nav2_controller --> /cmd_vel --> /motor_bridge --> [ESP32 UART]
+/nav2_controller (RegulatedPurePursuit, DUBIN planner) --> /cmd_vel
+  --> /ackermann_controller --> /motor_bridge --> [ESP32 UART]
 
 /ai_detector ------> /object_tracker --> /obstacle_layer --> /costmap
 
@@ -590,26 +594,36 @@ Single translation unit architecture (like Clock/Lamp) — .h files included fro
 
 ### Communication Protocol (Jetson <-> ESP32)
 
-UART at 115200 baud, simple binary packet protocol:
+**Phase 1 (debug/development)**: NMEA-style text protocol at 115200 baud (EA-12)
+- Human-readable sentences: `$CMTR,150,-150,200,-200,100,-100*4A`
+- 18 message types, ASCII checksum, 50Hz command rate
+- Easy to debug via serial monitor or telnet
+
+**Phase 2 (production)**: Binary COBS + CRC-16 at 460800 baud (EA-18)
+- Consistent Overhead Byte Stuffing framing (zero-delimiter)
+- CRC-16/CCITT error detection, 12% bandwidth utilisation
+- Packed C structs with scaled integers (no float)
+- Compile-time switch: `#define PHASE2_BINARY_PROTOCOL`
 
 ```
-Packet format:
-[SYNC: 0xAA] [CMD: 1 byte] [LEN: 1 byte] [DATA: N bytes] [CRC: 1 byte]
-
+Phase 2 message IDs:
 Commands (Jetson -> ESP32):
-  0x01: Set motor speeds (6x int16)
-  0x02: Set steering angles (4x int16)
-  0x03: Set LED pattern (1x uint8 + RGB)
-  0x04: Set arm servos (8x uint16)
-  0x05: Request sensor data
-  0x06: E-stop
-  0x07: Set brake
+  0x01: Motor speeds (6x int16, ±1000 = ±100%)
+  0x02: Steering angles (4x uint16, 0-1800 = 0.0-180.0°)
+  0x03: LED control (pattern + RGB)
+  0x04: Arm servos (8x uint16)
+  0x05: Config set (key-value)
+  0x0E: Ping
+  0x0F: E-stop (triple-sent for reliability)
 
-Commands (ESP32 -> Jetson):
-  0x81: Sensor data (ultrasonics, encoders, IMU, temps)
-  0x82: Battery status (voltage, current, SOC%)
-  0x83: Safety alert (tilt, overcurrent, stall)
-  0x84: Heartbeat (every 100ms)
+Telemetry (ESP32 -> Jetson):
+  0x81: Encoder data (6x tick count + dt)
+  0x82: IMU data (quaternion + gyro + accel, scaled int16)
+  0x83: Ultrasonic distances (6x uint16 mm)
+  0x84: Battery status (voltage, current, SoC, temp)
+  0x85: System status (mode, errors, uptime)
+  0x8E: Pong (response to ping)
+  0x8F: E-stop acknowledgement
 ```
 
 ### Phone App (PWA)

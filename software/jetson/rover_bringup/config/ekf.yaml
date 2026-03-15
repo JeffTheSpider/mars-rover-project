@@ -1,7 +1,13 @@
-# Extended Kalman Filter configuration for robot_localization
-# Fuses: IMU (orientation + angular velocity + accel) + wheel odometry (x, y, yaw) + GPS
+# Dual Extended Kalman Filter configuration for robot_localization
+# Architecture: local EKF (odom frame, no GPS) + global EKF (map frame, with GPS)
+# Prevents GPS jumps from causing jerky motor commands
+# See EA-13, ros2-architecture-research.md
 
-ekf_filter_node:
+# ─── LOCAL EKF ────────────────────────────────────────────────────────
+# Publishes: odom → base_link transform
+# Purpose: Smooth, continuous odometry for motor control (no GPS jumps)
+# Inputs: wheel encoders + IMU only
+ekf_local:
   ros__parameters:
     use_sim_time: false
     frequency: 30.0
@@ -12,22 +18,20 @@ ekf_filter_node:
     map_frame: map
     odom_frame: odom
     base_link_frame: base_link
-    world_frame: odom
+    world_frame: odom  # Local filter operates in odom frame
 
     # Wheel odometry (from ESP32 encoders via uart_bridge)
-    # Provides: x position, y position, yaw
     odom0: /wheel_odom
     odom0_config: [true, true, false,      # x, y, z
                    false, false, true,      # roll, pitch, yaw
-                   false, false, false,     # vx, vy, vz
-                   false, false, false,     # vroll, vpitch, vyaw
+                   true, true, false,       # vx, vy, vz
+                   false, false, true,      # vroll, vpitch, vyaw
                    false, false, false]     # ax, ay, az
     odom0_differential: false
     odom0_relative: false
     odom0_queue_size: 10
 
     # IMU (BNO055 or MPU6050 via ESP32)
-    # Provides: orientation (roll, pitch, yaw), angular velocity, linear acceleration
     imu0: /imu/data
     imu0_config: [false, false, false,     # x, y, z
                   true, true, true,         # roll, pitch, yaw
@@ -39,19 +43,7 @@ ekf_filter_node:
     imu0_queue_size: 10
     imu0_remove_gravitational_acceleration: true
 
-    # GPS odometry (converted from NavSatFix by navsat_transform_node)
-    # Provides: x, y position in odom frame
-    odom1: /gps/odom
-    odom1_config: [true, true, false,      # x, y, z
-                   false, false, false,     # roll, pitch, yaw
-                   false, false, false,     # vx, vy, vz
-                   false, false, false,     # vroll, vpitch, vyaw
-                   false, false, false]     # ax, ay, az
-    odom1_differential: true
-    odom1_relative: false
-    odom1_queue_size: 10
-
-    # Process noise covariance - tune based on sensor quality
+    # Process noise covariance — tuned for smooth local odometry
     process_noise_covariance: [
       0.05,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
       0.0,   0.05,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
@@ -69,3 +61,89 @@ ekf_filter_node:
       0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.01,  0.0,
       0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.015
     ]
+
+# ─── GLOBAL EKF ───────────────────────────────────────────────────────
+# Publishes: map → odom transform
+# Purpose: Global position (includes GPS) — may jump when GPS corrects
+# Inputs: wheel encoders + IMU + GPS
+ekf_global:
+  ros__parameters:
+    use_sim_time: false
+    frequency: 30.0
+    two_d_mode: true
+    publish_tf: true
+    publish_acceleration: false
+
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: map  # Global filter operates in map frame
+
+    # Wheel odometry
+    odom0: /wheel_odom
+    odom0_config: [true, true, false,      # x, y, z
+                   false, false, true,      # roll, pitch, yaw
+                   true, true, false,       # vx, vy, vz
+                   false, false, true,      # vroll, vpitch, vyaw
+                   false, false, false]     # ax, ay, az
+    odom0_differential: false
+    odom0_relative: false
+    odom0_queue_size: 10
+
+    # IMU
+    imu0: /imu/data
+    imu0_config: [false, false, false,     # x, y, z
+                  true, true, true,         # roll, pitch, yaw
+                  false, false, false,      # vx, vy, vz
+                  true, true, true,         # vroll, vpitch, vyaw
+                  true, true, true]         # ax, ay, az
+    imu0_differential: false
+    imu0_relative: false
+    imu0_queue_size: 10
+    imu0_remove_gravitational_acceleration: true
+
+    # GPS odometry (converted from NavSatFix by navsat_transform_node)
+    # Position in map frame — this is what makes global EKF different from local
+    odom1: /odometry/gps
+    odom1_config: [true, true, false,      # x, y, z
+                   false, false, false,     # roll, pitch, yaw
+                   false, false, false,     # vx, vy, vz
+                   false, false, false,     # vroll, vpitch, vyaw
+                   false, false, false]     # ax, ay, az
+    odom1_differential: false
+    odom1_relative: false
+    odom1_queue_size: 10
+
+    # Process noise covariance — slightly higher to accommodate GPS corrections
+    process_noise_covariance: [
+      0.05,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.05,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.06,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.03,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.03,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.06,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.025, 0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.025, 0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.04,  0.0,   0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.01,  0.0,   0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.01,  0.0,   0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.02,  0.0,   0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.01,  0.0,   0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.01,  0.0,
+      0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.015
+    ]
+
+# ─── NAVSAT TRANSFORM ─────────────────────────────────────────────────
+# Converts GPS NavSatFix → odometry in map frame for ekf_global
+navsat_transform:
+  ros__parameters:
+    use_sim_time: false
+    frequency: 30.0
+    delay: 3.0
+    magnetic_declination_radians: -0.0175  # ~-1 deg for UK
+    yaw_offset: 0.0
+    zero_altitude: true
+    broadcast_utm_transform: false
+    publish_filtered_gps: true
+    use_odometry_yaw: false
+    wait_for_datum: false
