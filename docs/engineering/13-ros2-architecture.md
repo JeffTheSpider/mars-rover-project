@@ -3,7 +3,8 @@
 **Document**: EA-13
 **Date**: 2026-03-15
 **Purpose**: Define the complete ROS2 software architecture for the Jetson Orin Nano, including node design, topic structure, navigation stack configuration, AI pipeline, and launch file organisation.
-**Depends on**: EA-04 (Compute), EA-09 (GPIO), EA-10 (Steering), EA-12 (UART Protocol)
+**Depends on**: EA-04 (Compute), EA-09 (GPIO), EA-10 (Steering), EA-12 (UART Protocol), EA-18 (Binary UART)
+**See also**: `docs/references/ros2-architecture-research.md` — detailed Nav2 config, dual EKF YAML, camera bandwidth analysis, TensorRT pipeline, launch file examples
 
 ---
 
@@ -180,7 +181,14 @@ Fusion:
 | `/camera/ir/image_raw` | `sensor_msgs/Image` | Pi NoIR | 10 Hz | 640×480 |
 | `/detections` | `rover_msgs/Detection[]` | yolo_node | 10 Hz | — |
 
-**USB Bandwidth Note**: 7 cameras at 640×480 RGB at 15 Hz = ~92 MB/s. USB 3.0 bandwidth is 640 MB/s theoretical. With the USB hub, practical bandwidth is ~300 MB/s. Use MJPEG compression on USB cameras to reduce to ~15 MB/s total. The OAK-D Lite uses USB 3.0 dedicated port.
+**USB Bandwidth Management** (critical):
+- 7 cameras at 1080p30 raw = ~1.3 GB/s — far exceeds USB 3.0 practical bandwidth (~3.2 Gbps)
+- **Tier 1**: OAK-D Lite on dedicated USB 3.0 port (~50 MB/s with on-device ISP/H.264)
+- **Tier 2**: 4× USB cameras at 640×480 MJPEG @ 15fps = ~12 MB/s total (fits USB 2.0 hub)
+- **Tier 3**: Side/rear cameras are **lifecycle-managed** — only stream when needed (turns, parking)
+- Front camera always on (navigation + YOLO input)
+- Use `v4l2_camera` with `pixel_format: mjpeg` (not raw YUYV)
+- Assign persistent `/dev/video*` names via udev rules based on USB port path, not plug order
 
 ### 4.3 Custom Messages
 
@@ -262,29 +270,32 @@ bt_navigator:
     - nav2_compute_path_to_pose_action_bt_node
     - nav2_follow_path_action_bt_node
     - nav2_back_up_action_bt_node
-    - nav2_spin_action_bt_node
+    # NO nav2_spin — Ackermann rovers cannot spin in place
     - nav2_wait_action_bt_node
 
 controller_server:
   controller_frequency: 20.0
   controller_plugins: ["FollowPath"]
   FollowPath:
-    plugin: "dwb_core::DWBLocalPlanner"
-    max_vel_x: 0.83          # 3 km/h in m/s (autonomous limit)
-    min_vel_x: 0.0
-    max_vel_theta: 0.5       # ~29°/s max rotation
-    min_speed_theta: 0.1
-    acc_lim_x: 0.5           # 0.5 m/s² max acceleration
-    decel_lim_x: -1.0        # Deceleration can be faster
-    acc_lim_theta: 1.0
-    min_turning_radius: 0.993  # From EA-10 (993mm)
+    # RegulatedPurePursuit — smooth path following, respects Ackermann constraints
+    # DWB assumes differential drive and will generate impossible spin commands
+    plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
+    desired_linear_vel: 0.83   # 3 km/h in m/s (autonomous limit)
+    lookahead_dist: 0.6
+    min_lookahead_dist: 0.3
+    max_lookahead_dist: 0.9
+    lookahead_time: 1.5
+    rotate_to_heading_angular_vel: 0.5
+    max_angular_accel: 1.0
+    allow_reversing: true
+    use_rotate_to_heading: false  # CRITICAL — Ackermann cannot rotate in place
 
 planner_server:
   planner_plugins: ["GridBased"]
   GridBased:
     plugin: "nav2_smac_planner/SmacPlannerHybrid"
-    minimum_turning_radius: 0.993  # Ackermann constraint
-    motion_model_for_search: "REEDS_SHEPP"  # Car-like model
+    minimum_turning_radius: 0.993  # Ackermann constraint (EA-10)
+    motion_model_for_search: "DUBIN"  # Forward-only Ackermann (use REEDS_SHEPP if reversing needed)
 
 global_costmap:
   robot_radius: 0.45         # Half of 900mm body
@@ -323,14 +334,16 @@ slam_toolbox:
   transform_publish_period: 0.05  # 20Hz map→odom TF
 ```
 
-### 6.3 Sensor Fusion (EKF)
+### 6.3 Sensor Fusion (Dual EKF)
+
+Use two EKF instances: **local** (continuous, no GPS, smooth for motor control) and **global** (with GPS, may jump on corrections). This prevents GPS discontinuities from causing jerky motor commands. See `docs/references/ros2-architecture-research.md` for full dual YAML config.
 
 ```yaml
-# ekf.yaml (robot_localization)
+# ekf.yaml (robot_localization) — local EKF shown, global adds GPS odom1
 ekf_filter_node:
   frequency: 50.0
   sensor_timeout: 0.5
-  two_d_mode: false          # 3D for slopes
+  two_d_mode: true           # Garden rover stays on ground plane (set false for slopes)
 
   # IMU: provides orientation + angular velocity + linear acceleration
   imu0: /imu/data
