@@ -41,7 +41,7 @@
 ### 1.3 Missing Documentation
 - [x] Create project README.md at repository root (project overview, phase status, quick links)
 - [ ] Create `docs/datasheets/README.md` listing required datasheets with download links
-- [~] Create wiring diagram document for Phase 1 (EA-19: ESP32-S3 → motors/sensors/servos) — in progress
+- [x] Create wiring diagram document for Phase 1 (EA-19: ESP32-S3 → motors/sensors/servos)
 - [ ] Create CAD preparation guide (reference dimensions from EA-08 for Fusion 360)
 - [ ] Document the backup strategy (3 drives, PowerShell commands)
 
@@ -147,7 +147,7 @@
 ## 4. ELECTRONICS & WIRING (After CAD/print, before firmware testing)
 
 ### 4.1 Phase 1 Component Procurement
-- [~] Create Phase 1 shopping list with specific UK supplier links (see `docs/plans/phase1-shopping-list.md`)
+- [x] Create Phase 1 shopping list with specific UK supplier links (see `docs/plans/phase1-shopping-list.md`)
   - [ ] ESP32-S3 DevKitC-1 N16R8
   - [ ] L298N motor drivers (x2, for 4 motor channels + 2 spare)
   - [ ] N20 or Chihai 12V DC gear motors (x6)

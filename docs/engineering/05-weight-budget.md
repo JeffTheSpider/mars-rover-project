@@ -30,13 +30,13 @@ This is the primary weight estimate. Phase 2 is the first fully-featured build.
 
 | Component | Qty | Unit Weight | Total Weight | Source/Basis |
 |-----------|-----|-------------|--------------|-------------|
-| JGB37-520 12V DC gearmotors | 6 | 175g | 1,050g | Datasheet typical |
-| BTS7960 motor driver modules | 3 | 55g | 165g | Dual H-bridge per module |
+| Chihai CHR-GM37-520 gearmotors | 6 | 185g | 1,110g | EA-02 spec, datasheet |
+| Cytron MDD10A motor driver modules | 3 | 55g | 165g | Dual H-bridge per module |
 | MG996R steering servos | 4 | 55g | 220g | Datasheet |
 | Steering linkage brackets (3D printed) | 4 | 25g | 100g | PETG |
 | Wheel encoders (optical) | 6 | 5g | 30g | Small PCB + disc |
 | Motor mounting hardware | 6 | 10g | 60g | Bolts, spacers |
-| **Subtotal: Drivetrain** | | | **1,625g** | |
+| **Subtotal: Drivetrain** | | | **1,685g** | |
 
 ### 1.3 Subsystem 3: Power
 
@@ -109,7 +109,7 @@ This is the primary weight estimate. Phase 2 is the first fully-featured build.
 | Arm mounting brackets | 2 | 25g | 50g | PETG, bolted to body |
 | **Subtotal: Arms & Mast** | | | **1,260g** | |
 
-### 1.8 Subsystem 8: Accessories
+### 1.8 Subsystem 7: Accessories
 
 | Component | Qty | Unit Weight | Total Weight | Source/Basis |
 |-----------|-----|-------------|--------------|-------------|
@@ -151,7 +151,7 @@ This is the primary weight estimate. Phase 2 is the first fully-featured build.
 | Subsystem | Weight (g) | Percentage |
 |-----------|-----------|------------|
 | Chassis & Suspension | 5,648 | 33.7% |
-| Drivetrain | 1,625 | 9.7% |
+| Drivetrain | 1,685 | 10.1% |
 | Power (batteries + BMS) | 2,155 | 12.9% |
 | Solar Panels | 2,040 | 12.2% |
 | Compute & Networking | 382 | 2.3% |
@@ -159,7 +159,7 @@ This is the primary weight estimate. Phase 2 is the first fully-featured build.
 | Arms & Mast | 1,260 | 7.5% |
 | Accessories | 652 | 3.9% |
 | Miscellaneous + Contingency | 2,350 | 14.0% |
-| **TOTAL** | **16,684g** | **100%** |
+| **TOTAL** | **16,744g** | **100%** |
 
 ### **Phase 2 estimated weight: ~16.7 kg**
 
@@ -217,7 +217,7 @@ Using coordinate system: origin at ground level, centre of rover footprint.
 | Subsystem | Weight (kg) | X (mm) | Y (mm) | Z (mm) |
 |-----------|------------|--------|--------|--------|
 | Chassis & Suspension | 5.65 | 0 | 0 | 200 |
-| Drivetrain (wheels) | 1.63 | 0 | 0 | 100 |
+| Drivetrain (wheels) | 1.69 | 0 | 0 | 100 |
 | Batteries (centre-low) | 2.16 | 0 | 0 | 180 |
 | Solar (top deck) | 2.04 | 0 | 0 | 380 |
 | Compute (electronics bay) | 0.38 | 0 | 50 | 220 |
@@ -229,10 +229,10 @@ Using coordinate system: origin at ground level, centre of rover footprint.
 **Weighted CoG height**:
 ```
 Z_cog = Σ(mi × zi) / Σ(mi)
-Z_cog = (5.65×200 + 1.63×100 + 2.16×180 + 2.04×380 + 0.38×220
-         + 0.57×250 + 1.26×350 + 0.65×250 + 2.35×250) / 16.69
-Z_cog = (1130 + 163 + 389 + 775 + 84 + 143 + 441 + 163 + 588) / 16.69
-Z_cog = 3,876 / 16.69
+Z_cog = (5.65×200 + 1.69×100 + 2.16×180 + 2.04×380 + 0.38×220
+         + 0.57×250 + 1.26×350 + 0.65×250 + 2.35×250) / 16.75
+Z_cog = (1130 + 169 + 389 + 775 + 84 + 143 + 441 + 163 + 588) / 16.75
+Z_cog = 3,882 / 16.75
 Z_cog = 232mm above ground
 ```
 
@@ -251,9 +251,9 @@ Excellent stability margin.
 When the mast is extended (600mm above deck = ~880mm above ground), the mast + cameras add ~0.5 kg at 880mm height:
 
 ```
-Z_cog_mast = (16.69 × 232 + 0.5 × 880) / (16.69 + 0.5)
-Z_cog_mast = (3,872 + 440) / 17.19
-Z_cog_mast = 4,312 / 17.19
+Z_cog_mast = (16.75 × 232 + 0.5 × 880) / (16.75 + 0.5)
+Z_cog_mast = (3,886 + 440) / 17.25
+Z_cog_mast = 4,326 / 17.25
 Z_cog_mast = 251mm
 ```
 

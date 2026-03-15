@@ -19,17 +19,17 @@
 | 4 | L298N motor drivers | Dual H-bridge | 2 | $3 | $6 | AliExpress |
 | 5 | 2S LiPo 2200mAh | 7.4V, XT30 | 1 | $12 | $12 | HobbyKing/Amazon |
 | 6 | LiPo charger | 2S balance charger | 1 | $8 | $8 | Amazon |
-| 7 | PLA/PETG filament | 500g spool | 1 | $10 | $10 | Amazon |
+| 7 | PETG filament | 1kg spool | 1 | $20 | $20 | Amazon | <!-- Aligned with EA-08 (1kg PETG rec.) and EA-17 ($20 estimate) -->
 | 8 | 608ZZ bearings (Phase 1 pivot) | 8mm bore, or 3mm mini | 10 | $0.50 | $5 | Amazon |
 | 9 | M3 fastener set | Bolts, nuts, washers | 1 set | $6 | $6 | Amazon |
 | 10 | M3 heat-set inserts | Brass, for PETG | 50 | $0.06 | $3 | AliExpress |
 | 11 | Breadboard + jumper wires | For prototyping | 1 | $5 | $5 | Amazon |
 | 12 | Switch + wiring | Power switch, wire | 1 | $3 | $3 | Amazon |
-| | | | | **Phase 1 Total** | **$92** | |
+| | | | | **Phase 1 Total** | **$102** | |
 
 ### Phase 1 Shopping List (Order of Purchase)
 
-1. **First order (start printing while waiting)**: Filament ($10)
+1. **First order (start printing while waiting)**: Filament ($20)
 2. **Second order (electronics)**: ESP32-S3, motors, servos, L298N, wiring ($48)
 3. **Third order (assembly)**: Bearings, fasteners, heat-set inserts, battery ($34)
 
@@ -146,7 +146,7 @@
 
 | # | Component | Qty | Unit Price | Total |
 |---|-----------|-----|-----------|-------|
-| 56 | PETG filament (1kg spools) | 4 | $15 | $60 |
+| 56 | PETG filament (1kg spools) | 7 | $20 | $140 | <!-- Revised per EA-11 ($130-160 range, midpoint $140) -->
 | 57 | 2020 V-slot aluminium extrusion (1m) | 6 | $4 | $24 |
 | 58 | 2020 corner brackets | 20 | $0.50 | $10 |
 | 59 | 2020 T-nuts | 50 | $0.15 | $7.50 |
@@ -158,7 +158,7 @@
 | 65 | Nyloc nuts assortment | 1 set | $4 | $4 |
 | 66 | Cable ties + heatshrink | lot | $5 | $5 |
 | 67 | Connectors (JST, Dupont, barrel) | lot | $8 | $8 |
-| | **Subtotal: Structure** | | | **$154** |
+| | **Subtotal: Structure** | | | **$234** |
 
 ### 2.10 Docking Station
 
@@ -184,17 +184,17 @@
 | Power System | $185 |
 | Solar | $103 |
 | Accessories | $96.50 |
-| Structure & Hardware | $154 |
+| Structure & Hardware | $234 |
 | Docking Station | $25 |
-| **Phase 2 Total** | **$1,402.50** |
+| **Phase 2 Total** | **$1,482.50** |
 
 ### With 10% Contingency
 
 | | Amount |
 |---|--------|
-| Phase 2 components | $1,402.50 |
-| Contingency (10%) | $140.25 |
-| **Phase 2 Budget Total** | **$1,542.75** |
+| Phase 2 components | $1,482.50 |
+| Contingency (10%) | $148.25 |
+| **Phase 2 Budget Total** | **$1,630.75** |
 
 ---
 
@@ -222,10 +222,10 @@
 
 | Phase | Component Cost | Contingency | Budget Total |
 |-------|---------------|-------------|-------------|
-| Phase 1 (0.4 prototype) | $92 | included | $92 |
-| Phase 2 (full 3D print) | $1,402.50 | $140.25 | $1,542.75 |
+| Phase 1 (0.4 prototype) | $102 | included | $102 |
+| Phase 2 (full 3D print) | $1,482.50 | $148.25 | $1,630.75 |
 | Phase 3 (metal, additional) | $260 | $39 | $299 |
-| **Grand Total** | **$1,754.50** | **$179.25** | **$1,933.75** |
+| **Grand Total** | **$1,844.50** | **$187.25** | **$2,031.75** |
 
 ### Budget Assessment
 

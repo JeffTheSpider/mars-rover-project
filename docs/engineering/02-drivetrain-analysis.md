@@ -294,22 +294,22 @@ For correct Ackermann steering (inner wheel turns more than outer):
   tan(θ_outer) = L / (R + W/2)
 
 Where:
-  L = wheelbase = 680mm
+  L = wheelbase = 900mm (axle-to-axle, from EA-01/EA-10)
   W = track width = 700mm
   R = turning radius
 
 For R = 1000mm (tight turn):
-  θ_inner = arctan(680 / (1000 - 350)) = arctan(1.046) = 46.3°
-  θ_outer = arctan(680 / (1000 + 350)) = arctan(0.504) = 26.7°
+  θ_inner = arctan(900 / (1000 - 350)) = arctan(1.385) = 54.2°
+  θ_outer = arctan(900 / (1000 + 350)) = arctan(0.667) = 33.7°
 
 For R = 2000mm (gentle turn):
-  θ_inner = arctan(680 / (2000 - 350)) = arctan(0.412) = 22.4°
-  θ_outer = arctan(680 / (2000 + 350)) = arctan(0.289) = 16.1°
+  θ_inner = arctan(900 / (2000 - 350)) = arctan(0.545) = 28.6°
+  θ_outer = arctan(900 / (2000 + 350)) = arctan(0.383) = 20.9°
 
 Minimum turning radius (servo max 60° from centre):
   R_min = L / tan(60°) + W/2
-  R_min = 680 / 1.732 + 350
-  R_min = 393 + 350 = 743mm
+  R_min = 900 / 1.732 + 350
+  R_min = 520 + 350 = 870mm
 
 Point turn (opposite steering):
   R_min = 0 (rotates on the spot)
@@ -386,7 +386,7 @@ Typical hall encoder specification:
 | Steering servos | SG90 (1.8 kg·cm) | MG996R (13 kg·cm) | DS3218 (21 kg·cm) |
 | Wheel encoders | None | Hall effect (built-in) | Hall effect (built-in) |
 | Top speed | 3 km/h | 5 km/h | 5 km/h |
-| Min turning radius | ~300mm | 743mm | 743mm |
+| Min turning radius | ~300mm | 870mm | 870mm |
 | Max slope | 15° | 30° | 30° |
 
 ---
