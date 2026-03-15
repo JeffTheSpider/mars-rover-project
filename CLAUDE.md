@@ -6,7 +6,7 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 ## Project Location
 - Root: `D:\Mars Rover Project\`
 - Design doc: `docs/plans/2026-03-14-mars-rover-design.md` (v1.2)
-- Engineering analyses: `docs/engineering/` (EA-01 through EA-17)
+- Engineering analyses: `docs/engineering/` (EA-01 through EA-18)
 - Firmware: `firmware/esp32/` (ESP32-S3 Phase 1 motor controller)
 - ROS2 packages: `software/jetson/` (7 packages)
 - Phone app: `software/pwa/` (Catppuccin Mocha PWA)
@@ -27,12 +27,13 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 | 09 | GPIO Pin Map | ESP32-S3 N16R8, Phase 1: 20 pins, Phase 2: 28 pins |
 | 10 | Ackermann Steering | 3 modes, min radius 993mm, servo mapping |
 | 11 | 3D Printing | PETG/ASA, settings, heat-set inserts, segmentation |
-| 12 | UART Protocol | NMEA-style, 115200 baud, 18 msg types, 50Hz |
+| 12 | UART Protocol | NMEA-style text, 115200 baud, 18 msg types, 50Hz (Phase 1/debug) |
 | 13 | ROS2 Architecture | Node graph, Nav2, SLAM, EKF, YOLO, behaviour trees |
 | 14 | Weatherproofing | IP44/IP54, zones, cable glands, thermal |
 | 15 | Safety Systems | 4-layer, E-stop, fuses, watchdog, geofence |
 | 16 | PWA App Design | Catppuccin Mocha, D-pad, camera, nav map |
 | 17 | Phase 1 Build Guide | Step-by-step, ~14 day timeline, troubleshooting |
+| 18 | Binary UART Protocol | COBS + CRC-16, 460800 baud, binary structs, 12% utilisation (Phase 2) |
 
 ## Key Specs
 - Size: 1100mm x 650mm x 1050mm (full) / 440x260mm (0.4 scale Phase 1)

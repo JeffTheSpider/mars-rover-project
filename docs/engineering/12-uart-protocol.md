@@ -4,6 +4,7 @@
 **Date**: 2026-03-15
 **Purpose**: Define the serial communication protocol between the Jetson Orin Nano (main brain) and ESP32-S3 (motor controller), including message format, framing, error detection, timing, and bandwidth analysis.
 **Depends on**: EA-04 (Compute), EA-09 (GPIO Pin Map)
+**See also**: EA-18 (Binary UART Protocol) — Phase 2 upgrade to binary COBS + CRC-16 at 460800 baud for production use. This EA-12 text-based protocol remains the Phase 1 reference and debugging fallback.
 
 ---
 
