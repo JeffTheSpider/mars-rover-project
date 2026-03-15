@@ -14,16 +14,1275 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<style>
+/* ============================================================
+   Catppuccin Mocha Palette
+   ============================================================ */
+:root {
+    --ctp-rosewater: #f5e0dc;
+    --ctp-flamingo: #f2cdcd;
+    --ctp-pink: #f5c2e7;
+    --ctp-mauve: #cba6f7;
+    --ctp-red: #f38ba8;
+    --ctp-maroon: #eba0ac;
+    --ctp-peach: #fab387;
+    --ctp-yellow: #f9e2af;
+    --ctp-green: #a6e3a1;
+    --ctp-teal: #94e2d5;
+    --ctp-sky: #89dceb;
+    --ctp-sapphire: #74c7ec;
+    --ctp-blue: #89b4fa;
+    --ctp-lavender: #b4befe;
+    --ctp-text: #cdd6f4;
+    --ctp-subtext1: #bac2de;
+    --ctp-subtext0: #a6adc8;
+    --ctp-overlay2: #9399b2;
+    --ctp-overlay1: #7f849c;
+    --ctp-overlay0: #6c7086;
+    --ctp-surface2: #585b70;
+    --ctp-surface1: #45475a;
+    --ctp-surface0: #313244;
+    --ctp-base: #1e1e2e;
+    --ctp-mantle: #181825;
+    --ctp-crust: #11111b;
+
+    --accent: var(--ctp-red);
+    --accent-hover: var(--ctp-maroon);
+    --secondary: var(--ctp-yellow);
+    --success: var(--ctp-green);
+    --warning: var(--ctp-peach);
+    --danger: var(--ctp-red);
+    --info: var(--ctp-blue);
+
+    --bg: var(--ctp-base);
+    --bg-card: var(--ctp-surface0);
+    --bg-input: var(--ctp-surface1);
+    --text: var(--ctp-text);
+    --text-muted: var(--ctp-subtext0);
+    --border: var(--ctp-surface2);
+
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+
+    --glass-bg: rgba(49, 50, 68, 0.7);
+    --glass-border: rgba(88, 91, 112, 0.4);
+    --glass-blur: blur(12px);
+
+    --font-heading: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+    --tap-target: 48px;
+}
+
+/* ============================================================
+   Reset & Base
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   Header
+   ============================================================ */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--ctp-mantle);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    gap: 8px;
+}
+
+.header__left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header__title {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.5px;
+}
+
+.header__status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.header__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ctp-overlay0);
+    transition: background 0.3s;
+    flex-shrink: 0;
+}
+
+.header__dot--connected { background: var(--success); }
+.header__dot--error { background: var(--danger); animation: pulse-dot 1s infinite; }
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.header__battery {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-variant-numeric: tabular-nums;
+}
+
+.header__indicators {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.header__gamepad {
+    font-size: 0.75rem;
+    color: var(--ctp-overlay0);
+    transition: color 0.3s;
+}
+
+.header__gamepad--connected {
+    color: var(--success);
+}
+
+.header__offline {
+    font-size: 0.625rem;
+    color: var(--ctp-crust);
+    background: var(--warning);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    display: none;
+}
+
+.header__offline--visible {
+    display: inline-block;
+}
+
+/* ============================================================
+   Tab Navigation
+   ============================================================ */
+.tab-nav {
+    display: flex;
+    background: var(--ctp-mantle);
+    border-bottom: 1px solid var(--glass-border);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.tab-nav::-webkit-scrollbar { display: none; }
+
+.tab-btn {
+    flex: 1;
+    min-width: 64px;
+    padding: 10px 6px 8px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: var(--font-body);
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.tab-btn__icon {
+    font-size: 1.125rem;
+    line-height: 1;
+}
+
+.tab-btn--active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.tab-page {
+    display: none;
+    padding: 0 0 80px;
+}
+
+.tab-page--active {
+    display: block;
+}
+
+/* ============================================================
+   Telemetry Dashboard
+   ============================================================ */
+.telem-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 12px 16px;
+}
+
+.telem-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    padding: 12px;
+}
+
+.telem-card--wide {
+    grid-column: span 2;
+}
+
+.telem-card__label {
+    font-size: 0.625rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.telem-card__value {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+}
+
+.telem-card__sub {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* Battery bar */
+.battery-bar {
+    height: 6px;
+    background: var(--ctp-surface1);
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+}
+
+.battery-bar__fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s, background 0.5s;
+    width: 0%;
+    background: var(--success);
+}
+
+/* Compass */
+.compass {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 2px solid var(--ctp-surface2);
+    position: relative;
+    margin: 4px auto 0;
+}
+
+.compass__needle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2px;
+    height: 32px;
+    background: var(--accent);
+    transform-origin: bottom center;
+    transform: translate(-50%, -100%) rotate(0deg);
+    border-radius: 1px;
+    transition: transform 0.3s;
+}
+
+.compass__needle::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 6px solid var(--accent);
+}
+
+.compass__label {
+    position: absolute;
+    font-size: 0.5rem;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.compass__label--n { top: 2px; left: 50%; transform: translateX(-50%); color: var(--accent); }
+.compass__label--s { bottom: 2px; left: 50%; transform: translateX(-50%); }
+.compass__label--e { right: 4px; top: 50%; transform: translateY(-50%); }
+.compass__label--w { left: 4px; top: 50%; transform: translateY(-50%); }
+
+/* IMU tilt bars */
+.tilt-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.tilt-row__label {
+    font-size: 0.625rem;
+    color: var(--text-muted);
+    min-width: 28px;
+}
+
+.tilt-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--ctp-surface1);
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+}
+
+.tilt-bar__fill {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background: var(--info);
+    border-radius: 4px;
+    transition: left 0.3s, width 0.3s;
+    left: 50%;
+    width: 0;
+}
+
+.tilt-row__value {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--text);
+    min-width: 40px;
+    text-align: right;
+}
+
+/* ============================================================
+   Drive Controls (Tab)
+   ============================================================ */
+.camera-section {
+    padding: 8px 16px;
+}
+
+.camera-feed {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: var(--ctp-crust);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.camera-feed__placeholder {
+    color: var(--ctp-overlay0);
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+.camera-feed__placeholder svg {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 8px;
+    opacity: 0.5;
+}
+
+.controls-section {
+    padding: 16px;
+}
+
+.dpad {
+    display: grid;
+    grid-template-columns: repeat(3, var(--tap-target));
+    grid-template-rows: repeat(3, var(--tap-target));
+    gap: 6px;
+    justify-content: center;
+    margin: 0 auto;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+}
+
+.dpad__btn {
+    width: var(--tap-target);
+    height: var(--tap-target);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    color: var(--text);
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.1s, transform 0.1s, border-color 0.1s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.dpad__btn:active,
+.dpad__btn--active {
+    background: var(--accent);
+    color: var(--ctp-crust);
+    border-color: var(--accent);
+    transform: scale(0.95);
+}
+
+.dpad__btn--stop {
+    background: var(--danger);
+    color: var(--ctp-crust);
+    border-color: var(--danger);
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.dpad__btn--stop:active {
+    background: var(--ctp-maroon);
+    transform: scale(0.92);
+}
+
+/* Speed Slider */
+.speed-section {
+    padding: 8px 16px;
+}
+
+.speed-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.speed-control__label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    min-width: 40px;
+}
+
+.speed-control__value {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--secondary);
+    min-width: 36px;
+    text-align: right;
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--bg-input);
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--ctp-mantle);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    border: 2px solid var(--ctp-mantle);
+}
+
+/* Mode Buttons */
+.mode-section {
+    padding: 8px 16px;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.mode-btn {
+    flex: 1;
+    max-width: 140px;
+    padding: 10px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mode-btn--active {
+    background: var(--accent);
+    color: var(--ctp-crust);
+    border-color: var(--accent);
+}
+
+.mode-btn:not(.mode-btn--active):active {
+    background: var(--bg-input);
+}
+
+/* Quick Actions */
+.actions-section {
+    padding: 8px 16px;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.action-btn {
+    flex: 1;
+    max-width: 100px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    color: var(--text-muted);
+    font-size: 0.6875rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.action-btn:active {
+    background: var(--bg-input);
+    transform: scale(0.95);
+}
+
+.action-btn__icon {
+    font-size: 1.25rem;
+    margin-bottom: 2px;
+}
+
+/* Gamepad status indicator */
+.gamepad-status {
+    padding: 8px 16px;
+}
+
+.gamepad-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.8125rem;
+}
+
+.gamepad-card__icon {
+    font-size: 1.25rem;
+}
+
+.gamepad-card__text {
+    flex: 1;
+    color: var(--text-muted);
+}
+
+.gamepad-card__mode {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--secondary);
+    background: var(--ctp-surface1);
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+/* ============================================================
+   Map Tab
+   ============================================================ */
+.map-container {
+    position: relative;
+    height: calc(100dvh - 144px - 68px);
+    min-height: 300px;
+}
+
+.map-container #rover-map {
+    width: 100%;
+    height: 100%;
+    background: var(--ctp-crust);
+}
+
+/* Override Leaflet tiles for dark theme */
+.leaflet-container {
+    background: var(--ctp-crust) !important;
+}
+
+.map-toolbar {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.map-tool-btn {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    color: var(--text);
+    font-size: 1.125rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.map-tool-btn:active {
+    background: var(--ctp-surface1);
+}
+
+.map-tool-btn--active {
+    background: var(--accent);
+    color: var(--ctp-crust);
+    border-color: var(--accent);
+}
+
+.map-info {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    z-index: 1000;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--text);
+}
+
+/* ============================================================
+   Mission Control
+   ============================================================ */
+.mission-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 12px 16px;
+}
+
+.mission-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    padding: 16px;
+    text-align: center;
+}
+
+.mission-card--wide {
+    grid-column: span 2;
+}
+
+.mission-card__title {
+    font-family: var(--font-heading);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.mission-card__status {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+.mission-status--idle { background: var(--ctp-surface1); color: var(--text-muted); }
+.mission-status--running { background: rgba(166, 227, 161, 0.15); color: var(--success); }
+.mission-status--paused { background: rgba(249, 226, 175, 0.15); color: var(--secondary); }
+.mission-status--error { background: rgba(243, 139, 168, 0.15); color: var(--danger); }
+
+.mission-btn {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    color: var(--text);
+    font-family: var(--font-heading);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mission-btn:active {
+    transform: scale(0.97);
+}
+
+.mission-btn--start {
+    background: var(--success);
+    color: var(--ctp-crust);
+    border-color: var(--success);
+}
+
+.mission-btn--stop {
+    background: var(--danger);
+    color: var(--ctp-crust);
+    border-color: var(--danger);
+}
+
+.mission-btn--home {
+    background: var(--info);
+    color: var(--ctp-crust);
+    border-color: var(--info);
+}
+
+.mission-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ============================================================
+   Settings Page
+   ============================================================ */
+.settings-page {
+    padding: 12px 16px;
+}
+
+.settings-group {
+    margin-bottom: 16px;
+}
+
+.settings-group__title {
+    font-family: var(--font-heading);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.setting-row:last-child { border-bottom: none; }
+
+.setting-row__label {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.setting-row__control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    max-width: 200px;
+}
+
+.setting-row__value {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--text);
+    min-width: 40px;
+    text-align: right;
+}
+
+input[type="color"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 32px;
+    height: 32px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0;
+    cursor: pointer;
+    background: transparent;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
+input[type="color"]::-webkit-color-swatch { border-radius: 4px; border: none; }
+
+select {
+    padding: 8px 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.8125rem;
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+}
+
+select:focus {
+    border-color: var(--accent);
+}
+
+/* ============================================================
+   Diagnostic Log Viewer
+   ============================================================ */
+.log-panel {
+    position: fixed;
+    bottom: 68px;
+    left: 0;
+    right: 0;
+    max-height: 240px;
+    background: var(--ctp-crust);
+    border-top: 1px solid var(--border);
+    z-index: 80;
+    display: none;
+    flex-direction: column;
+}
+
+.log-panel--visible {
+    display: flex;
+}
+
+.log-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    background: var(--ctp-mantle);
+    border-bottom: 1px solid var(--glass-border);
+    flex-shrink: 0;
+}
+
+.log-panel__title {
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.log-panel__actions {
+    display: flex;
+    gap: 6px;
+}
+
+.log-panel__btn {
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.625rem;
+    cursor: pointer;
+}
+
+.log-panel__btn:active {
+    background: var(--ctp-surface1);
+}
+
+.log-viewer {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 12px;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    line-height: 1.6;
+    color: var(--ctp-subtext0);
+}
+
+.log-viewer::-webkit-scrollbar { width: 4px; }
+.log-viewer::-webkit-scrollbar-track { background: transparent; }
+.log-viewer::-webkit-scrollbar-thumb { background: var(--ctp-surface2); border-radius: 2px; }
+
+.log-entry--error { color: var(--danger); }
+.log-entry--warn { color: var(--warning); }
+.log-entry--info { color: var(--info); }
+.log-entry--ws { color: var(--ctp-teal); }
+
+/* Log toggle (floating) */
+.log-toggle {
+    position: fixed;
+    bottom: 76px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    cursor: pointer;
+    z-index: 85;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.log-toggle:active {
+    background: var(--ctp-surface1);
+}
+
+.log-toggle--active {
+    background: var(--accent);
+    color: var(--ctp-crust);
+    border-color: var(--accent);
+}
+
+/* ============================================================
+   System / Health Cards
+   ============================================================ */
+.health-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 12px 16px;
+}
+
+.health-card {
+    padding: 10px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--glass-border);
+}
+
+.health-card__label {
+    font-size: 0.625rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.health-card__value {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.health-card__value--ok { color: var(--success); }
+.health-card__value--warn { color: var(--warning); }
+.health-card__value--danger { color: var(--danger); }
+
+/* ============================================================
+   E-Stop Bar
+   ============================================================ */
+.estop-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 10px 16px;
+    background: var(--ctp-mantle);
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: center;
+    z-index: 90;
+}
+
+.estop-btn {
+    width: 100%;
+    max-width: 400px;
+    padding: 14px;
+    background: var(--danger);
+    color: var(--ctp-crust);
+    border: 2px solid var(--ctp-maroon);
+    border-radius: var(--radius);
+    font-family: var(--font-heading);
+    font-size: 0.9375rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.1s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.estop-btn:active {
+    transform: scale(0.97);
+    background: var(--ctp-maroon);
+}
+
+.estop-btn--engaged {
+    background: var(--ctp-surface2);
+    color: var(--danger);
+    border-color: var(--danger);
+    animation: estop-flash 1s infinite;
+}
+
+@keyframes estop-flash {
+    0%, 100% { border-color: var(--danger); }
+    50% { border-color: transparent; }
+}
+
+/* ============================================================
+   Connection Dialog
+   ============================================================ */
+.connect-dialog {
+    position: fixed;
+    inset: 0;
+    background: rgba(17, 17, 27, 0.85);
+    backdrop-filter: var(--glass-blur);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 24px;
+}
+
+.connect-dialog--hidden { display: none; }
+
+.connect-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    width: 100%;
+    max-width: 360px;
+}
+
+.connect-card__title {
+    font-family: var(--font-heading);
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+.connect-card__input {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.9375rem;
+    text-align: center;
+    outline: none;
+    margin-bottom: 12px;
+}
+
+.connect-card__input:focus {
+    border-color: var(--accent);
+}
+
+.connect-card__btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--accent);
+    color: var(--ctp-crust);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-heading);
+    font-size: 0.9375rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.connect-card__btn:active {
+    background: var(--accent-hover);
+}
+
+.connect-card__error {
+    color: var(--danger);
+    font-size: 0.75rem;
+    text-align: center;
+    margin-top: 8px;
+    min-height: 1.2em;
+}
+
+/* ============================================================
+   PWA Install Banner
+   ============================================================ */
+.install-banner {
+    position: fixed;
+    bottom: 76px;
+    left: 16px;
+    right: 16px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    display: none;
+    align-items: center;
+    gap: 12px;
+    z-index: 85;
+}
+
+.install-banner--visible {
+    display: flex;
+}
+
+.install-banner__text {
+    flex: 1;
+    font-size: 0.8125rem;
+    color: var(--text);
+}
+
+.install-banner__btn {
+    padding: 8px 16px;
+    background: var(--accent);
+    color: var(--ctp-crust);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.install-banner__close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 4px;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (orientation: landscape) and (max-height: 500px) {
+    .dpad {
+        --tap-target: 40px;
+        gap: 4px;
+    }
+
+    .telem-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .compass { width: 60px; height: 60px; }
+    .compass__needle { height: 24px; }
+
+    .map-container {
+        height: calc(100dvh - 120px - 56px);
+    }
+}
+
+@media (min-width: 769px) {
+    .telem-grid {
+        grid-template-columns: repeat(3, 1fr);
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .dpad {
+        --tap-target: 56px;
+        gap: 8px;
+    }
+
+    .mission-grid {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .settings-page {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+}
+
+/* ============================================================
+   Utilities
+   ============================================================ */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+</style>
 </head>
 <body>
     <!-- ============================================================
          Header
          ============================================================ -->
     <header class="header">
-        <span class="header__title">MARS ROVER</span>
-        <div class="header__status">
+        <div class="header__left">
             <span id="status-dot" class="header__dot"></span>
+            <span class="header__title">MARS ROVER</span>
+        </div>
+        <div class="header__status">
+            <div class="header__indicators">
+                <span class="header__gamepad" id="gamepad-indicator" title="Gamepad">&#127918;</span>
+                <span class="header__offline" id="offline-indicator">OFFLINE</span>
+            </div>
             <div class="header__battery" id="battery-display">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="10" x2="23" y2="14"/>
@@ -34,212 +1293,346 @@
     </header>
 
     <!-- ============================================================
-         Status Bar
+         Tab Navigation
          ============================================================ -->
-    <div class="status-bar">
-        <div class="status-bar__item">
-            <span class="status-bar__value" id="status-voltage">--V</span>
-            <span class="status-bar__label">Battery</span>
-        </div>
-        <div class="status-bar__item">
-            <span class="status-bar__value" id="status-speed">L:0 R:0</span>
-            <span class="status-bar__label">Speed</span>
-        </div>
-        <div class="status-bar__item">
-            <span class="status-bar__value" id="status-mode">Ackermann</span>
-            <span class="status-bar__label">Steering</span>
+    <nav class="tab-nav" id="tab-nav">
+        <button class="tab-btn tab-btn--active" data-tab="telemetry">
+            <span class="tab-btn__icon">&#128200;</span>
+            Telemetry
+        </button>
+        <button class="tab-btn" data-tab="drive">
+            <span class="tab-btn__icon">&#127959;</span>
+            Drive
+        </button>
+        <button class="tab-btn" data-tab="map">
+            <span class="tab-btn__icon">&#128506;</span>
+            Map
+        </button>
+        <button class="tab-btn" data-tab="mission">
+            <span class="tab-btn__icon">&#128640;</span>
+            Mission
+        </button>
+        <button class="tab-btn" data-tab="settings">
+            <span class="tab-btn__icon">&#9881;</span>
+            Settings
+        </button>
+    </nav>
+
+    <!-- ============================================================
+         Telemetry Tab
+         ============================================================ -->
+    <div class="tab-page tab-page--active" id="page-telemetry">
+        <div class="telem-grid">
+            <!-- Battery -->
+            <div class="telem-card">
+                <div class="telem-card__label">Battery</div>
+                <div class="telem-card__value" id="telem-batt-pct">--%</div>
+                <div class="telem-card__sub" id="telem-batt-v">--V</div>
+                <div class="battery-bar"><div class="battery-bar__fill" id="batt-bar-fill"></div></div>
+            </div>
+            <!-- Heading / Compass -->
+            <div class="telem-card">
+                <div class="telem-card__label">Heading</div>
+                <div class="telem-card__value" id="telem-heading">--&deg;</div>
+                <div class="compass">
+                    <div class="compass__needle" id="compass-needle"></div>
+                    <span class="compass__label compass__label--n">N</span>
+                    <span class="compass__label compass__label--s">S</span>
+                    <span class="compass__label compass__label--e">E</span>
+                    <span class="compass__label compass__label--w">W</span>
+                </div>
+            </div>
+            <!-- Speed -->
+            <div class="telem-card">
+                <div class="telem-card__label">Motor Speed</div>
+                <div class="telem-card__value" id="telem-speed-l">L: --</div>
+                <div class="telem-card__sub" id="telem-speed-r">R: --</div>
+            </div>
+            <!-- GPS -->
+            <div class="telem-card">
+                <div class="telem-card__label">GPS Position</div>
+                <div class="telem-card__value" id="telem-lat" style="font-size: 0.875rem;">--</div>
+                <div class="telem-card__sub" id="telem-lon">--</div>
+            </div>
+            <!-- IMU -->
+            <div class="telem-card telem-card--wide">
+                <div class="telem-card__label">IMU Tilt</div>
+                <div class="tilt-row">
+                    <span class="tilt-row__label">Roll</span>
+                    <div class="tilt-bar"><div class="tilt-bar__fill" id="tilt-roll-fill"></div></div>
+                    <span class="tilt-row__value" id="telem-roll">0.0&deg;</span>
+                </div>
+                <div class="tilt-row">
+                    <span class="tilt-row__label">Pitch</span>
+                    <div class="tilt-bar"><div class="tilt-bar__fill" id="tilt-pitch-fill"></div></div>
+                    <span class="tilt-row__value" id="telem-pitch">0.0&deg;</span>
+                </div>
+            </div>
+            <!-- Uptime -->
+            <div class="telem-card telem-card--wide">
+                <div class="telem-card__label">Uptime</div>
+                <div class="telem-card__value" id="telem-uptime">--</div>
+            </div>
         </div>
     </div>
 
     <!-- ============================================================
-         Main Layout (responsive: portrait=stack, landscape=grid)
+         Drive Tab
          ============================================================ -->
-    <div class="main-layout">
+    <div class="tab-page" id="page-drive">
         <!-- Camera Feed -->
-        <div class="main-layout__camera">
-            <div class="camera-section">
-                <div class="camera-feed" id="camera-feed">
-                    <div class="camera-feed__placeholder">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-                            <circle cx="12" cy="13" r="4"/>
-                        </svg>
-                        <div>Camera feed</div>
-                        <div>Phase 2</div>
-                    </div>
+        <div class="camera-section">
+            <div class="camera-feed" id="camera-feed">
+                <div class="camera-feed__placeholder">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    <div>Camera feed</div>
+                    <div>Phase 2</div>
                 </div>
             </div>
         </div>
 
-        <!-- Controls -->
-        <div class="main-layout__controls">
-            <!-- D-Pad -->
-            <div class="controls-section">
-                <div class="dpad">
-                    <button class="dpad__btn" data-cmd="fl" aria-label="Forward-left">&#8598;</button>
-                    <button class="dpad__btn" data-cmd="fwd" aria-label="Forward">&#8593;</button>
-                    <button class="dpad__btn" data-cmd="fr" aria-label="Forward-right">&#8599;</button>
-                    <button class="dpad__btn" data-cmd="left" aria-label="Left">&#8592;</button>
-                    <button class="dpad__btn dpad__btn--stop" data-cmd="stop" aria-label="Stop">STP</button>
-                    <button class="dpad__btn" data-cmd="right" aria-label="Right">&#8594;</button>
-                    <button class="dpad__btn" data-cmd="bl" aria-label="Back-left">&#8601;</button>
-                    <button class="dpad__btn" data-cmd="rev" aria-label="Reverse">&#8595;</button>
-                    <button class="dpad__btn" data-cmd="br" aria-label="Back-right">&#8600;</button>
-                </div>
+        <!-- D-Pad -->
+        <div class="controls-section">
+            <div class="dpad" id="dpad">
+                <button class="dpad__btn" data-cmd="fl" aria-label="Forward-left">&#8598;</button>
+                <button class="dpad__btn" data-cmd="fwd" aria-label="Forward">&#8593;</button>
+                <button class="dpad__btn" data-cmd="fr" aria-label="Forward-right">&#8599;</button>
+                <button class="dpad__btn" data-cmd="left" aria-label="Left">&#8592;</button>
+                <button class="dpad__btn dpad__btn--stop" data-cmd="stop" aria-label="Stop">STP</button>
+                <button class="dpad__btn" data-cmd="right" aria-label="Right">&#8594;</button>
+                <button class="dpad__btn" data-cmd="bl" aria-label="Back-left">&#8601;</button>
+                <button class="dpad__btn" data-cmd="rev" aria-label="Reverse">&#8595;</button>
+                <button class="dpad__btn" data-cmd="br" aria-label="Back-right">&#8600;</button>
             </div>
+        </div>
 
-            <!-- Speed Slider -->
-            <div class="speed-section">
-                <div class="speed-control">
-                    <span class="speed-control__label">Speed</span>
-                    <input type="range" id="speed-slider" min="10" max="100" value="50" step="5">
-                    <span class="speed-control__value" id="speed-value">50%</span>
-                </div>
+        <!-- Speed Slider -->
+        <div class="speed-section">
+            <div class="speed-control">
+                <span class="speed-control__label">Speed</span>
+                <input type="range" id="speed-slider" min="10" max="100" value="50" step="5">
+                <span class="speed-control__value" id="speed-value">50%</span>
             </div>
+        </div>
 
-            <!-- Steering Mode -->
-            <div class="mode-section">
-                <button class="mode-btn mode-btn--active" data-mode="0">Ackermann</button>
-                <button class="mode-btn" data-mode="1">Point Turn</button>
-                <button class="mode-btn" data-mode="2">Crab Walk</button>
+        <!-- Steering Mode -->
+        <div class="mode-section" id="mode-section">
+            <button class="mode-btn mode-btn--active" data-mode="0">Ackermann</button>
+            <button class="mode-btn" data-mode="1">Point Turn</button>
+            <button class="mode-btn" data-mode="2">Crab Walk</button>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="actions-section">
+            <button class="action-btn" id="action-lights">
+                <div class="action-btn__icon">&#128161;</div>
+                Lights
+            </button>
+            <button class="action-btn" id="action-horn">
+                <div class="action-btn__icon">&#128266;</div>
+                Horn
+            </button>
+            <button class="action-btn" id="action-camera" disabled>
+                <div class="action-btn__icon">&#128247;</div>
+                Camera
+            </button>
+        </div>
+
+        <!-- Gamepad Status -->
+        <div class="gamepad-status">
+            <div class="gamepad-card">
+                <div class="gamepad-card__icon">&#127918;</div>
+                <div class="gamepad-card__text" id="gamepad-text">No gamepad detected</div>
+                <div class="gamepad-card__mode" id="gamepad-speed-mode">NORMAL</div>
             </div>
-
-            <!-- Quick Actions -->
-            <div class="actions-section">
-                <button class="action-btn" id="action-lights">
-                    <div class="action-btn__icon">&#128161;</div>
-                    Lights
-                </button>
-                <button class="action-btn" id="action-horn">
-                    <div class="action-btn__icon">&#128266;</div>
-                    Horn
-                </button>
-                <button class="action-btn" id="action-camera" disabled>
-                    <div class="action-btn__icon">&#128247;</div>
-                    Camera
-                </button>
-            </div>
-
-            <!-- ============================================================
-                 Expandable Sections
-                 ============================================================ -->
-
-            <!-- Settings -->
-            <div class="section">
-                <div class="section__header">
-                    <span class="section__title">Settings</span>
-                    <span class="section__arrow">&#9654;</span>
-                </div>
-                <div class="section__body">
-                    <div class="setting-row">
-                        <span class="setting-row__label">Max Speed</span>
-                        <div class="setting-row__control">
-                            <input type="range" min="10" max="100" value="100" step="5"
-                                   oninput="updateSetting('max_speed', this.value)">
-                            <span class="setting-row__value" id="setting-max_speed-value">100</span>
-                        </div>
-                    </div>
-                    <div class="setting-row">
-                        <span class="setting-row__label">LED Colour</span>
-                        <div class="setting-row__control">
-                            <input type="color" value="#f38ba8"
-                                   oninput="updateSetting('led_color', this.value)">
-                        </div>
-                    </div>
-                    <div class="setting-row">
-                        <span class="setting-row__label">Servo Trim FL</span>
-                        <div class="setting-row__control">
-                            <input type="range" min="-50" max="50" value="0" step="1"
-                                   oninput="updateSetting('trim_fl', this.value)">
-                            <span class="setting-row__value" id="setting-trim_fl-value">0</span>
-                        </div>
-                    </div>
-                    <div class="setting-row">
-                        <span class="setting-row__label">Servo Trim FR</span>
-                        <div class="setting-row__control">
-                            <input type="range" min="-50" max="50" value="0" step="1"
-                                   oninput="updateSetting('trim_fr', this.value)">
-                            <span class="setting-row__value" id="setting-trim_fr-value">0</span>
-                        </div>
-                    </div>
-                    <div class="setting-row">
-                        <span class="setting-row__label">Servo Trim RL</span>
-                        <div class="setting-row__control">
-                            <input type="range" min="-50" max="50" value="0" step="1"
-                                   oninput="updateSetting('trim_rl', this.value)">
-                            <span class="setting-row__value" id="setting-trim_rl-value">0</span>
-                        </div>
-                    </div>
-                    <div class="setting-row">
-                        <span class="setting-row__label">Servo Trim RR</span>
-                        <div class="setting-row__control">
-                            <input type="range" min="-50" max="50" value="0" step="1"
-                                   oninput="updateSetting('trim_rr', this.value)">
-                            <span class="setting-row__value" id="setting-trim_rr-value">0</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Navigation (Phase 2) -->
-            <div class="section">
-                <div class="section__header">
-                    <span class="section__title">Navigation</span>
-                    <span class="section__arrow">&#9654;</span>
-                </div>
-                <div class="section__body">
-                    <div style="color: var(--text-muted); font-size: 0.8125rem; text-align: center; padding: 20px 0;">
-                        Navigation features available in Phase 2<br>
-                        (GPS, SLAM map, waypoints, geofence)
-                    </div>
-                </div>
-            </div>
-
-            <!-- System -->
-            <div class="section">
-                <div class="section__header">
-                    <span class="section__title">System</span>
-                    <span class="section__arrow">&#9654;</span>
-                </div>
-                <div class="section__body">
-                    <div class="health-grid mb-16">
-                        <div class="health-card">
-                            <div class="health-card__label">Uptime</div>
-                            <div class="health-card__value health-card__value--ok" id="health-uptime">--</div>
-                        </div>
-                        <div class="health-card">
-                            <div class="health-card__label">WiFi</div>
-                            <div class="health-card__value" id="health-wifi">-- dBm</div>
-                        </div>
-                        <div class="health-card">
-                            <div class="health-card__label">Battery</div>
-                            <div class="health-card__value" id="health-battery">--V</div>
-                        </div>
-                        <div class="health-card">
-                            <div class="health-card__label">Motors</div>
-                            <div class="health-card__value health-card__value--ok" id="health-motors">OK</div>
-                        </div>
-                    </div>
-
-                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">Logs</div>
-                    <div class="log-viewer" id="log-viewer"></div>
-                </div>
-            </div>
-
-            <!-- Spacer for E-stop bar -->
-            <div style="height: 68px;"></div>
         </div>
     </div>
 
     <!-- ============================================================
-         E-Stop Bar (always visible at bottom)
+         Map Tab
+         ============================================================ -->
+    <div class="tab-page" id="page-map">
+        <div class="map-container">
+            <div id="rover-map"></div>
+            <div class="map-toolbar">
+                <button class="map-tool-btn" id="map-center" title="Center on rover">&#127919;</button>
+                <button class="map-tool-btn" id="map-add-wp" title="Add waypoint mode">&#128205;</button>
+                <button class="map-tool-btn" id="map-clear-trail" title="Clear trail">&#128465;</button>
+                <button class="map-tool-btn" id="map-clear-wp" title="Clear waypoints">&#10060;</button>
+            </div>
+            <div class="map-info" id="map-info">
+                GPS: waiting for fix...
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         Mission Tab
+         ============================================================ -->
+    <div class="tab-page" id="page-mission">
+        <!-- Mission Status -->
+        <div class="mission-grid">
+            <div class="mission-card mission-card--wide">
+                <div class="mission-card__title">Mission Status</div>
+                <div class="mission-card__status mission-status--idle" id="mission-status">IDLE</div>
+            </div>
+
+            <div class="mission-card">
+                <div class="mission-card__title">Patrol</div>
+                <button class="mission-btn mission-btn--start" id="mission-patrol-btn" data-mission="patrol">
+                    Start Patrol
+                </button>
+            </div>
+
+            <div class="mission-card">
+                <div class="mission-card__title">Explore</div>
+                <button class="mission-btn mission-btn--start" id="mission-explore-btn" data-mission="explore">
+                    Start Explore
+                </button>
+            </div>
+
+            <div class="mission-card mission-card--wide">
+                <div class="mission-card__title">Return Home</div>
+                <button class="mission-btn mission-btn--home" id="mission-home-btn">
+                    Return to Base
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         Settings Tab
+         ============================================================ -->
+    <div class="tab-page" id="page-settings">
+        <div class="settings-page">
+            <div class="settings-group">
+                <div class="settings-group__title">Drive</div>
+                <div class="setting-row">
+                    <span class="setting-row__label">Speed Limit</span>
+                    <div class="setting-row__control">
+                        <input type="range" id="set-speed-limit" min="0" max="100" value="100" step="5">
+                        <span class="setting-row__value" id="set-speed-limit-val">100%</span>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-row__label">Steering Sensitivity</span>
+                    <div class="setting-row__control">
+                        <input type="range" id="set-steer-sens" min="10" max="100" value="50" step="5">
+                        <span class="setting-row__value" id="set-steer-sens-val">50%</span>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-row__label">Steering Mode</span>
+                    <div class="setting-row__control">
+                        <select id="set-steer-mode">
+                            <option value="0">Ackermann</option>
+                            <option value="1">Point Turn</option>
+                            <option value="2">Crab Walk</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-group__title">Safety</div>
+                <div class="setting-row">
+                    <span class="setting-row__label">Geofence Radius (m)</span>
+                    <div class="setting-row__control">
+                        <input type="range" id="set-geofence" min="5" max="200" value="50" step="5">
+                        <span class="setting-row__value" id="set-geofence-val">50m</span>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-row__label">E-Stop Timeout (s)</span>
+                    <div class="setting-row__control">
+                        <input type="range" id="set-estop-timeout" min="5" max="120" value="30" step="5">
+                        <span class="setting-row__value" id="set-estop-timeout-val">30s</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-group__title">Appearance</div>
+                <div class="setting-row">
+                    <span class="setting-row__label">LED Colour</span>
+                    <div class="setting-row__control">
+                        <input type="color" id="set-led-color" value="#f38ba8">
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-group__title">Servo Trim</div>
+                <div class="setting-row">
+                    <span class="setting-row__label">Front Left</span>
+                    <div class="setting-row__control">
+                        <input type="range" id="set-trim-fl" min="-50" max="50" value="0" step="1">
+                        <span class="setting-row__value" id="set-trim-fl-val">0</span>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-row__label">Front Right</span>
+                    <div class="setting-row__control">
+                        <input type="range" id="set-trim-fr" min="-50" max="50" value="0" step="1">
+                        <span class="setting-row__value" id="set-trim-fr-val">0</span>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-row__label">Rear Left</span>
+                    <div class="setting-row__control">
+                        <input type="range" id="set-trim-rl" min="-50" max="50" value="0" step="1">
+                        <span class="setting-row__value" id="set-trim-rl-val">0</span>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-row__label">Rear Right</span>
+                    <div class="setting-row__control">
+                        <input type="range" id="set-trim-rr" min="-50" max="50" value="0" step="1">
+                        <span class="setting-row__value" id="set-trim-rr-val">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         Diagnostic Log Panel (floating overlay)
+         ============================================================ -->
+    <div class="log-panel" id="log-panel">
+        <div class="log-panel__header">
+            <span class="log-panel__title">Diagnostics</span>
+            <div class="log-panel__actions">
+                <button class="log-panel__btn" id="log-clear">Clear</button>
+                <button class="log-panel__btn" id="log-close">Close</button>
+            </div>
+        </div>
+        <div class="log-viewer" id="log-viewer"></div>
+    </div>
+
+    <!-- Log Toggle Button -->
+    <button class="log-toggle" id="log-toggle" title="Toggle diagnostics">&#128220;</button>
+
+    <!-- ============================================================
+         E-Stop Bar
          ============================================================ -->
     <div class="estop-bar">
         <button class="estop-btn" id="estop-btn">EMERGENCY STOP</button>
     </div>
 
     <!-- ============================================================
-         Connection Dialog (shown on startup)
+         PWA Install Banner
+         ============================================================ -->
+    <div class="install-banner" id="install-banner">
+        <span class="install-banner__text">Install Mars Rover for quick access</span>
+        <button class="install-banner__btn" id="install-btn">Install</button>
+        <button class="install-banner__close" id="install-close">&times;</button>
+    </div>
+
+    <!-- ============================================================
+         Connection Dialog
          ============================================================ -->
     <div class="connect-dialog" id="connect-dialog">
         <div class="connect-card">
@@ -251,9 +1644,1223 @@
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script src="/js/connection.js"></script>
-    <script src="/js/controls.js"></script>
-    <script src="/js/app.js"></script>
+<script>
+// ============================================================
+// Mars Rover PWA v2 — Single-file application
+// All modules: Connection, Controls, Gamepad, Telemetry,
+// Map, Mission, Settings, Diagnostics, PWA Install
+// ============================================================
+(function() {
+    'use strict';
+
+    // ============================================================
+    // WebSocket Connection Manager
+    // ============================================================
+    class RoverConnection {
+        constructor() {
+            this.ws = null;
+            this.ip = null;
+            this.port = 81;
+            this.reconnectDelay = 1000;
+            this.maxReconnectDelay = 10000;
+            this.reconnectTimer = null;
+            this.heartbeatTimer = null;
+            this.connected = false;
+            this._listeners = new Map();
+        }
+
+        on(event, callback) {
+            if (!this._listeners.has(event)) this._listeners.set(event, []);
+            this._listeners.get(event).push(callback);
+        }
+
+        emit(event, data) {
+            var cbs = this._listeners.get(event);
+            if (cbs) cbs.forEach(function(cb) { cb(data); });
+        }
+
+        connect(ip) {
+            this.ip = ip;
+            this.disconnect();
+            try {
+                this.ws = new WebSocket('ws://' + ip + ':' + this.port);
+            } catch (e) {
+                this.emit('error', 'Invalid address: ' + ip);
+                return;
+            }
+
+            var self = this;
+
+            this.ws.onopen = function() {
+                self.connected = true;
+                self.reconnectDelay = 1000;
+                self.emit('connected', self.ip);
+                self.startHeartbeat();
+                try { localStorage.setItem('rover_ip', ip); } catch (_) {}
+            };
+
+            this.ws.onclose = function() {
+                var wasConnected = self.connected;
+                self.connected = false;
+                self.stopHeartbeat();
+                self.emit('disconnected', wasConnected ? 'lost' : 'failed');
+                self.scheduleReconnect();
+            };
+
+            this.ws.onerror = function() {};
+
+            this.ws.onmessage = function(e) {
+                try {
+                    var data = JSON.parse(e.data);
+                    self.emit('message', data);
+                } catch (_) {
+                    self.emit('binary', e.data);
+                }
+            };
+        }
+
+        disconnect() {
+            this.stopHeartbeat();
+            clearTimeout(this.reconnectTimer);
+            if (this.ws) {
+                this.ws.onclose = null;
+                this.ws.onerror = null;
+                this.ws.close();
+                this.ws = null;
+            }
+            this.connected = false;
+        }
+
+        scheduleReconnect() {
+            clearTimeout(this.reconnectTimer);
+            var self = this;
+            this.reconnectTimer = setTimeout(function() {
+                if (self.ip) self.connect(self.ip);
+            }, this.reconnectDelay);
+            this.reconnectDelay = Math.min(this.reconnectDelay * 2, this.maxReconnectDelay);
+        }
+
+        startHeartbeat() {
+            this.stopHeartbeat();
+            var self = this;
+            this.heartbeatTimer = setInterval(function() {
+                self.send({ cmd: 'ping' });
+            }, 5000);
+        }
+
+        stopHeartbeat() {
+            clearInterval(this.heartbeatTimer);
+            this.heartbeatTimer = null;
+        }
+
+        send(obj) {
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                this.ws.send(JSON.stringify(obj));
+                return true;
+            }
+            return false;
+        }
+
+        sendDrive(cmd, speed, mode) {
+            return this.send({ cmd: cmd, speed: speed, mode: mode });
+        }
+
+        sendStop() {
+            return this.send({ cmd: 'stop' });
+        }
+
+        sendEstop() {
+            return this.send({ cmd: 'estop' });
+        }
+
+        get isConnected() {
+            return this.connected && this.ws && this.ws.readyState === WebSocket.OPEN;
+        }
+
+        getLastIP() {
+            try { return localStorage.getItem('rover_ip') || ''; } catch (_) { return ''; }
+        }
+    }
+
+    // ============================================================
+    // Diagnostic Logger
+    // ============================================================
+    var MAX_LOG_ENTRIES = 200;
+    var logEntries = [];
+    var logAutoScroll = true;
+
+    function addLog(level, message) {
+        var now = new Date();
+        var ts = now.toLocaleTimeString('en-GB', { hour12: false });
+        logEntries.push({ time: ts, level: level, message: message });
+        if (logEntries.length > MAX_LOG_ENTRIES) logEntries.shift();
+
+        var viewer = document.getElementById('log-viewer');
+        if (!viewer) return;
+
+        var div = document.createElement('div');
+        div.className = 'log-entry--' + level;
+        div.textContent = '[' + ts + '] ' + message;
+        viewer.appendChild(div);
+
+        while (viewer.children.length > MAX_LOG_ENTRIES) {
+            viewer.removeChild(viewer.firstChild);
+        }
+
+        if (logAutoScroll) {
+            viewer.scrollTop = viewer.scrollHeight;
+        }
+    }
+
+    // ============================================================
+    // Settings Manager
+    // ============================================================
+    var SETTINGS_KEY = 'rover_settings';
+    var defaultSettings = {
+        speedLimit: 100,
+        steerSens: 50,
+        steerMode: 0,
+        geofenceRadius: 50,
+        estopTimeout: 30,
+        ledColor: '#f38ba8',
+        trimFL: 0,
+        trimFR: 0,
+        trimRL: 0,
+        trimRR: 0
+    };
+
+    function loadSettings() {
+        try {
+            var saved = localStorage.getItem(SETTINGS_KEY);
+            if (saved) {
+                var parsed = JSON.parse(saved);
+                var merged = {};
+                for (var k in defaultSettings) {
+                    merged[k] = parsed.hasOwnProperty(k) ? parsed[k] : defaultSettings[k];
+                }
+                return merged;
+            }
+        } catch (_) {}
+        return Object.assign({}, defaultSettings);
+    }
+
+    function saveSettings(s) {
+        try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch (_) {}
+    }
+
+    var settings = loadSettings();
+
+    // ============================================================
+    // App State
+    // ============================================================
+    var conn = new RoverConnection();
+    var estopEngaged = false;
+    var activeCmd = null;
+    var speed = 50;
+    var steeringMode = 0;
+    var debounceTimer = null;
+
+    // Telemetry state
+    var telemetry = {
+        batt: 0, pct: 0, ml: 0, mr: 0,
+        heading: 0, lat: 0, lon: 0,
+        roll: 0, pitch: 0, uptime: 0,
+        mission: 'idle'
+    };
+
+    // Mission state
+    var currentMission = 'idle'; // idle, patrol, explore, homing
+    var missionRunning = false;
+
+    // Gamepad state
+    var gamepadConnected = false;
+    var gamepadIndex = -1;
+    var gamepadSpeedMode = 1; // 0=slow, 1=normal, 2=fast
+    var gamepadSpeedModes = ['SLOW', 'NORMAL', 'FAST'];
+    var gamepadSpeedFactors = [0.3, 0.6, 1.0];
+    var gamepadPollTimer = null;
+    var prevGamepadButtons = new Array(17).fill(false);
+
+    // Map state
+    var map = null;
+    var roverMarker = null;
+    var roverTrail = null;
+    var trailPoints = [];
+    var waypoints = [];
+    var waypointMarkers = [];
+    var geofenceCircle = null;
+    var addWaypointMode = false;
+    var mapInitialized = false;
+
+    // ============================================================
+    // DOM Ready
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        registerServiceWorker();
+        initConnectionDialog();
+        initTabs();
+        initDpad();
+        initSpeedSlider();
+        initModeButtons();
+        initEstop();
+        initActionButtons();
+        initLogPanel();
+        initSettings();
+        initMissionButtons();
+        initPWAInstall();
+        initOnlineStatus();
+        initGamepad();
+
+        // Connection events
+        conn.on('connected', onConnected);
+        conn.on('disconnected', onDisconnected);
+        conn.on('message', onMessage);
+        conn.on('error', onError);
+
+        // Restore saved IP
+        var lastIP = conn.getLastIP();
+        if (lastIP) {
+            document.getElementById('rover-ip').value = lastIP;
+        }
+
+        // Restore saved speed/mode
+        try {
+            var savedSpeed = localStorage.getItem('rover_speed');
+            if (savedSpeed) {
+                speed = parseInt(savedSpeed, 10);
+                var slider = document.getElementById('speed-slider');
+                if (slider) slider.value = speed;
+                var valEl = document.getElementById('speed-value');
+                if (valEl) valEl.textContent = speed + '%';
+            }
+            var savedMode = localStorage.getItem('rover_mode');
+            if (savedMode !== null) {
+                steeringMode = parseInt(savedMode, 10);
+                updateModeButtonUI(steeringMode);
+            }
+        } catch (_) {}
+    });
+
+    // ============================================================
+    // Service Worker
+    // ============================================================
+    function registerServiceWorker() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(function() { addLog('info', 'Service worker registered'); })
+                .catch(function() { addLog('error', 'SW registration failed'); });
+        }
+    }
+
+    // ============================================================
+    // Online/Offline Status
+    // ============================================================
+    function initOnlineStatus() {
+        var offlineEl = document.getElementById('offline-indicator');
+
+        function updateStatus() {
+            if (navigator.onLine) {
+                offlineEl.classList.remove('header__offline--visible');
+            } else {
+                offlineEl.classList.add('header__offline--visible');
+            }
+        }
+
+        window.addEventListener('online', updateStatus);
+        window.addEventListener('offline', updateStatus);
+        updateStatus();
+    }
+
+    // ============================================================
+    // PWA Install Prompt
+    // ============================================================
+    var deferredInstallPrompt = null;
+
+    function initPWAInstall() {
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            var banner = document.getElementById('install-banner');
+            banner.classList.add('install-banner--visible');
+        });
+
+        document.getElementById('install-btn').addEventListener('click', function() {
+            if (!deferredInstallPrompt) return;
+            deferredInstallPrompt.prompt();
+            deferredInstallPrompt.userChoice.then(function() {
+                deferredInstallPrompt = null;
+                document.getElementById('install-banner').classList.remove('install-banner--visible');
+            });
+        });
+
+        document.getElementById('install-close').addEventListener('click', function() {
+            document.getElementById('install-banner').classList.remove('install-banner--visible');
+        });
+    }
+
+    // ============================================================
+    // Tab Navigation
+    // ============================================================
+    function initTabs() {
+        var nav = document.getElementById('tab-nav');
+        nav.addEventListener('click', function(e) {
+            var btn = e.target.closest('.tab-btn');
+            if (!btn) return;
+            var tabId = btn.dataset.tab;
+            switchTab(tabId);
+        });
+    }
+
+    function switchTab(tabId) {
+        // Deactivate all tabs
+        document.querySelectorAll('.tab-btn').forEach(function(b) {
+            b.classList.remove('tab-btn--active');
+        });
+        document.querySelectorAll('.tab-page').forEach(function(p) {
+            p.classList.remove('tab-page--active');
+        });
+
+        // Activate selected
+        var btn = document.querySelector('.tab-btn[data-tab="' + tabId + '"]');
+        if (btn) btn.classList.add('tab-btn--active');
+        var page = document.getElementById('page-' + tabId);
+        if (page) page.classList.add('tab-page--active');
+
+        // Lazy-init map
+        if (tabId === 'map' && !mapInitialized) {
+            initMap();
+        }
+
+        // Invalidate map size when switching to map tab
+        if (tabId === 'map' && map) {
+            setTimeout(function() { map.invalidateSize(); }, 100);
+        }
+    }
+
+    // ============================================================
+    // Connection Dialog
+    // ============================================================
+    function initConnectionDialog() {
+        var btn = document.getElementById('connect-btn');
+        var input = document.getElementById('rover-ip');
+        var errorEl = document.getElementById('connect-error');
+
+        btn.addEventListener('click', function() {
+            var ip = input.value.trim();
+            if (!ip) {
+                errorEl.textContent = 'Enter the rover IP address';
+                return;
+            }
+            errorEl.textContent = 'Connecting...';
+            btn.disabled = true;
+            conn.connect(ip);
+        });
+
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') btn.click();
+        });
+    }
+
+    function onConnected(ip) {
+        document.getElementById('connect-dialog').classList.add('connect-dialog--hidden');
+        document.getElementById('connect-btn').disabled = false;
+        updateConnectionDot(true);
+        addLog('info', 'Connected to ' + ip);
+    }
+
+    function onDisconnected(reason) {
+        updateConnectionDot(false);
+        if (reason === 'lost') {
+            addLog('warn', 'Connection lost - reconnecting...');
+        } else if (reason === 'failed') {
+            var errorEl = document.getElementById('connect-error');
+            if (errorEl) errorEl.textContent = 'Connection failed - retrying...';
+        }
+    }
+
+    function onError(msg) {
+        addLog('error', msg);
+        var errorEl = document.getElementById('connect-error');
+        if (errorEl) errorEl.textContent = msg;
+    }
+
+    function updateConnectionDot(connected) {
+        var dot = document.getElementById('status-dot');
+        if (dot) {
+            dot.className = 'header__dot' + (connected ? ' header__dot--connected' : ' header__dot--error');
+        }
+    }
+
+    // ============================================================
+    // Telemetry Message Handler
+    // ============================================================
+    function onMessage(data) {
+        addLog('ws', 'RX: ' + JSON.stringify(data).substring(0, 120));
+
+        // Battery
+        if (data.batt !== undefined) {
+            telemetry.batt = data.batt;
+            telemetry.pct = data.pct || 0;
+            updateBatteryUI(data.batt, data.pct);
+        }
+
+        // Motor speed
+        if (data.ml !== undefined) {
+            telemetry.ml = data.ml;
+            telemetry.mr = data.mr || 0;
+            updateSpeedUI(data.ml, data.mr);
+        }
+
+        // Heading
+        if (data.heading !== undefined) {
+            telemetry.heading = data.heading;
+            updateHeadingUI(data.heading);
+        }
+
+        // GPS
+        if (data.lat !== undefined) {
+            telemetry.lat = data.lat;
+            telemetry.lon = data.lon || 0;
+            updateGPSUI(data.lat, data.lon);
+            updateMapPosition(data.lat, data.lon);
+        }
+
+        // IMU
+        if (data.imu) {
+            telemetry.roll = data.imu.roll || 0;
+            telemetry.pitch = data.imu.pitch || 0;
+            updateIMUUI(data.imu.roll, data.imu.pitch);
+        }
+
+        // Uptime
+        if (data.uptime !== undefined) {
+            telemetry.uptime = data.uptime;
+            updateUptimeUI(data.uptime);
+        }
+
+        // Mission status
+        if (data.mission !== undefined) {
+            telemetry.mission = data.mission;
+            updateMissionStatusUI(data.mission);
+        }
+
+        // E-stop
+        if (data.estop !== undefined) {
+            setEstop(data.estop);
+        }
+
+        // Steering mode
+        if (data.mode !== undefined) {
+            updateModeButtonUI(data.mode);
+        }
+
+        // Error from rover
+        if (data.error) addLog('error', 'Rover: ' + data.error);
+    }
+
+    // ============================================================
+    // Telemetry UI Updaters
+    // ============================================================
+    function updateBatteryUI(voltage, percent) {
+        var pct = Math.round(percent || 0);
+
+        // Header battery
+        var battVal = document.getElementById('battery-value');
+        if (battVal) battVal.textContent = pct + '%';
+
+        var battDisplay = document.getElementById('battery-display');
+        if (battDisplay) {
+            if (pct > 50) battDisplay.style.color = 'var(--success)';
+            else if (pct > 20) battDisplay.style.color = 'var(--warning)';
+            else battDisplay.style.color = 'var(--danger)';
+        }
+
+        // Telemetry card
+        var telemPct = document.getElementById('telem-batt-pct');
+        if (telemPct) telemPct.textContent = pct + '%';
+
+        var telemV = document.getElementById('telem-batt-v');
+        if (telemV && voltage !== undefined) telemV.textContent = voltage.toFixed(2) + 'V';
+
+        // Battery bar
+        var barFill = document.getElementById('batt-bar-fill');
+        if (barFill) {
+            barFill.style.width = pct + '%';
+            if (pct > 50) barFill.style.background = 'var(--success)';
+            else if (pct > 20) barFill.style.background = 'var(--warning)';
+            else barFill.style.background = 'var(--danger)';
+        }
+    }
+
+    function updateSpeedUI(left, right) {
+        var el = document.getElementById('telem-speed-l');
+        if (el) el.textContent = 'L: ' + left;
+        var er = document.getElementById('telem-speed-r');
+        if (er) er.textContent = 'R: ' + right;
+    }
+
+    function updateHeadingUI(heading) {
+        var el = document.getElementById('telem-heading');
+        if (el) el.textContent = heading.toFixed(1) + '\u00B0';
+
+        var needle = document.getElementById('compass-needle');
+        if (needle) {
+            needle.style.transform = 'translate(-50%, -100%) rotate(' + heading + 'deg)';
+        }
+    }
+
+    function updateGPSUI(lat, lon) {
+        var latEl = document.getElementById('telem-lat');
+        if (latEl) latEl.textContent = lat.toFixed(6) + '\u00B0';
+        var lonEl = document.getElementById('telem-lon');
+        if (lonEl) lonEl.textContent = lon.toFixed(6) + '\u00B0';
+
+        var info = document.getElementById('map-info');
+        if (info) info.textContent = 'GPS: ' + lat.toFixed(6) + ', ' + lon.toFixed(6);
+    }
+
+    function updateIMUUI(roll, pitch) {
+        var rollEl = document.getElementById('telem-roll');
+        if (rollEl) rollEl.textContent = roll.toFixed(1) + '\u00B0';
+        var pitchEl = document.getElementById('telem-pitch');
+        if (pitchEl) pitchEl.textContent = pitch.toFixed(1) + '\u00B0';
+
+        // Tilt bars: map -45..+45 degrees to bar position
+        updateTiltBar('tilt-roll-fill', roll);
+        updateTiltBar('tilt-pitch-fill', pitch);
+    }
+
+    function updateTiltBar(id, angle) {
+        var fill = document.getElementById(id);
+        if (!fill) return;
+        var clamped = Math.max(-45, Math.min(45, angle));
+        var pct = (clamped / 45) * 50; // -50% to +50%
+        if (pct >= 0) {
+            fill.style.left = '50%';
+            fill.style.width = pct + '%';
+        } else {
+            fill.style.left = (50 + pct) + '%';
+            fill.style.width = Math.abs(pct) + '%';
+        }
+
+        // Color based on severity
+        var absDeg = Math.abs(angle);
+        if (absDeg > 30) fill.style.background = 'var(--danger)';
+        else if (absDeg > 15) fill.style.background = 'var(--warning)';
+        else fill.style.background = 'var(--info)';
+    }
+
+    function updateUptimeUI(seconds) {
+        var el = document.getElementById('telem-uptime');
+        if (!el) return;
+        var h = Math.floor(seconds / 3600);
+        var m = Math.floor((seconds % 3600) / 60);
+        var s = seconds % 60;
+        el.textContent = h + 'h ' + m + 'm ' + s + 's';
+    }
+
+    // ============================================================
+    // D-Pad Controls
+    // ============================================================
+    function initDpad() {
+        var buttons = document.querySelectorAll('#dpad .dpad__btn[data-cmd]');
+        buttons.forEach(function(btn) {
+            var cmd = btn.dataset.cmd;
+
+            btn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                onDpadPress(cmd, btn);
+            }, { passive: false });
+
+            btn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                onDpadRelease(btn);
+            }, { passive: false });
+
+            btn.addEventListener('touchcancel', function(e) {
+                e.preventDefault();
+                onDpadRelease(btn);
+            }, { passive: false });
+
+            btn.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                onDpadPress(cmd, btn);
+            });
+
+            btn.addEventListener('mouseup', function(e) {
+                e.preventDefault();
+                onDpadRelease(btn);
+            });
+
+            btn.addEventListener('mouseleave', function() {
+                if (activeCmd) onDpadRelease(btn);
+            });
+        });
+
+        document.addEventListener('touchend', function() {
+            if (activeCmd && activeCmd !== 'stop') {
+                conn.sendStop();
+                activeCmd = null;
+            }
+        });
+    }
+
+    function onDpadPress(cmd, btn) {
+        if (estopEngaged) return;
+        if (debounceTimer) return;
+        debounceTimer = setTimeout(function() { debounceTimer = null; }, 50);
+
+        activeCmd = cmd;
+        btn.classList.add('dpad__btn--active');
+
+        if (cmd === 'stop') {
+            conn.sendStop();
+            activeCmd = null;
+        } else {
+            conn.sendDrive(cmd, speed, steeringMode);
+        }
+    }
+
+    function onDpadRelease(btn) {
+        btn.classList.remove('dpad__btn--active');
+        if (activeCmd && activeCmd !== 'stop') {
+            conn.sendStop();
+        }
+        activeCmd = null;
+    }
+
+    // ============================================================
+    // Speed Slider
+    // ============================================================
+    function initSpeedSlider() {
+        var slider = document.getElementById('speed-slider');
+        var valEl = document.getElementById('speed-value');
+        if (!slider || !valEl) return;
+
+        slider.addEventListener('input', function() {
+            speed = parseInt(slider.value, 10);
+            valEl.textContent = speed + '%';
+        });
+
+        slider.addEventListener('change', function() {
+            try { localStorage.setItem('rover_speed', speed); } catch (_) {}
+        });
+    }
+
+    // ============================================================
+    // Mode Buttons
+    // ============================================================
+    function initModeButtons() {
+        var modeSection = document.getElementById('mode-section');
+        modeSection.addEventListener('click', function(e) {
+            var btn = e.target.closest('.mode-btn[data-mode]');
+            if (!btn) return;
+            steeringMode = parseInt(btn.dataset.mode, 10);
+            updateModeButtonUI(steeringMode);
+            conn.send({ cmd: 'mode', mode: steeringMode });
+            try { localStorage.setItem('rover_mode', steeringMode); } catch (_) {}
+        });
+    }
+
+    function updateModeButtonUI(mode) {
+        document.querySelectorAll('#mode-section .mode-btn').forEach(function(b) {
+            b.classList.remove('mode-btn--active');
+        });
+        var active = document.querySelector('#mode-section .mode-btn[data-mode="' + mode + '"]');
+        if (active) active.classList.add('mode-btn--active');
+    }
+
+    // ============================================================
+    // E-Stop
+    // ============================================================
+    function initEstop() {
+        var btn = document.getElementById('estop-btn');
+        if (!btn) return;
+
+        btn.addEventListener('click', function() {
+            if (estopEngaged) {
+                estopEngaged = false;
+                btn.classList.remove('estop-btn--engaged');
+                btn.textContent = 'EMERGENCY STOP';
+                conn.send({ cmd: 'resume' });
+                addLog('warn', 'E-Stop released');
+            } else {
+                estopEngaged = true;
+                btn.classList.add('estop-btn--engaged');
+                btn.textContent = 'E-STOP ENGAGED \u2014 TAP TO RELEASE';
+                conn.sendEstop();
+                addLog('error', 'E-Stop engaged!');
+            }
+        });
+    }
+
+    function setEstop(engaged) {
+        estopEngaged = engaged;
+        var btn = document.getElementById('estop-btn');
+        if (!btn) return;
+        if (engaged) {
+            btn.classList.add('estop-btn--engaged');
+            btn.textContent = 'E-STOP ENGAGED \u2014 TAP TO RELEASE';
+        } else {
+            btn.classList.remove('estop-btn--engaged');
+            btn.textContent = 'EMERGENCY STOP';
+        }
+    }
+
+    // ============================================================
+    // Quick Action Buttons
+    // ============================================================
+    function initActionButtons() {
+        var ledBtn = document.getElementById('action-lights');
+        if (ledBtn) {
+            var ledOn = false;
+            ledBtn.addEventListener('click', function() {
+                ledOn = !ledOn;
+                conn.send({ cmd: 'led', state: ledOn ? 1 : 0 });
+                ledBtn.style.color = ledOn ? 'var(--secondary)' : '';
+            });
+        }
+
+        var hornBtn = document.getElementById('action-horn');
+        if (hornBtn) {
+            hornBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                conn.send({ cmd: 'buzzer', state: 1 });
+            }, { passive: false });
+            hornBtn.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                conn.send({ cmd: 'buzzer', state: 0 });
+            }, { passive: false });
+            hornBtn.addEventListener('mousedown', function() { conn.send({ cmd: 'buzzer', state: 1 }); });
+            hornBtn.addEventListener('mouseup', function() { conn.send({ cmd: 'buzzer', state: 0 }); });
+        }
+    }
+
+    // ============================================================
+    // Diagnostic Log Panel
+    // ============================================================
+    function initLogPanel() {
+        var panel = document.getElementById('log-panel');
+        var toggle = document.getElementById('log-toggle');
+        var closeBtn = document.getElementById('log-close');
+        var clearBtn = document.getElementById('log-clear');
+        var viewer = document.getElementById('log-viewer');
+
+        toggle.addEventListener('click', function() {
+            var visible = panel.classList.toggle('log-panel--visible');
+            toggle.classList.toggle('log-toggle--active', visible);
+        });
+
+        closeBtn.addEventListener('click', function() {
+            panel.classList.remove('log-panel--visible');
+            toggle.classList.remove('log-toggle--active');
+        });
+
+        clearBtn.addEventListener('click', function() {
+            logEntries = [];
+            while (viewer.firstChild) viewer.removeChild(viewer.firstChild);
+        });
+
+        // Auto-scroll toggle: pause if user scrolls up
+        viewer.addEventListener('scroll', function() {
+            logAutoScroll = (viewer.scrollTop + viewer.clientHeight >= viewer.scrollHeight - 20);
+        });
+    }
+
+    // ============================================================
+    // Settings
+    // ============================================================
+    function initSettings() {
+        bindSetting('set-speed-limit', 'set-speed-limit-val', 'speedLimit', '%');
+        bindSetting('set-steer-sens', 'set-steer-sens-val', 'steerSens', '%');
+        bindSetting('set-geofence', 'set-geofence-val', 'geofenceRadius', 'm');
+        bindSetting('set-estop-timeout', 'set-estop-timeout-val', 'estopTimeout', 's');
+        bindSetting('set-trim-fl', 'set-trim-fl-val', 'trimFL', '');
+        bindSetting('set-trim-fr', 'set-trim-fr-val', 'trimFR', '');
+        bindSetting('set-trim-rl', 'set-trim-rl-val', 'trimRL', '');
+        bindSetting('set-trim-rr', 'set-trim-rr-val', 'trimRR', '');
+
+        // Steering mode select
+        var modeSelect = document.getElementById('set-steer-mode');
+        if (modeSelect) {
+            modeSelect.value = settings.steerMode;
+            modeSelect.addEventListener('change', function() {
+                settings.steerMode = parseInt(modeSelect.value, 10);
+                steeringMode = settings.steerMode;
+                updateModeButtonUI(steeringMode);
+                saveSettings(settings);
+                conn.send({ cmd: 'mode', mode: steeringMode });
+            });
+        }
+
+        // LED color
+        var colorInput = document.getElementById('set-led-color');
+        if (colorInput) {
+            colorInput.value = settings.ledColor;
+            colorInput.addEventListener('input', function() {
+                settings.ledColor = colorInput.value;
+                saveSettings(settings);
+                conn.send({ cmd: 'cfg', key: 'led_color', value: colorInput.value });
+            });
+        }
+    }
+
+    function bindSetting(inputId, valId, key, suffix) {
+        var input = document.getElementById(inputId);
+        var valEl = document.getElementById(valId);
+        if (!input || !valEl) return;
+
+        // Load saved value
+        input.value = settings[key];
+        valEl.textContent = settings[key] + suffix;
+
+        input.addEventListener('input', function() {
+            var v = parseInt(input.value, 10);
+            valEl.textContent = v + suffix;
+        });
+
+        input.addEventListener('change', function() {
+            settings[key] = parseInt(input.value, 10);
+            saveSettings(settings);
+            conn.send({ cmd: 'cfg', key: key, value: settings[key] });
+        });
+    }
+
+    // ============================================================
+    // Mission Control
+    // ============================================================
+    function initMissionButtons() {
+        document.getElementById('mission-patrol-btn').addEventListener('click', function() {
+            toggleMission('patrol', this);
+        });
+
+        document.getElementById('mission-explore-btn').addEventListener('click', function() {
+            toggleMission('explore', this);
+        });
+
+        document.getElementById('mission-home-btn').addEventListener('click', function() {
+            conn.send({ cmd: 'mission', action: 'start', type: 'home' });
+            addLog('info', 'Return home commanded');
+        });
+    }
+
+    function toggleMission(type, btn) {
+        if (currentMission === type && missionRunning) {
+            // Stop current mission
+            conn.send({ cmd: 'mission', action: 'stop', type: type });
+            addLog('info', 'Stopping ' + type + ' mission');
+        } else {
+            // Start mission
+            conn.send({ cmd: 'mission', action: 'start', type: type });
+            addLog('info', 'Starting ' + type + ' mission');
+        }
+    }
+
+    function updateMissionStatusUI(status) {
+        var statusEl = document.getElementById('mission-status');
+        if (!statusEl) return;
+
+        var statusText = status.toUpperCase();
+        statusEl.textContent = statusText;
+        statusEl.className = 'mission-card__status';
+
+        if (status === 'idle') {
+            statusEl.classList.add('mission-status--idle');
+            missionRunning = false;
+            currentMission = 'idle';
+        } else if (status === 'running' || status === 'patrol' || status === 'explore' || status === 'homing') {
+            statusEl.classList.add('mission-status--running');
+            missionRunning = true;
+            if (status !== 'running') currentMission = status;
+        } else if (status === 'paused') {
+            statusEl.classList.add('mission-status--paused');
+        } else if (status === 'error') {
+            statusEl.classList.add('mission-status--error');
+            missionRunning = false;
+        }
+
+        // Update mission buttons
+        updateMissionButtons();
+    }
+
+    function updateMissionButtons() {
+        var patrolBtn = document.getElementById('mission-patrol-btn');
+        var exploreBtn = document.getElementById('mission-explore-btn');
+
+        if (missionRunning && currentMission === 'patrol') {
+            patrolBtn.textContent = 'Stop Patrol';
+            patrolBtn.className = 'mission-btn mission-btn--stop';
+            exploreBtn.disabled = true;
+        } else if (missionRunning && currentMission === 'explore') {
+            exploreBtn.textContent = 'Stop Explore';
+            exploreBtn.className = 'mission-btn mission-btn--stop';
+            patrolBtn.disabled = true;
+        } else {
+            patrolBtn.textContent = 'Start Patrol';
+            patrolBtn.className = 'mission-btn mission-btn--start';
+            patrolBtn.disabled = false;
+            exploreBtn.textContent = 'Start Explore';
+            exploreBtn.className = 'mission-btn mission-btn--start';
+            exploreBtn.disabled = false;
+        }
+    }
+
+    // ============================================================
+    // Interactive Map (Leaflet)
+    // ============================================================
+    function initMap() {
+        if (mapInitialized) return;
+        mapInitialized = true;
+
+        var defaultLat = telemetry.lat || 51.505;
+        var defaultLon = telemetry.lon || -0.09;
+
+        map = L.map('rover-map', {
+            zoomControl: false,
+            attributionControl: false
+        }).setView([defaultLat, defaultLon], 18);
+
+        // Dark tile layer
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 20
+        }).addTo(map);
+
+        // Zoom control top-left
+        L.control.zoom({ position: 'topleft' }).addTo(map);
+
+        // Rover marker (red circle)
+        var roverIcon = L.divIcon({
+            className: '',
+            html: '<div style="width:14px;height:14px;background:#f38ba8;border:2px solid #cdd6f4;border-radius:50%;box-shadow:0 0 8px rgba(243,139,168,0.6);"></div>',
+            iconSize: [14, 14],
+            iconAnchor: [7, 7]
+        });
+        roverMarker = L.marker([defaultLat, defaultLon], { icon: roverIcon }).addTo(map);
+
+        // Trail polyline
+        roverTrail = L.polyline([], {
+            color: '#f38ba8',
+            weight: 2,
+            opacity: 0.6,
+            dashArray: '4 4'
+        }).addTo(map);
+
+        // Geofence circle
+        geofenceCircle = L.circle([defaultLat, defaultLon], {
+            radius: settings.geofenceRadius,
+            color: '#f9e2af',
+            weight: 1,
+            opacity: 0.5,
+            fillOpacity: 0.05,
+            dashArray: '6 4'
+        }).addTo(map);
+
+        // Map click for waypoints
+        map.on('click', function(e) {
+            if (!addWaypointMode) return;
+            addWaypoint(e.latlng.lat, e.latlng.lng);
+        });
+
+        // Toolbar buttons
+        document.getElementById('map-center').addEventListener('click', function() {
+            if (telemetry.lat) {
+                map.setView([telemetry.lat, telemetry.lon], 18);
+            }
+        });
+
+        document.getElementById('map-add-wp').addEventListener('click', function() {
+            addWaypointMode = !addWaypointMode;
+            this.classList.toggle('map-tool-btn--active', addWaypointMode);
+        });
+
+        document.getElementById('map-clear-trail').addEventListener('click', function() {
+            trailPoints = [];
+            if (roverTrail) roverTrail.setLatLngs([]);
+            addLog('info', 'Trail cleared');
+        });
+
+        document.getElementById('map-clear-wp').addEventListener('click', function() {
+            clearWaypoints();
+            addLog('info', 'Waypoints cleared');
+        });
+    }
+
+    function updateMapPosition(lat, lon) {
+        if (!map || !roverMarker) return;
+
+        roverMarker.setLatLng([lat, lon]);
+
+        // Update trail
+        trailPoints.push([lat, lon]);
+        if (trailPoints.length > 500) trailPoints.shift();
+        roverTrail.setLatLngs(trailPoints);
+
+        // Update geofence center
+        if (geofenceCircle) {
+            // Keep geofence centered on starting position (first point)
+            if (trailPoints.length === 1) {
+                geofenceCircle.setLatLng([lat, lon]);
+            }
+            geofenceCircle.setRadius(settings.geofenceRadius);
+        }
+    }
+
+    function addWaypoint(lat, lon) {
+        var idx = waypoints.length + 1;
+        var wpIcon = L.divIcon({
+            className: '',
+            html: '<div style="width:20px;height:20px;background:#89b4fa;border:2px solid #cdd6f4;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#11111b;">' + idx + '</div>',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
+        var marker = L.marker([lat, lon], { icon: wpIcon }).addTo(map);
+        waypoints.push({ lat: lat, lon: lon });
+        waypointMarkers.push(marker);
+        addLog('info', 'Waypoint ' + idx + ': ' + lat.toFixed(6) + ', ' + lon.toFixed(6));
+
+        // Send to rover
+        conn.send({ cmd: 'waypoint', action: 'add', lat: lat, lon: lon, idx: idx });
+    }
+
+    function clearWaypoints() {
+        waypointMarkers.forEach(function(m) { map.removeLayer(m); });
+        waypointMarkers = [];
+        waypoints = [];
+        conn.send({ cmd: 'waypoint', action: 'clear' });
+    }
+
+    // ============================================================
+    // Gamepad Support
+    // ============================================================
+    function initGamepad() {
+        window.addEventListener('gamepadconnected', function(e) {
+            gamepadConnected = true;
+            gamepadIndex = e.gamepad.index;
+            addLog('info', 'Gamepad connected: ' + e.gamepad.id);
+            updateGamepadUI(true, e.gamepad.id);
+            startGamepadPoll();
+        });
+
+        window.addEventListener('gamepaddisconnected', function(e) {
+            gamepadConnected = false;
+            gamepadIndex = -1;
+            addLog('info', 'Gamepad disconnected');
+            updateGamepadUI(false, '');
+            stopGamepadPoll();
+        });
+    }
+
+    function updateGamepadUI(connected, name) {
+        var indicator = document.getElementById('gamepad-indicator');
+        if (indicator) {
+            indicator.classList.toggle('header__gamepad--connected', connected);
+        }
+        var text = document.getElementById('gamepad-text');
+        if (text) {
+            text.textContent = connected ? name.substring(0, 40) : 'No gamepad detected';
+        }
+    }
+
+    function startGamepadPoll() {
+        stopGamepadPoll();
+        gamepadPollTimer = setInterval(pollGamepad, 50); // 20Hz
+    }
+
+    function stopGamepadPoll() {
+        if (gamepadPollTimer) {
+            clearInterval(gamepadPollTimer);
+            gamepadPollTimer = null;
+        }
+    }
+
+    function pollGamepad() {
+        if (!gamepadConnected) return;
+        var gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+        var gp = gamepads[gamepadIndex];
+        if (!gp) return;
+
+        // Deadzone
+        var DEADZONE = 0.12;
+        function applyDeadzone(val) {
+            return Math.abs(val) < DEADZONE ? 0 : val;
+        }
+
+        // Left stick: drive (axes 0,1)
+        var steerX = applyDeadzone(gp.axes[0] || 0); // angular
+        var steerY = applyDeadzone(gp.axes[1] || 0); // forward/back (inverted)
+        var linear = -steerY; // forward = positive
+        var angular = steerX;
+
+        // Right stick: camera pan/tilt (axes 2,3)
+        var camPan = applyDeadzone(gp.axes[2] || 0);
+        var camTilt = applyDeadzone(gp.axes[3] || 0);
+
+        // Triggers: LT=axis4/button6, RT=axis5/button7
+        // Use triggers as override: RT=forward, LT=reverse
+        var lt = gp.buttons[6] ? gp.buttons[6].value : 0;
+        var rt = gp.buttons[7] ? gp.buttons[7].value : 0;
+        if (rt > 0.1 || lt > 0.1) {
+            linear = rt - lt; // RT pushes forward, LT pushes back
+        }
+
+        // Speed mode: bumpers LB(4) / RB(5)
+        var lb = gp.buttons[4] ? gp.buttons[4].pressed : false;
+        var rb = gp.buttons[5] ? gp.buttons[5].pressed : false;
+
+        if (lb && !prevGamepadButtons[4]) {
+            gamepadSpeedMode = Math.max(0, gamepadSpeedMode - 1);
+            updateGamepadSpeedModeUI();
+        }
+        if (rb && !prevGamepadButtons[5]) {
+            gamepadSpeedMode = Math.min(2, gamepadSpeedMode + 1);
+            updateGamepadSpeedModeUI();
+        }
+
+        // A button (0) = E-stop toggle
+        var aBtn = gp.buttons[0] ? gp.buttons[0].pressed : false;
+        if (aBtn && !prevGamepadButtons[0]) {
+            // Toggle E-stop
+            document.getElementById('estop-btn').click();
+        }
+
+        // Store button states for edge detection
+        for (var i = 0; i < gp.buttons.length && i < prevGamepadButtons.length; i++) {
+            prevGamepadButtons[i] = gp.buttons[i] ? gp.buttons[i].pressed : false;
+        }
+
+        // Apply speed factor
+        var factor = gamepadSpeedFactors[gamepadSpeedMode];
+        linear *= factor;
+        angular *= factor;
+
+        // Send if any input active
+        if (Math.abs(linear) > 0.01 || Math.abs(angular) > 0.01) {
+            if (!estopEngaged) {
+                conn.send({
+                    cmd: 'gamepad',
+                    linear: Math.round(linear * 100) / 100,
+                    angular: Math.round(angular * 100) / 100
+                });
+            }
+        }
+
+        // Camera pan/tilt
+        if (Math.abs(camPan) > 0.01 || Math.abs(camTilt) > 0.01) {
+            conn.send({
+                cmd: 'camera',
+                pan: Math.round(camPan * 100) / 100,
+                tilt: Math.round(-camTilt * 100) / 100
+            });
+        }
+    }
+
+    function updateGamepadSpeedModeUI() {
+        var el = document.getElementById('gamepad-speed-mode');
+        if (el) el.textContent = gamepadSpeedModes[gamepadSpeedMode];
+        addLog('info', 'Gamepad speed: ' + gamepadSpeedModes[gamepadSpeedMode]);
+    }
+
+})();
+</script>
 </body>
 </html>

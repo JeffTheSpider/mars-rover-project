@@ -1,15 +1,17 @@
 // ============================================================
 // Mars Rover — Phase 1 Firmware
 // ESP32-S3 DevKitC-1 (N16R8)
-// Version: 0.1.0
+// Version: 0.2.0
 //
 // Phase 1: 0.4 scale prototype
 // - 4-channel motor control (L298N, 6 motors as 4 groups)
 // - 4 SG90 steering servos (Ackermann + point turn + crab)
 // - WiFi web server + WebSocket for phone control
+// - NMEA text UART protocol for Jetson communication (EA-12)
 // - Battery monitoring (ADC)
 // - 2 wheel encoders (optional)
 // - E-stop button
+// - Phase 2: define PHASE2_BINARY_PROTOCOL for COBS binary UART (EA-18)
 //
 // Architecture: Single translation unit (.h includes)
 // Same proven pattern as Clock/Lamp ESP8266 projects
@@ -26,6 +28,9 @@
 #include "steering.h"
 #include "sensors.h"
 #include "rover_webserver.h"
+#include "ota.h"
+#include "uart_nmea.h"
+#include "uart_binary.h"
 
 // --- Timing ---
 unsigned long lastMotorUpdate = 0;
@@ -64,6 +69,14 @@ void setup() {
   // Start web server
   setupWebServer();
 
+  // OTA firmware updates
+  setupOTA();
+
+  // Start UART for Jetson communication (Phase 1: NMEA text)
+#ifndef PHASE2_BINARY_PROTOCOL
+  setupUartNMEA();
+#endif
+
   // Enable watchdog (5 second timeout)
   // ESP32 Arduino Core v3.x uses config struct
   esp_task_wdt_config_t wdt_config = {
@@ -98,8 +111,16 @@ void loop() {
     connectWiFi();
   }
 
+  // Handle OTA updates
+  handleOTA();
+
   // Handle web server + WebSocket
   handleWeb();
+
+  // Handle UART protocol (Jetson communication)
+#ifndef PHASE2_BINARY_PROTOCOL
+  handleUartNMEA();
+#endif
 
   // Check E-stop
   if (isEStopPressed() && !estopActive) {

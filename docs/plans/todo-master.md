@@ -42,10 +42,15 @@
 
 ### 1.3 Missing Documentation
 - [x] Create project README.md at repository root (project overview, phase status, quick links)
-- [ ] Create `docs/datasheets/README.md` listing required datasheets with download links
+- [x] Create `docs/datasheets/README.md` listing required datasheets with download links
 - [x] Create wiring diagram document for Phase 1 (EA-19: ESP32-S3 → motors/sensors/servos)
-- [ ] Create CAD preparation guide (reference dimensions from EA-08 for Fusion 360)
-- [ ] Document the backup strategy (3 drives, PowerShell commands)
+- [x] Create CAD preparation guide (EA-20, reference dimensions from EA-08 for Fusion 360)
+- [x] Create test procedures & acceptance criteria (EA-21)
+- [x] Create Master Engineering Handbook (EA-00, compiles all EAs)
+- [x] Create design methodology document (V-model, phases, review gates)
+- [x] Create Fusion 360 MCP setup guide
+- [x] Create parametric CAD generation script (cad/scripts/generate_rover_params.py)
+- [x] Document the backup strategy (`docs/plans/backup-strategy.md` + `scripts/backup.bat`)
 
 ---
 
@@ -64,7 +69,7 @@
 ### 2.2 URDF / Simulation
 - [x] Uncomment Gazebo plugins in rover.urdf.xacro (diff_drive, joint_state, LiDAR, IMU, depth camera)
 - [x] Create standalone `simulation.launch.py` for Gazebo testing
-- [ ] Add Gazebo world file for garden environment (flat grass + gravel path + slope)
+- [x] Add Gazebo world file for garden environment (grass + gravel path + slopes + obstacles + furniture)
 - [ ] Test URDF loads correctly: `check_urdf rover.urdf` (requires Jetson)
 - [ ] Verify TF tree matches EA-13 specification (requires Jetson)
 
@@ -101,7 +106,7 @@
 - [x] Implement ultrasonic sensors (6 channels) — non-blocking trigger/echo, median filter
 - [x] Add WiFi AP mode for initial configuration
 - [x] Add OTA firmware update support
-- [ ] Test compile for ESP32-S3 DevKitC-1 (requires ESP32 board package)
+- [x] Test compile for ESP32-S3 DevKitC-1 (971KB/74% flash, 48KB/14% RAM — ESP32 Core v3.3.7)
 - [ ] **All modules need on-hardware validation** (requires ESP32-S3 + peripherals)
 
 ---
@@ -259,6 +264,7 @@
 - [ ] Verify detection → obstacle avoidance pipeline end-to-end
 
 ### 6.5 Autonomy
+- [x] Create BT.CPP v4 behaviour tree XML missions (patrol, explore, return_home, safety_subtree)
 - [ ] Test patrol mission (predefined waypoints, loop)
 - [ ] Test explore mission (frontier exploration)
 - [ ] Test return-to-home on low battery
@@ -306,7 +312,7 @@
 - [ ] Implement live camera streaming (MJPEG from Jetson web_server_node)
 - [ ] Implement interactive map (leaflet.js, show rover position, waypoints, geofence)
 - [ ] Implement gamepad input support (Gamepad API → WebSocket → ROS2)
-- [ ] Implement D-pad touch control for manual driving
+- [x] Implement D-pad touch control for manual driving (in PWA and ESP32 embedded web UI)
 - [ ] Implement mission planner UI (draw waypoints on map, start/stop missions)
 - [ ] Implement settings page (PID tuning, speed limits, geofence radius)
 - [ ] Implement firmware update trigger (OTA from PWA via Jetson)
@@ -330,8 +336,7 @@
 
 ## 10. PROJECT MANAGEMENT
 
-- [x] Complete all 18 engineering analyses (EA-01 through EA-18)
-- [x] Create EA-19 wiring diagram
+- [x] Complete all 21 engineering analyses (EA-00 through EA-21)
 - [x] Create Phase 1 firmware skeleton (all modules implemented)
 - [x] Create ROS2 package scaffolding (all 10 nodes implemented)
 - [x] Create PWA app

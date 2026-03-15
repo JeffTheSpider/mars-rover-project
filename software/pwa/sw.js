@@ -1,15 +1,12 @@
-// Mars Rover PWA — Service Worker v1
+// Mars Rover PWA — Service Worker v2
 // Network-first strategy (proven pattern from Hub project)
+// Bump CACHE_VERSION when changing index.html
 
-const CACHE_VERSION = 'rover-v1';
+const CACHE_VERSION = 'rover-v2';
 const CACHE_FILES = [
     '/',
     '/index.html',
     '/manifest.json',
-    '/css/styles.css',
-    '/js/app.js',
-    '/js/connection.js',
-    '/js/controls.js',
 ];
 
 // Install — pre-cache core assets
@@ -37,6 +34,15 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
     // Skip WebSocket and non-GET requests
     if (e.request.url.startsWith('ws') || e.request.method !== 'GET') return;
+
+    // Skip CDN resources (Leaflet, Google Fonts) from caching
+    const url = new URL(e.request.url);
+    if (url.hostname !== location.hostname) {
+        e.respondWith(
+            fetch(e.request).catch(() => caches.match(e.request))
+        );
+        return;
+    }
 
     e.respondWith(
         fetch(e.request)

@@ -1,0 +1,175 @@
+name: Mars Rover CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  # ── ESP32-S3 Firmware Build ──────────────────────────────────────────
+  esp32-firmware:
+    name: ESP32 Firmware
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache Arduino CLI data
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.arduino15
+            ~/Arduino/libraries
+          key: arduino-esp32-${{ hashFiles('firmware/esp32/*.ino', 'firmware/esp32/*.h') }}
+          restore-keys: |
+            arduino-esp32-
+
+      - name: Install Arduino CLI
+        uses: arduino/setup-arduino-cli@v2
+
+      - name: Install ESP32 board package
+        run: |
+          arduino-cli config init
+          arduino-cli config add board_manager.additional_urls \
+            https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+          arduino-cli core update-index
+          arduino-cli core install esp32:esp32
+
+      - name: Install libraries
+        run: |
+          arduino-cli lib install "WebSockets"
+
+      - name: Compile firmware
+        run: |
+          arduino-cli compile --fqbn esp32:esp32:esp32s3 firmware/esp32/
+
+  # ── ROS2 Humble Build & Test ─────────────────────────────────────────
+  ros2-build:
+    name: ROS2 Build & Test
+    runs-on: ubuntu-22.04
+    container:
+      image: ros:humble-ros-base
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          apt-get update
+          apt-get install -y python3-colcon-common-extensions python3-rosdep
+          rosdep init || true
+          rosdep update
+
+      - name: Install package dependencies
+        working-directory: software/jetson
+        run: |
+          rosdep install --from-paths . --ignore-src -r -y
+
+      - name: Build all packages
+        working-directory: software/jetson
+        run: |
+          . /opt/ros/humble/setup.sh
+          colcon build --packages-up-to rover_bringup
+
+      - name: Run tests
+        working-directory: software/jetson
+        run: |
+          . /opt/ros/humble/setup.sh
+          . install/setup.sh
+          colcon test
+          colcon test-result --verbose || true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ros2-test-results
+          path: software/jetson/build/**/test_results/**/*.xml
+          retention-days: 14
+
+  # ── Python Linting ───────────────────────────────────────────────────
+  python-lint:
+    name: Python Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install flake8
+        run: pip install flake8
+
+      - name: Lint Python files
+        run: |
+          flake8 software/jetson/ software/pwa/ \
+            --max-line-length=120 \
+            --count \
+            --show-source \
+            --statistics
+
+  # ── Documentation Check ──────────────────────────────────────────────
+  docs-check:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check all engineering documents exist
+        run: |
+          DOCS_DIR="docs/engineering"
+          MISSING=0
+
+          for i in $(seq -w 0 21); do
+            PATTERN="${DOCS_DIR}/${i}-*.md"
+            COUNT=$(ls -1 $PATTERN 2>/dev/null | wc -l)
+            if [ "$COUNT" -eq 0 ]; then
+              echo "::error::Missing document EA-${i} (no file matching ${PATTERN})"
+              MISSING=$((MISSING + 1))
+            else
+              echo "OK: EA-${i} ($(ls -1 $PATTERN))"
+            fi
+          done
+
+          if [ "$MISSING" -gt 0 ]; then
+            echo "::error::${MISSING} engineering document(s) missing"
+            exit 1
+          fi
+
+          echo "All engineering documents present."
+
+      - name: Check internal cross-references
+        run: |
+          DOCS_DIR="docs/engineering"
+          BROKEN=0
+
+          for doc in ${DOCS_DIR}/*.md; do
+            # Find references like EA-00, EA-01, etc.
+            REFS=$(grep -oE 'EA-[0-9]{2}' "$doc" 2>/dev/null | sort -u)
+
+            for ref in $REFS; do
+              NUM=$(echo "$ref" | sed 's/EA-//')
+              PATTERN="${DOCS_DIR}/${NUM}-*.md"
+              if ! ls $PATTERN >/dev/null 2>&1; then
+                echo "::warning file=${doc}::Broken reference to ${ref} (no file matching ${PATTERN})"
+                BROKEN=$((BROKEN + 1))
+              fi
+            done
+          done
+
+          if [ "$BROKEN" -gt 0 ]; then
+            echo "::error::${BROKEN} broken cross-reference(s) found"
+            exit 1
+          fi
+
+          echo "All cross-references valid."
