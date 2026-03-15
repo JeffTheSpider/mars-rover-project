@@ -6,7 +6,7 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 ## Project Location
 - Root: `D:\Mars Rover Project\`
 - Design doc: `docs/plans/2026-03-14-mars-rover-design.md` (v1.3)
-- Engineering analyses: `docs/engineering/` (EA-01 through EA-19)
+- Engineering analyses: `docs/engineering/` (EA-00 through EA-21)
 - Shopping list: `docs/plans/phase1-shopping-list.md`
 - Master todo: `docs/plans/todo-master.md`
 - Firmware: `firmware/esp32/` (ESP32-S3 Phase 1 motor controller)
@@ -37,6 +37,8 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 | 17 | Phase 1 Build Guide | Step-by-step, ~14 day timeline, troubleshooting |
 | 18 | Binary UART Protocol | COBS + CRC-16, 460800 baud, binary structs, 12% utilisation (Phase 2) |
 | 19 | Wiring Diagram | Phase 1 complete wiring reference, ASCII diagrams, connector strategy |
+| 20 | CAD Preparation | Parametric dimensions from EA-08, Fusion 360 assembly structure |
+| 21 | Test Procedures | Acceptance criteria for firmware, electronics, integration, autonomy |
 
 ## Key Specs
 - Size: 1100mm x 650mm x 1050mm (full) / 440x260mm (0.4 scale Phase 1)
@@ -61,7 +63,7 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 - `motors.h` — 4-channel L298N control with speed ramping
 - `steering.h` — Ackermann/point turn/crab walk via SG90 servos
 - `sensors.h` — Battery ADC (10-sample average), encoders, E-stop
-- `webserver.h` — HTTP + WebSocket, embedded Catppuccin Mocha UI
+- `rover_webserver.h` — HTTP + WebSocket, embedded Catppuccin Mocha UI
 - `esp32.ino` — Main loop, WiFi, watchdog, non-blocking timing
 - Compile: `arduino-cli compile --fqbn esp32:esp32:esp32s3`
 - Upload: USB or OTA (espota.py)
@@ -109,7 +111,7 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 - UK magnetic declination: -0.0175 rad (for navsat_transform)
 
 ## Project Status (as of 2026-03-15)
-- All 19 engineering analyses complete
+- All 22 engineering analyses complete (EA-00 master handbook through EA-21)
 - All ROS2 nodes scaffolded (10 nodes across 7 packages)
 - All ESP32 firmware modules scaffolded (6 modules)
 - ESP32-S3 firmware compiles successfully (971KB flash 74%, 48KB RAM 14%)
