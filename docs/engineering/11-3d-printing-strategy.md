@@ -131,14 +131,16 @@ Small parts that join extrusions or hold bearings.
 | Thread | M3 (0.5mm pitch) |
 | Supplier | CNC Kitchen style / AliExpress bulk |
 | Cost | ~$0.06 each |
-| Pull-out strength (PETG) | 600-900 N (60-90 kg·f) |
+| Pull-out strength (PETG) | 800-1,200N (per CNC Kitchen testing with proper hole sizing) |
 | Torque resistance | ~2.5 N·m |
 
 ### 3.2 Hole Design for Inserts
 
 | Feature | Dimension | Notes |
 |---------|-----------|-------|
-| Hole diameter | 4.8mm | Slightly undersized vs insert OD (5.7mm) — plastic flows around knurls |
+| Hole diameter | 4.8mm (general) | Slightly undersized vs insert OD (5.7mm) — plastic flows around knurls |
+| Hole diameter (vertical insertion) | 4.2mm | Insert axis perpendicular to layers — tighter hole, knurls grip layer lines |
+| Hole diameter (horizontal insertion) | 4.25mm | Insert axis parallel to layers — slightly larger to avoid pushing layers apart |
 | Hole depth | 5.5mm | 1mm deeper than insert to allow full seating |
 | Wall thickness around hole | ≥2.4mm (3 walls at 0.4mm line width) | Prevents blowout |
 | Chamfer at top | 0.5mm × 45° | Guides insert during installation |
@@ -163,6 +165,8 @@ Small parts that join extrusions or hold bearings.
 **Acceptable**: Insert axis parallel to layers (inserted from side). Slightly lower pull-out strength (~70% of perpendicular) because the knurls push layers apart rather than gripping into them.
 
 **Rule**: Where possible, design parts so inserts go in perpendicular to layers. If this conflicts with the best print orientation for strength, prioritise the print orientation and accept slightly lower insert strength (still far exceeds our loads).
+
+**Always print a test insert block first.** A small 30×30×15mm block with 2-3 insert holes lets you validate hole diameter, insertion depth, and pull-out strength before committing to a multi-hour structural print.
 
 ### 3.5 Slicer Tip: Local Infill Override
 
@@ -425,12 +429,16 @@ PETG parts used outdoors should be protected from UV:
 
 **Recommendation**: Print structural parts in ASA for inherent UV resistance. For PETG body panels, apply 2 coats of automotive clear coat spray — quick, cheap, effective.
 
-**Layered UV protection (best results for PETG panels)**:
-1. Sand with 220 grit for adhesion
-2. Spray primer (Rust-Oleum 2X Ultra Cover Primer)
-3. 2-3 thin coats spray paint
-4. 2 coats UV clear coat (Rust-Oleum Crystal Clear) — primary UV barrier
+**4-step spray paint process (best results for PETG panels)**:
+1. **Sand**: 220 grit over entire surface for mechanical adhesion
+2. **Primer**: Rust-Oleum 2X Ultra Cover Primer — 2 coats, 15min between coats
+3. **Color**: 2-3 thin coats of spray paint (any Rust-Oleum 2X color), 10min between coats. Thin coats prevent drips and build even coverage.
+4. **Clear coat**: Rust-Oleum Crystal Clear matte or satin — 2 coats, 20min between coats. **This is the primary UV barrier.** Without clear coat, the color will fade and the plastic underneath degrades.
 5. Total cost: ~£15-20 for entire rover
+
+**Important notes**:
+- XTC-3D epoxy fills layer lines and gives a smooth finish but is NOT UV stable — must apply clear coat over it or it will yellow and crack within months outdoors.
+- ASA can be chemically smoothed with MEK (methyl ethyl ketone) but MEK is hazardous (respiratory and skin irritant, flammable). Spray paint + clear coat is a safer alternative that also provides UV protection and colour in one process.
 
 ### 7.4 Phase 2 Structural Reinforcement
 
@@ -443,6 +451,12 @@ For high-stress parts at full scale (16.7 kg rover weight):
 | M3 threaded rod tensile core | Through-bolt running arm length | Easy — drill and insert | Alternative to aluminium tube core |
 
 **Not needed for Phase 1** — at 1.1 kg total weight, PETG alone is more than adequate.
+
+**Reinforcement details (Phase 2)**:
+
+- **Carbon fiber strips**: Bond 1mm × 10mm pultruded carbon fiber strips to the flat faces of rocker and bogie arms using structural epoxy (e.g. JB Weld or West System). Apply strips to both top and bottom faces for maximum effect. Increases bending stiffness 3-5× compared to bare PETG/ASA. Lightly sand the printed surface and the strip with 120 grit before bonding. Clamp or tape in place for 24hr cure.
+- **Fiberglass tape**: Wrap 25mm woven fiberglass tape around pivot joint bosses with epoxy (wet layup). 2-3 wraps provides substantial shear reinforcement at the most stressed points. Sand smooth after cure.
+- **Differential bar tensile core**: Run an M3 threaded rod through the full length of the differential bar as a tensile core. The rod carries tension loads while the printed shell handles compression, preventing the bar from snapping under suspension articulation.
 
 ### 7.3 Waterproofing (Phase 2)
 

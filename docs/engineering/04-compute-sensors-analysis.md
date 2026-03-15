@@ -45,6 +45,24 @@ Pi 5 + Coral TPU improves to 10-15 FPS but:
 
 The ESP32-S3 handles all real-time motor/sensor control (as designed in EA-02), so the Jetson only needs to run the "smart" tasks: vision, navigation, web server.
 
+### 1.4 TensorRT Deployment
+
+**WARNING**: TensorRT engines MUST be exported ON the Jetson — engines are GPU-architecture-specific. Never export on a PC and copy to Jetson.
+
+Export pipeline (run on the Jetson Orin Nano Super):
+
+```bash
+# On Jetson Orin Nano Super:
+yolo export model=yolov8n.pt format=onnx imgsz=640 simplify=True opset=18
+/usr/src/tensorrt/bin/trtexec --onnx=yolov8n.onnx --saveEngine=yolov8n_fp16.engine --fp16
+```
+
+**Gotcha**: FP16 + dynamic shapes are incompatible — always use static input size (640x640). Dynamic batch/resolution triggers TensorRT builder failures or severe performance regression on Orin.
+
+**Performance benchmarks on Orin Nano Super**:
+- FP16 (640×640): ~25-35 FPS — good balance of accuracy and speed for real-time driving
+- INT8 (640×640): ~50-65 FPS — reduced precision but sufficient for obstacle detection; requires calibration dataset
+
 ---
 
 ## 2. Camera System

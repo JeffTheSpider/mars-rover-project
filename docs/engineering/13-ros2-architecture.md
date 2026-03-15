@@ -189,6 +189,16 @@ Fusion:
 - Front camera always on (navigation + YOLO input)
 - Use `v4l2_camera` with `pixel_format: mjpeg` (not raw YUYV)
 - Assign persistent `/dev/video*` names via udev rules based on USB port path, not plug order
+- USB 3.0 practical bandwidth: ~3.2 Gbps shared across all ports on the same controller
+
+**udev rules for persistent camera names** (assign by USB port path, not plug order):
+```
+# /etc/udev/rules.d/99-rover-cameras.rules
+SUBSYSTEM=="video4linux", KERNELS=="1-2.1", SYMLINK+="cam_front"
+SUBSYSTEM=="video4linux", KERNELS=="1-2.2", SYMLINK+="cam_rear"
+SUBSYSTEM=="video4linux", KERNELS=="1-2.3", SYMLINK+="cam_left"
+SUBSYSTEM=="video4linux", KERNELS=="1-2.4", SYMLINK+="cam_right"
+```
 
 ### 4.3 Custom Messages
 
@@ -337,6 +347,10 @@ slam_toolbox:
 ### 6.3 Sensor Fusion (Dual EKF)
 
 Use two EKF instances: **local** (continuous, no GPS, smooth for motor control) and **global** (with GPS, may jump on corrections). This prevents GPS discontinuities from causing jerky motor commands. See `docs/references/ros2-architecture-research.md` for full dual YAML config.
+
+- **Local EKF** (`odom` frame): Fuses IMU + encoders only. Continuous, no GPS. Outputs smooth `/odom` for motor control. Prevents GPS jumps from causing jerky motor commands.
+- **Global EKF** (`map` frame): Fuses local EKF output + GPS via `navsat_transform`. Outputs absolute position. May have discontinuities when GPS correction arrives.
+- Nav2 plans using global EKF but `ackermann_controller` uses local EKF for smooth low-level control.
 
 ```yaml
 # ekf.yaml (robot_localization) — local EKF shown, global adds GPS odom1
@@ -529,6 +543,8 @@ def generate_launch_description():
 | `nav.launch.py` | Navigation test | hardware + teleop + EKF + SLAM + Nav2 |
 | `perception.launch.py` | Camera/AI test | cameras + YOLO + depth |
 | `rover.launch.py` | Full system | Everything |
+
+**CRITICAL**: Always set `use_sim_time: true` in ALL nodes when running in Gazebo simulation. Mixed sim/wall time causes silent TF failures — transforms will appear to exist but have stale timestamps, causing Nav2 and robot_localization to silently drop data with no error messages.
 
 ---
 

@@ -356,6 +356,44 @@ The PCA9685 provides 16 PWM channels at 50Hz for all servos:
 **Used: 28 pins | Reserved: 12 pins (PSRAM/Flash) | USB: 2 pins**
 **All 28 available GPIOs are allocated** — zero spare pins in Phase 2.
 
+### 3.3 Phase 2+ GPIO Expansion Strategy
+
+With all 28 native GPIOs consumed by Phase 2, any additional peripherals require I2C GPIO expanders on the existing I2C bus (GPIO3 SDA / GPIO8 SCL shared with PCA9685 servo driver).
+
+**Recommended: PCA9535 16-bit I2C GPIO Expander**
+
+| Feature | PCA9535 | PCF8574 |
+|---|---|---|
+| GPIO count | 16 | 8 |
+| I2C address range | 0x20–0x27 (8 devices) | 0x20–0x27 (8 devices) |
+| Interrupt output | Yes (INT pin) | Yes (INT pin) |
+| Max sink/source | 25 mA / 10 mA | 25 mA / 300 µA source |
+| Input/output config | Register-based per pin | Quasi-bidirectional |
+| Price | ~£1.50 | ~£0.80 |
+| Best for | Mixed I/O, ultrasonics | Simple digital inputs |
+
+**Phase 2+ peripherals needing expansion:**
+
+| Peripheral | GPIO needed | Direction | Notes |
+|---|---|---|---|
+| Ultrasonic sensors (×6) | 12 (trig+echo each) | I/O | PCA9535 INT for echo timing |
+| DS18B20 temp sensors | 1 (1-Wire bus) | I/O | Multiple sensors on one pin |
+| I2S audio amplifier | 3 (BCLK, LRCLK, DOUT) | Out | Requires real GPIO (timing-critical) |
+| SPI LCD display | 4 (MOSI, SCK, DC, CS) | Out | Requires real GPIO (SPI peripheral) |
+
+**Recommendation:** Use one PCA9535 (address 0x20) for all 6 ultrasonic sensors (6 trigger out + 6 echo in = 12 pins, with 4 spare). The DS18B20 1-Wire bus can share one of the 4 spare PCA9535 pins.
+
+**I2S and SPI LCD cannot use I2C expanders** — they require hardware peripheral pins with precise timing. If both are needed in Phase 3, consider upgrading to an ESP32-S3 with more exposed GPIOs (e.g., ESP32-S3-WROOM-2 module) or offloading audio/display to the Jetson.
+
+**I2C bus address map (Phase 2):**
+
+| Address | Device |
+|---|---|
+| 0x20 | PCA9535 GPIO expander |
+| 0x40 | PCA9685 servo driver |
+| 0x68 | MPU-6050 IMU |
+| 0x76 | BMP280 barometer (if added) |
+
 ---
 
 ## 4. Wiring Diagrams

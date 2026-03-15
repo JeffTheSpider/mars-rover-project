@@ -33,7 +33,7 @@
 - [x] Check EA-03 power budget matches EA-02 motor selections — consistent (peak 24A = 6×4A stall)
 - [x] Check EA-06 cost breakdown matches all component selections — **fixed**: filament $10→$20
 - [x] Verify EA-08 Phase 1 spec dimensions match EA-01 suspension geometry — consistent (0.4× scaling)
-- [ ] Verify EA-09 GPIO pinmap covers all sensors in EA-04 — **gap**: Phase 2 sensors need I2C expander (noted)
+- [x] Verify EA-09 GPIO pinmap covers all sensors in EA-04 — **gap confirmed**: 6× ultrasonic, 3× DS18B20, audio, LCD need I2C expander (PCA9535/PCF8574). BME280/BH1750/VEML6075 fit on existing I2C bus
 - [x] Verify EA-10 Ackermann values match EA-08 wheelbase dimensions — consistent (900mm/360mm)
 - [x] Verify EA-17 build guide references correct EA numbers — correct
 - [x] **Fixed**: EA-02 Ackermann wheelbase 680mm→900mm (was using projected ground distance)
@@ -349,7 +349,7 @@
 - [x] Enable Gazebo plugins in URDF
 - [x] Complete uart_bridge_node.cpp (IMU, USS, odometry)
 - [x] Back up project to C: and E: drives (periodic)
-- [ ] Consolidate reference docs' best findings into EAs
+- [x] Consolidate reference docs' best findings into EAs (EA-04: TensorRT export, EA-09: I2C expander strategy, EA-11: insert sizing + UV protection, EA-13: dual EKF + udev + use_sim_time)
 - [x] Update CLAUDE.md when significant changes happen
 - [ ] Maintain this todo list as work progresses
 
