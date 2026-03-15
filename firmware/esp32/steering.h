@@ -17,6 +17,9 @@ float steerAngle[4] = {0, 0, 0, 0};
 const uint8_t servoPin[] = {SERVO_FL_PIN, SERVO_FR_PIN, SERVO_RL_PIN, SERVO_RR_PIN};
 const uint8_t servoLEDC[] = {SERVO_LEDC_CH_FL, SERVO_LEDC_CH_FR, SERVO_LEDC_CH_RL, SERVO_LEDC_CH_RR};
 
+// Forward declarations
+void setServoUS(uint8_t idx, float us);
+
 // Steering modes
 enum SteeringMode {
   STEER_ACKERMANN = 0,

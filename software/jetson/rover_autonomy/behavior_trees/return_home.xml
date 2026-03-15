@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Return Home Behaviour Tree
+
+  Navigates the rover back to the home waypoint (0, 0 in map frame, or the
+  GPS home point stored on the blackboard at mission start).
+
+  Strategy:
+    1. Run safety checks every tick (ReactiveSequence)
+    2. Set conservative speed limit (2 km/h per EA-15 section 5.4)
+    3. Attempt primary route via Nav2 NavigateToPose
+    4. If path blocked, compute an alternate route with a via-waypoint
+    5. If battery critically low (<10%), stop in place and send distress alert
+
+  BT.CPP v4 format. Uses Nav2 action servers for path planning and execution.
+-->
+<root BTCPP_format="4">
+
+  <BehaviorTree ID="ReturnHome">
+    <ReactiveSequence name="return_home_root">
+
+      <!-- ===== SAFETY GATE (re-checked every tick) ===== -->
+      <SubTree ID="SafetyChecks"/>
+
+      <!-- ===== CRITICAL BATTERY OVERRIDE =====
+           If battery drops below 10% during return, stop immediately.
+           This overrides the navigation goal. -->
+      <ReactiveFallback name="critical_battery_gate">
+        <CheckBattery name="battery_above_critical"
+                       topic="/rover/status"
+                       min_percent="10"
+                       output_key="{battery_pct}"/>
+        <!-- Battery is critically low: stop and send distress -->
+        <ForceFailure>
+          <Sequence name="critical_stop_sequence">
+            <PublishTwist name="emergency_halt"
+                          topic="/cmd_vel"
+                          linear_x="0.0"
+                          angular_z="0.0"/>
+            <LogMessage name="critical_stop_log"
+                        message="[RTH] CRITICAL BATTERY - stopped in place, awaiting retrieval"
+                        level="ERROR"/>
+            <PublishAlert name="distress_alert"
+                          topic="/mission/status"
+                          message="DISTRESS: Battery critical during return home. Rover stopped. GPS position attached."/>
+            <!-- Stay here forever (return RUNNING) until operator intervenes -->
+            <WaitForever name="await_rescue"/>
+          </Sequence>
+        </ForceFailure>
+      </ReactiveFallback>
+
+      <!-- ===== RETURN HOME NAVIGATION ===== -->
+      <Sequence name="navigate_home_sequence">
+
+        <!-- Enforce reduced speed for return-to-home (2 km/h = 0.56 m/s) -->
+        <SetSpeedLimit name="set_rth_speed"
+                        speed_limit="0.56"
+                        server_name="speed_limit"
+                        server_timeout="5000"/>
+
+        <LogMessage name="rth_start_log"
+                    message="[RTH] Beginning return-to-home navigation"
+                    level="INFO"/>
+
+        <!-- Save current position so we can resume the mission later if needed -->
+        <GetCurrentPose name="save_position"
+                         topic="/odom"
+                         output_key="{saved_pose}"/>
+
+        <!-- Set the home goal (map frame origin or GPS home stored at mission start) -->
+        <SetBlackboard output_key="home_goal.header.frame_id" value="map"/>
+        <SetBlackboard output_key="home_goal.pose.position.x" value="0.0"/>
+        <SetBlackboard output_key="home_goal.pose.position.y" value="0.0"/>
+        <SetBlackboard output_key="home_goal.pose.orientation.w" value="1.0"/>
+
+        <!-- Primary route: direct navigation to home -->
+        <Fallback name="route_fallback">
+
+          <!-- Attempt 1: direct route via Nav2 -->
+          <NavigateToPose name="navigate_home_direct"
+                          goal="{home_goal}"
+                          server_name="navigate_to_pose"
+                          server_timeout="10000"
+                          error_code="{nav_error}"/>
+
+          <!-- Attempt 2: if direct route failed (blocked), try alternate via-waypoint.
+               Offset 3m perpendicular to the home bearing to route around the obstacle. -->
+          <Sequence name="alternate_route">
+            <LogMessage name="alt_route_log"
+                        message="[RTH] Direct route blocked, computing alternate path"
+                        level="WARN"/>
+
+            <ComputeAlternateGoal name="compute_via_point"
+                                   current_pose="{saved_pose}"
+                                   final_goal="{home_goal}"
+                                   offset_metres="3.0"
+                                   output_key="{via_goal}"/>
+
+            <!-- Navigate to the via-waypoint first -->
+            <NavigateToPose name="navigate_via_point"
+                            goal="{via_goal}"
+                            server_name="navigate_to_pose"
+                            server_timeout="10000"/>
+
+            <!-- Then continue to home -->
+            <NavigateToPose name="navigate_home_via"
+                            goal="{home_goal}"
+                            server_name="navigate_to_pose"
+                            server_timeout="10000"/>
+          </Sequence>
+
+          <!-- Attempt 3: both routes failed. Stop and alert operator. -->
+          <Sequence name="navigation_failed">
+            <PublishTwist name="stop_on_failure"
+                          topic="/cmd_vel"
+                          linear_x="0.0"
+                          angular_z="0.0"/>
+            <LogMessage name="nav_failed_log"
+                        message="[RTH] All routes to home blocked - stopped, awaiting operator"
+                        level="ERROR"/>
+            <PublishAlert name="nav_failed_alert"
+                          topic="/mission/status"
+                          message="Cannot reach home. All routes blocked. Manual intervention required."/>
+            <WaitForever name="await_operator"/>
+          </Sequence>
+
+        </Fallback>
+
+        <!-- Successfully reached home -->
+        <LogMessage name="rth_complete_log"
+                    message="[RTH] Arrived at home position"
+                    level="INFO"/>
+        <PublishAlert name="rth_complete_alert"
+                      topic="/mission/status"
+                      message="Rover has returned home successfully."/>
+
+      </Sequence>
+
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <!-- Include the safety subtree definition -->
+  <include path="safety_subtree.xml"/>
+
+</root>

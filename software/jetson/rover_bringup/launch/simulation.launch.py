@@ -6,7 +6,7 @@ and optionally includes the navigation stack for testing.
 Usage:
   ros2 launch rover_bringup simulation.launch.py
   ros2 launch rover_bringup simulation.launch.py enable_nav:=true
-  ros2 launch rover_bringup simulation.launch.py world:=garden.world
+  ros2 launch rover_bringup simulation.launch.py world:=/path/to/custom.world
 """
 
 import os
@@ -28,12 +28,13 @@ def generate_launch_description():
     bringup_dir = get_package_share_directory('rover_bringup')
     xacro_file = os.path.join(bringup_dir, 'urdf', 'rover.urdf.xacro')
     ekf_params_file = os.path.join(bringup_dir, 'config', 'ekf.yaml')
+    default_world = os.path.join(bringup_dir, 'worlds', 'garden.world')
 
     # Launch arguments
     world_arg = DeclareLaunchArgument(
         'world',
-        default_value='',
-        description='Path to Gazebo world file (empty = default empty world)'
+        default_value=default_world,
+        description='Path to Gazebo world file (defaults to garden.world)'
     )
 
     enable_nav_arg = DeclareLaunchArgument(

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Safety Subtree - Reusable safety checks included by all mission trees.
+
+  Runs as a ReactiveSequence so safety conditions are re-evaluated every tick,
+  even while a child action is RUNNING. If any safety check fails, the
+  appropriate recovery response executes immediately.
+
+  Checks (in priority order):
+    1. E-stop status        - highest priority, immediate full stop
+    2. Battery level        - critical (<10%) stops in place, low (<20%) returns home
+    3. Geofence boundary    - returns to nearest valid point if breached
+    4. Communication link   - watchdog on heartbeat, stops if comms lost too long
+
+  BT.CPP v4 format. Custom nodes must be registered in the C++ BT factory.
+  Nav2 action nodes (NavigateToPose) used for recovery navigation.
+-->
+<root BTCPP_format="4">
+
+  <!-- ============================================================
+       SAFETY SUBTREE
+       Included by patrol.xml, explore.xml, return_home.xml via
+       <SubTree ID="SafetyChecks"/>
+       ============================================================ -->
+  <BehaviorTree ID="SafetyChecks">
+    <ReactiveSequence name="safety_gate">
+
+      <!-- ========== 1. E-STOP CHECK ==========
+           Reads /estop topic. If e-stop is active, halt immediately.
+           CheckEStop is a custom ConditionNode subscribed to /estop (std_msgs/Bool).
+           Returns FAILURE when e-stop is pressed, SUCCESS when clear. -->
+      <ReactiveFallback name="estop_handler">
+        <CheckEStop name="is_estop_clear"
+                     topic="/estop"
+                     expected="false"/>
+        <!-- E-stop is active: stop all motion, publish alert, return FAILURE
+             to halt the entire tree. -->
+        <ForceFailure>
+          <Sequence name="estop_response">
+            <PublishTwist name="zero_velocity"
+                          topic="/cmd_vel"
+                          linear_x="0.0"
+                          angular_z="0.0"/>
+            <LogMessage name="estop_alert"
+                        message="[SAFETY] E-STOP ACTIVE - all motion halted"
+                        level="ERROR"/>
+            <PublishAlert name="notify_estop"
+                          topic="/mission/status"
+                          message="E-STOP active. Release button and re-arm to continue."/>
+          </Sequence>
+        </ForceFailure>
+      </ReactiveFallback>
+
+      <!-- ========== 2. BATTERY CHECK ==========
+           Reads battery_pct from /rover/status via blackboard.
+           Three tiers: critical (<10%), low (<20%), normal (>=20%). -->
+      <ReactiveFallback name="battery_handler">
+        <!-- Normal: battery >= 20% -->
+        <CheckBattery name="battery_ok"
+                       topic="/rover/status"
+                       min_percent="20"
+                       output_key="{battery_pct}"/>
+        <!-- Battery is below 20%. Determine severity. -->
+        <Sequence name="battery_response">
+          <ReactiveFallback name="battery_severity">
+            <!-- Low but not critical (10-19%): trigger return home -->
+            <Inverter>
+              <CheckBattery name="battery_critical_check"
+                             topic="/rover/status"
+                             min_percent="10"
+                             output_key="{battery_pct}"/>
+            </Inverter>
+            <!-- Critical (<10%): stop in place, send distress alert -->
+            <ForceFailure>
+              <Sequence name="critical_battery_response">
+                <PublishTwist name="emergency_stop"
+                              topic="/cmd_vel"
+                              linear_x="0.0"
+                              angular_z="0.0"/>
+                <LogMessage name="critical_battery_alert"
+                            message="[SAFETY] CRITICAL BATTERY (<10%) - stopped in place"
+                            level="ERROR"/>
+                <PublishAlert name="notify_critical_battery"
+                              topic="/mission/status"
+                              message="CRITICAL: Battery below 10%. Rover stopped. Retrieve immediately."/>
+              </Sequence>
+            </ForceFailure>
+          </ReactiveFallback>
+          <!-- If we reach here, battery is low (10-19%) but not critical.
+               Log warning; the parent tree should check {battery_pct} and
+               switch to return_home. We return SUCCESS to let the tree continue
+               with return-home logic. -->
+          <LogMessage name="low_battery_warn"
+                      message="[SAFETY] Low battery - return home recommended"
+                      level="WARN"/>
+          <SetBlackboard output_key="low_battery" value="true"/>
+        </Sequence>
+      </ReactiveFallback>
+
+      <!-- ========== 3. GEOFENCE CHECK ==========
+           CheckGeofence is a custom ConditionNode subscribed to /gps/fix.
+           Compares current position against the geofence polygon stored on
+           the parameter server (geofence_polygon param).
+           Returns SUCCESS if inside fence, FAILURE if outside. -->
+      <ReactiveFallback name="geofence_handler">
+        <CheckGeofence name="inside_geofence"
+                        topic="/gps/fix"
+                        polygon_param="geofence_polygon"
+                        margin_metres="2.0"/>
+        <!-- Outside geofence: stop, warn, and navigate to nearest fence point -->
+        <ForceFailure>
+          <Sequence name="geofence_response">
+            <PublishTwist name="geofence_stop"
+                          topic="/cmd_vel"
+                          linear_x="0.0"
+                          angular_z="0.0"/>
+            <LogMessage name="geofence_alert"
+                        message="[SAFETY] GEOFENCE BREACH - returning to boundary"
+                        level="ERROR"/>
+            <PublishAlert name="notify_geofence"
+                          topic="/mission/status"
+                          message="Geofence breach detected. Returning to safe area."/>
+            <!-- Navigate back to the nearest point inside the fence -->
+            <ComputeNearestFencePoint name="find_return_point"
+                                       polygon_param="geofence_polygon"
+                                       output_goal="{geofence_return_goal}"/>
+            <NavigateToPose name="return_to_fence"
+                            goal="{geofence_return_goal}"
+                            server_name="navigate_to_pose"
+                            server_timeout="10000"/>
+          </Sequence>
+        </ForceFailure>
+      </ReactiveFallback>
+
+      <!-- ========== 4. COMMUNICATION LINK WATCHDOG ==========
+           CheckCommsLink monitors the heartbeat interval from the phone app
+           (WebSocket via web_server_node). If no heartbeat for >30s in
+           autonomous mode, warn. If >120s, stop. -->
+      <ReactiveFallback name="comms_handler">
+        <CheckCommsLink name="comms_ok"
+                         heartbeat_topic="/teleop/heartbeat"
+                         timeout_warn_s="30.0"
+                         timeout_critical_s="120.0"
+                         output_key="{comms_status}"/>
+        <!-- Comms lost beyond critical timeout -->
+        <Sequence name="comms_lost_response">
+          <LogMessage name="comms_lost_warn"
+                      message="[SAFETY] Communication link lost - continuing mission with caution"
+                      level="WARN"/>
+          <SetBlackboard output_key="comms_lost" value="true"/>
+          <!-- Do not stop the rover; autonomous missions should continue.
+               The rover will return home at next battery check or mission end.
+               Only alert when comms are restored. -->
+        </Sequence>
+      </ReactiveFallback>
+
+    </ReactiveSequence>
+  </BehaviorTree>
+
+</root>

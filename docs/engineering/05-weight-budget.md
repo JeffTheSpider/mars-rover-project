@@ -264,9 +264,9 @@ Mast extension raises CoG by only 19mm (232 → 251mm) because the mast is light
 A full fridge (4-6 cans = ~2 kg extra) at ~300mm height:
 
 ```
-Z_cog_loaded = (16.69 × 232 + 2.0 × 300) / (16.69 + 2.0)
-Z_cog_loaded = (3,872 + 600) / 18.69
-Z_cog_loaded = 4,472 / 18.69
+Z_cog_loaded = (16.75 × 232 + 2.0 × 300) / (16.75 + 2.0)
+Z_cog_loaded = (3,886 + 600) / 18.75
+Z_cog_loaded = 4,486 / 18.75
 Z_cog_loaded = 239mm
 ```
 
@@ -281,7 +281,7 @@ These weight figures feed directly into EA-02 (Drivetrain Analysis):
 | Scenario | Total Weight | Per-Wheel Load (6 wheels) | Notes |
 |----------|-------------|--------------------------|-------|
 | Phase 1 (empty) | 1.1 kg | 0.18 kg | Very light |
-| Phase 2 (empty) | 16.7 kg | 2.78 kg | Design target |
+| Phase 2 (empty) | 16.7 kg | 2.79 kg | Design target |
 | Phase 2 (loaded, fridge full) | 18.7 kg | 3.12 kg | Realistic operating weight |
 | Phase 3 (empty) | 20.8 kg | 3.47 kg | Metal version |
 | Phase 3 (loaded) | 22.8 kg | 3.80 kg | Metal + full fridge |

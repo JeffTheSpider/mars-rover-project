@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Explore Behaviour Tree
+
+  Frontier-based exploration: finds the nearest unexplored frontier in the
+  SLAM map, navigates to it, and repeats. Builds a complete map of the
+  operating area over time.
+
+  Behaviour:
+    - ReactiveSequence ensures safety checks gate every tick
+    - Battery threshold is 25% (higher than patrol because distance to home
+      is uncertain during exploration)
+    - If stuck for 30s (no progress), rotate in place and pick a different frontier
+    - Exploration continues until battery triggers return home
+
+  BT.CPP v4 format. Uses Nav2 NavigateToPose for navigation.
+  FindNearestFrontier queries the SLAM costmap for unexplored regions.
+-->
+<root BTCPP_format="4">
+
+  <BehaviorTree ID="Explore">
+    <ReactiveSequence name="explore_root">
+
+      <!-- ===== SAFETY GATE (re-checked every tick) ===== -->
+      <SubTree ID="SafetyChecks"/>
+
+      <!-- ===== BATTERY-TRIGGERED RETURN HOME (25% threshold) =====
+           Higher threshold than patrol because the rover may be far from home
+           and the return distance is unpredictable during exploration. -->
+      <ReactiveFallback name="battery_or_explore">
+        <CheckBattery name="explore_battery_ok"
+                       topic="/rover/status"
+                       min_percent="25"
+                       output_key="{battery_pct}"/>
+        <!-- Battery below 25%: abort exploration and return home -->
+        <Sequence name="explore_low_battery">
+          <LogMessage name="explore_battery_warn"
+                      message="[EXPLORE] Battery below 25% - aborting exploration, returning home"
+                      level="WARN"/>
+          <PublishAlert name="explore_rth_alert"
+                        topic="/mission/status"
+                        message="Exploration aborted: low battery (25% threshold). Returning home."/>
+          <SubTree ID="ReturnHome"/>
+        </Sequence>
+      </ReactiveFallback>
+
+      <!-- ===== MAIN EXPLORATION LOOP ===== -->
+      <Sequence name="explore_main">
+
+        <LogMessage name="explore_start"
+                    message="[EXPLORE] Beginning frontier exploration"
+                    level="INFO"/>
+
+        <!-- Repeat exploration cycle indefinitely -->
+        <Repeat num_cycles="-1" name="explore_forever">
+          <Sequence name="explore_cycle">
+
+            <!-- Find the nearest unexplored frontier in the costmap.
+                 FindNearestFrontier analyses the global costmap for cells on
+                 the boundary between known-free and unknown space.
+                 Outputs a PoseStamped goal to {frontier_goal}.
+                 Returns FAILURE if no frontiers remain (map fully explored). -->
+            <Fallback name="find_frontier_or_done">
+              <FindNearestFrontier name="find_frontier"
+                                    costmap_topic="/global_costmap/costmap"
+                                    min_frontier_size="0.5"
+                                    blacklist="{frontier_blacklist}"
+                                    output_key="{frontier_goal}"/>
+              <!-- No frontiers left: exploration is complete -->
+              <Sequence name="exploration_complete">
+                <LogMessage name="explore_done"
+                            message="[EXPLORE] No more frontiers - map fully explored"
+                            level="INFO"/>
+                <PublishAlert name="explore_done_alert"
+                              topic="/mission/status"
+                              message="Exploration complete. No unexplored frontiers remain."/>
+                <SubTree ID="ReturnHome"/>
+              </Sequence>
+            </Fallback>
+
+            <LogMessage name="frontier_nav_log"
+                        message="[EXPLORE] Navigating to next frontier"
+                        level="INFO"/>
+
+            <!-- Navigate to frontier with stuck-detection timeout.
+                 If NavigateToPose does not complete within 30s, the rover
+                 is likely stuck. The Timeout decorator will abort it. -->
+            <Fallback name="navigate_or_unstick">
+
+              <!-- Primary: navigate to frontier with 30s timeout -->
+              <Timeout msec="30000" name="nav_timeout">
+                <NavigateToPose name="nav_to_frontier"
+                                goal="{frontier_goal}"
+                                server_name="navigate_to_pose"
+                                server_timeout="10000"
+                                error_code="{nav_error}"/>
+              </Timeout>
+
+              <!-- Stuck fallback: rotate to scan surroundings, blacklist this
+                   frontier, and try a different one on the next cycle. -->
+              <Sequence name="unstick_sequence">
+                <LogMessage name="stuck_log"
+                            message="[EXPLORE] Stuck for 30s - rotating and trying different frontier"
+                            level="WARN"/>
+
+                <!-- Stop forward motion -->
+                <PublishTwist name="stop_before_rotate"
+                              topic="/cmd_vel"
+                              linear_x="0.0"
+                              angular_z="0.0"/>
+
+                <!-- Execute a recovery rotation to scan for new paths.
+                     Uses Nav2 Spin action if available, otherwise manual rotation. -->
+                <Fallback name="rotate_method">
+                  <Spin name="recovery_spin"
+                        spin_dist="3.14"
+                        server_name="spin"
+                        server_timeout="10000"/>
+                  <!-- Manual rotation fallback for Ackermann (cannot spin in place):
+                       drive a small arc instead -->
+                  <Sequence name="manual_arc">
+                    <PublishTwist name="arc_turn"
+                                  topic="/cmd_vel"
+                                  linear_x="0.2"
+                                  angular_z="0.5"/>
+                    <Wait name="arc_duration" duration="4.0"/>
+                    <PublishTwist name="arc_stop"
+                                  topic="/cmd_vel"
+                                  linear_x="0.0"
+                                  angular_z="0.0"/>
+                  </Sequence>
+                </Fallback>
+
+                <!-- Blacklist this frontier so we don't try it again immediately -->
+                <BlacklistFrontier name="blacklist_stuck_frontier"
+                                    frontier="{frontier_goal}"
+                                    blacklist="{frontier_blacklist}"
+                                    expiry_s="120.0"/>
+
+                <LogMessage name="retry_log"
+                            message="[EXPLORE] Frontier blacklisted, will try next nearest"
+                            level="INFO"/>
+
+              </Sequence>
+            </Fallback>
+
+            <!-- Brief pause after reaching frontier to let SLAM update the map -->
+            <Wait name="slam_settle" duration="3.0"/>
+
+            <!-- Log progress -->
+            <GetExplorationProgress name="check_progress"
+                                     costmap_topic="/global_costmap/costmap"
+                                     output_key="{explored_pct}"/>
+            <LogMessage name="progress_log"
+                        message="[EXPLORE] Map {explored_pct}% explored"
+                        level="INFO"/>
+
+          </Sequence>
+        </Repeat>
+
+      </Sequence>
+
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <!-- Include subtree definitions -->
+  <include path="safety_subtree.xml"/>
+  <include path="return_home.xml"/>
+
+</root>

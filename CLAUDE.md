@@ -112,6 +112,15 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 - All 19 engineering analyses complete
 - All ROS2 nodes scaffolded (10 nodes across 7 packages)
 - All ESP32 firmware modules scaffolded (6 modules)
+- ESP32-S3 firmware compiles successfully (971KB flash 74%, 48KB RAM 14%)
 - PWA phone app scaffolded
+- Gazebo garden world created (slopes, obstacles, paths, furniture)
 - All config/launch files corrected to match EA research
-- **Next step**: Fusion 360 CAD design + order Phase 1 components
+- Fusion 360 MCP setup guide ready (`docs/plans/fusion360-mcp-setup.md`)
+- **Next step**: Install Fusion 360 + MCP server, then CAD design + order Phase 1 components
+
+## Key Learnings
+- ESP32 Arduino Core v3.x: `esp_task_wdt_init()` takes `esp_task_wdt_config_t*` struct, not int+bool
+- Windows case-insensitive FS: local `webserver.h` collides with ESP32 library `WebServer.h` — renamed to `rover_webserver.h`
+- Include guard `WEBSERVER_H` collided with ESP32 library's own guard — use `ROVER_WEBSERVER_H`
+- Single-translation-unit: forward-declare functions used before definition in same .h file

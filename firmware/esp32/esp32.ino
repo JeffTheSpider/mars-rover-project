@@ -19,15 +19,13 @@
 // ============================================================
 
 #include <WiFi.h>
-#include <WebServer.h>
-#include <WebSocketsServer.h>
 #include <esp_task_wdt.h>
 
 #include "config.h"
 #include "motors.h"
 #include "steering.h"
 #include "sensors.h"
-#include "webserver.h"
+#include "rover_webserver.h"
 
 // --- Timing ---
 unsigned long lastMotorUpdate = 0;
@@ -67,7 +65,13 @@ void setup() {
   setupWebServer();
 
   // Enable watchdog (5 second timeout)
-  esp_task_wdt_init(WATCHDOG_TIMEOUT_S, true);
+  // ESP32 Arduino Core v3.x uses config struct
+  esp_task_wdt_config_t wdt_config = {
+    .timeout_ms = WATCHDOG_TIMEOUT_S * 1000,
+    .idle_core_mask = 0,
+    .trigger_panic = true
+  };
+  esp_task_wdt_init(&wdt_config);
   esp_task_wdt_add(NULL);  // Add current task
 
   Serial.println("[MAIN] Setup complete — ready to drive!");

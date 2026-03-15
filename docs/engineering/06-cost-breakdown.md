@@ -229,7 +229,7 @@
 
 ### Budget Assessment
 
-**$1,933.75 falls within the $1,500-2,000 target budget.** There is ~$66 of headroom for unexpected costs.
+**$2,031.75 slightly exceeds the $1,500-2,000 target budget** by ~$32. This is due to revised filament estimates (EA-08, EA-11, EA-17). Consider the cost reduction options below or a modest budget adjustment.
 
 ### Cost Reduction Options (if needed)
 
@@ -252,7 +252,7 @@ Suggested purchasing order to spread costs and test incrementally:
 
 | Order | Components | Cost | What It Enables |
 |-------|-----------|------|-----------------|
-| 1 | Structure: filament, extrusion, fasteners, bearings | $154 | Print and assemble chassis |
+| 1 | Structure: filament, extrusion, fasteners, bearings | $234 | Print and assemble chassis |
 | 2 | Drivetrain: motors, drivers, steering servos | $141 | Rolling chassis, basic driving |
 | 3 | Power: batteries, BMS, converters, wiring | $185 | Powered driving |
 | 4 | Compute: Jetson, ESP32, SD cards, USB hub | $292 | Smart brain installed |

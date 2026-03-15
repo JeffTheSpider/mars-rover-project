@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Patrol Behaviour Tree
+
+  Navigates through a predefined list of patrol waypoints in a continuous loop.
+  Safety checks run reactively (re-evaluated every tick) so any safety condition
+  immediately interrupts the patrol.
+
+  Behaviour:
+    - ReactiveSequence ensures safety checks gate every tick
+    - If battery < 20%, abort patrol and switch to return_home subtree
+    - If obstacle blocks a waypoint, wait 5s then retry (up to 3 attempts)
+    - After visiting all waypoints, loop back to the first
+    - At each waypoint: pause briefly, optionally capture a photo
+
+  BT.CPP v4 format. Uses Nav2 NavigateToPose for point-to-point navigation.
+  Waypoints are loaded from the parameter server (patrol_waypoints param)
+  or set on the blackboard before the tree starts.
+-->
+<root BTCPP_format="4">
+
+  <BehaviorTree ID="Patrol">
+    <ReactiveSequence name="patrol_root">
+
+      <!-- ===== SAFETY GATE (re-checked every tick) ===== -->
+      <SubTree ID="SafetyChecks"/>
+
+      <!-- ===== BATTERY-TRIGGERED RETURN HOME =====
+           If battery drops below 20%, abort patrol and go home.
+           ReactiveSequence re-checks this every tick. -->
+      <ReactiveFallback name="battery_or_patrol">
+        <CheckBattery name="patrol_battery_ok"
+                       topic="/rover/status"
+                       min_percent="20"
+                       output_key="{battery_pct}"/>
+        <!-- Battery low: switch to return home -->
+        <Sequence name="low_battery_return">
+          <LogMessage name="patrol_low_battery"
+                      message="[PATROL] Battery below 20% - aborting patrol, returning home"
+                      level="WARN"/>
+          <PublishAlert name="patrol_rth_alert"
+                        topic="/mission/status"
+                        message="Patrol aborted: low battery. Returning home."/>
+          <SubTree ID="ReturnHome"/>
+        </Sequence>
+      </ReactiveFallback>
+
+      <!-- ===== MAIN PATROL LOOP ===== -->
+      <Sequence name="patrol_main">
+
+        <!-- Load waypoints from parameter server into blackboard.
+             GeneratePatrolWaypoints reads the 'patrol_waypoints' param
+             (list of [x,y,yaw] in map frame) and writes them to {waypoint_list}.
+             If no param exists, generates a circular route around current position. -->
+        <GeneratePatrolWaypoints name="load_waypoints"
+                                  param_name="patrol_waypoints"
+                                  fallback_radius="5.0"
+                                  fallback_count="8"
+                                  output_key="{waypoint_list}"/>
+
+        <LogMessage name="patrol_start"
+                    message="[PATROL] Starting patrol route"
+                    level="INFO"/>
+
+        <!-- Repeat the waypoint sequence forever (-1 = infinite) -->
+        <Repeat num_cycles="-1" name="patrol_forever">
+          <Sequence name="one_lap">
+
+            <!-- Iterate over each waypoint in the list.
+                 ForEachWaypoint pops the next waypoint from {waypoint_list}
+                 into {current_waypoint} each time it is ticked.
+                 When the list is exhausted, it reloads from the original list. -->
+            <ForEachWaypoint name="waypoint_iterator"
+                              waypoints="{waypoint_list}"
+                              output_key="{current_waypoint}"
+                              output_index="{waypoint_index}"/>
+
+            <LogMessage name="waypoint_log"
+                        message="[PATROL] Navigating to waypoint {waypoint_index}"
+                        level="INFO"/>
+
+            <!-- Navigate to the current waypoint with obstacle retry logic -->
+            <Fallback name="navigate_with_retry">
+
+              <!-- Attempt 1: direct navigation -->
+              <NavigateToPose name="nav_to_waypoint"
+                              goal="{current_waypoint}"
+                              server_name="navigate_to_pose"
+                              server_timeout="10000"
+                              error_code="{nav_error}"/>
+
+              <!-- Attempt 2: wait 5s for obstacle to clear, then retry -->
+              <Sequence name="retry_after_wait">
+                <LogMessage name="obstacle_wait_log"
+                            message="[PATROL] Waypoint blocked, waiting 5s before retry"
+                            level="WARN"/>
+                <Wait name="obstacle_wait" duration="5.0"/>
+                <NavigateToPose name="nav_retry_1"
+                                goal="{current_waypoint}"
+                                server_name="navigate_to_pose"
+                                server_timeout="10000"
+                                error_code="{nav_error}"/>
+              </Sequence>
+
+              <!-- Attempt 3: wait another 5s, try once more -->
+              <Sequence name="retry_after_wait_2">
+                <LogMessage name="obstacle_wait_log_2"
+                            message="[PATROL] Still blocked, waiting 5s for second retry"
+                            level="WARN"/>
+                <Wait name="obstacle_wait_2" duration="5.0"/>
+                <NavigateToPose name="nav_retry_2"
+                                goal="{current_waypoint}"
+                                server_name="navigate_to_pose"
+                                server_timeout="10000"
+                                error_code="{nav_error}"/>
+              </Sequence>
+
+              <!-- All attempts failed: skip this waypoint and continue -->
+              <Sequence name="skip_waypoint">
+                <LogMessage name="skip_log"
+                            message="[PATROL] Skipping waypoint {waypoint_index} after 3 failed attempts"
+                            level="WARN"/>
+                <PublishAlert name="skip_alert"
+                              topic="/mission/status"
+                              message="Waypoint skipped: navigation failed after 3 attempts."/>
+              </Sequence>
+
+            </Fallback>
+
+            <!-- Brief pause at waypoint (2s) for observation -->
+            <Wait name="waypoint_pause" duration="2.0"/>
+
+            <!-- Optional: capture a photo at each waypoint for logging -->
+            <CapturePhoto name="waypoint_photo"
+                           camera_topic="/camera/front/image_raw"
+                           save_path="/tmp/patrol/"
+                           _failureIsSuccess="true"/>
+
+          </Sequence>
+        </Repeat>
+
+      </Sequence>
+
+    </ReactiveSequence>
+  </BehaviorTree>
+
+  <!-- Include subtree definitions -->
+  <include path="safety_subtree.xml"/>
+  <include path="return_home.xml"/>
+
+</root>

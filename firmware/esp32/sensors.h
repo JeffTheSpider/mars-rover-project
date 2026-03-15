@@ -6,6 +6,9 @@
 // Phase 1: ADC battery monitor + 2 wheel encoders
 // ============================================================
 
+// Forward declarations
+float readBatteryRaw();
+
 // --- Battery ---
 float batteryVoltage = 0;
 uint8_t batteryPercent = 100;

@@ -1,8 +1,11 @@
-#ifndef WEBSERVER_H
-#define WEBSERVER_H
+#ifndef ROVER_WEBSERVER_H
+#define ROVER_WEBSERVER_H
 
 #include <WebServer.h>
 #include <WebSocketsServer.h>
+
+// Forward declarations
+void processCommand(String cmd, int speed, int mode);
 
 // ============================================================
 // WiFi Web Server + WebSocket for Phase 1 control
@@ -333,4 +336,4 @@ void handleWeb() {
   }
 }
 
-#endif // WEBSERVER_H
+#endif // ROVER_WEBSERVER_H
