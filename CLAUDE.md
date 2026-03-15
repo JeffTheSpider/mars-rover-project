@@ -78,9 +78,11 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 - `rover_msgs` — Custom messages (WheelSpeeds, SteeringAngles, RoverStatus, Detection)
 
 ## Phone PWA (`software/pwa/`)
-- Catppuccin Mocha dark theme, Mars red accent (#f38ba8)
+- Catppuccin Mocha/Latte themes (dark/light toggle), Mars red accent (#f38ba8)
 - D-pad with touch-and-hold (touchstart/touchend)
 - 3 steering modes, speed slider, E-stop
+- Live MJPEG camera streaming (4 sources: front, rear, mast, depth)
+- System panel: firmware version, OTA trigger, restart, CPU temp, WiFi RSSI
 - WebSocket JSON protocol
 - Service worker network-first (v1)
 - Responsive: phone portrait/landscape, tablet, desktop
@@ -113,10 +115,14 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 ## Project Status (as of 2026-03-15)
 - All 22 engineering analyses complete (EA-00 master handbook through EA-21)
 - All ROS2 nodes scaffolded (10 nodes across 7 packages)
-- All ESP32 firmware modules scaffolded (6 modules)
-- ESP32-S3 firmware compiles successfully (971KB flash 74%, 48KB RAM 14%)
-- PWA phone app scaffolded
-- Gazebo garden world created (slopes, obstacles, paths, furniture)
+- All ESP32 firmware modules scaffolded (7 modules incl. OTA, NMEA, binary UART)
+- ESP32-S3 firmware compiles successfully (1042KB flash 79%, 53KB RAM 16%, v0.2.0)
+- PWA phone app complete (telemetry, drive, map, mission, settings, camera stream, OTA)
+- Gazebo garden world + 21 simulation test scenarios
+- ROS2 unit tests: 134 pytest tests across 5 test files
+- ESP32 firmware unit tests: 42 pytest host-based tests (NMEA, Ackermann, battery, COBS)
+- Research references: YOLO garden detection, Gazebo simulation best practices
+- CI/CD: GitHub Actions (ESP32 compile, ROS2 build, Python lint, docs check)
 - All config/launch files corrected to match EA research
 - Fusion 360 MCP setup guide ready (`docs/plans/fusion360-mcp-setup.md`)
 - **Next step**: Install Fusion 360 + MCP server, then CAD design + order Phase 1 components
