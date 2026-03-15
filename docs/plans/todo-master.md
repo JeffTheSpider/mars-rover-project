@@ -27,16 +27,18 @@
   - [x] Add carbon fiber reinforcement mention for Phase 2
   - [x] Cross-reference EA-18 binary protocol for Phase 2
 
-### 1.2 Cross-Reference Audit
-- [ ] Verify all 18 EAs reference each other correctly where dependent
-- [ ] Check EA-02 torque calcs match EA-05 weight budget values
-- [ ] Check EA-03 power budget matches EA-02 motor selections
-- [ ] Check EA-06 cost breakdown matches all component selections in EA-01 through EA-05
-- [ ] Verify EA-08 Phase 1 spec dimensions match EA-01 suspension geometry
-- [ ] Verify EA-09 GPIO pinmap covers all sensors in EA-04
-- [ ] Verify EA-10 Ackermann values match EA-08 wheelbase dimensions
-- [ ] Verify EA-17 build guide references correct EA numbers
-*(Note: Cross-reference audit partially done — agents ran but results pending review)*
+### 1.2 Cross-Reference Audit (DONE — 3 HIGH issues fixed, 3 MEDIUM noted, 5 LOW noted)
+- [x] Verify all 18 EAs reference each other correctly where dependent
+- [x] Check EA-02 torque calcs match EA-05 weight budget values — consistent (34.2kg design weight)
+- [x] Check EA-03 power budget matches EA-02 motor selections — consistent (peak 24A = 6×4A stall)
+- [x] Check EA-06 cost breakdown matches all component selections — **fixed**: filament $10→$20
+- [x] Verify EA-08 Phase 1 spec dimensions match EA-01 suspension geometry — consistent (0.4× scaling)
+- [ ] Verify EA-09 GPIO pinmap covers all sensors in EA-04 — **gap**: Phase 2 sensors need I2C expander (noted)
+- [x] Verify EA-10 Ackermann values match EA-08 wheelbase dimensions — consistent (900mm/360mm)
+- [x] Verify EA-17 build guide references correct EA numbers — correct
+- [x] **Fixed**: EA-02 Ackermann wheelbase 680mm→900mm (was using projected ground distance)
+- [x] **Fixed**: EA-05 motor name JGB37-520→Chihai CHR-GM37-520 (185g, matching EA-02)
+- [x] **Fixed**: EA-05 motor driver BTS7960→Cytron MDD10A (matching EA-02)
 
 ### 1.3 Missing Documentation
 - [x] Create project README.md at repository root (project overview, phase status, quick links)
