@@ -25,7 +25,7 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 | 05 | Weight Budget | 16.7kg Phase 2, 20.8kg Phase 3, CoG analysis |
 | 06 | Cost | $2,031.75 total, phase-by-phase breakdown |
 | 07 | Open Source Review | Sawppy + JPL hybrid approach |
-| 08 | Phase 1 Spec | 22 parts, all CAD dimensions, 65hr print |
+| 08 | Phase 1 Spec | 24 parts (4-segment body), all CAD dimensions, 69hr print |
 | 09 | GPIO Pin Map | ESP32-S3 N16R8, Phase 1: 20 pins, Phase 2: 28 pins |
 | 10 | Ackermann Steering | 3 modes, min radius 993mm, servo mapping |
 | 11 | 3D Printing | PETG/ASA, settings, heat-set inserts, segmentation |
@@ -53,9 +53,24 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 - Budget: ~$102 (Phase 1) / ~$2,032 total
 
 ## Build Phases
-1. **Phase 1** (0.4 scale, current): PETG prototype, ESP32-S3 + 2× L298N, basic driving ($102)
+1. **Phase 1** (0.4 scale, current): PLA prototype, ESP32-S3 + 2× L298N, basic driving ($102)
 2. **Phase 2** (full scale): PETG/ASA + aluminium extrusion, all electronics ($1,631)
 3. **Phase 3** (full scale): Machined aluminium/steel, IP54 weatherproof ($299 additional)
+
+## 3D Printer
+- **Model**: CTC printer
+- **Bed size**: 150×200mm
+- **Material**: PLA only (no PETG, no TPU)
+- **Impact**: Body splits into 4 quadrants (not 2 halves). Rigid PLA wheels with rubber O-ring traction bands.
+- **Heat-set inserts**: 170-180°C for PLA (lower than PETG's 200-220°C)
+- **Phase 2 upgrade**: Will need PETG/ASA-capable printer for outdoor durability
+
+## CAD Workflow
+- **Tool**: Fusion 360 Personal (free) + MCP-Link add-in
+- **MCP server**: `cad/fusion-mcp/` (AuraFriday/Fusion-360-MCP-Server)
+- **MCP-Link server**: `cad/mcp-link-server/` (runs at https://127-0-0-1.local.aurafriday.com:31173/sse)
+- **Parameters**: `cad/scripts/generate_rover_params.py` — all dimensions for Phase 1 (0.4x) and Phase 2 (1.0x)
+- **Design order**: bearing test → wheels → bogies → rockers → diff bar → steering → motor mounts → body → electronics tray
 
 ## Firmware (`firmware/esp32/`)
 - Arduino framework, ESP32-S3 DevKitC-1
