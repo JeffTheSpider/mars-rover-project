@@ -16,8 +16,10 @@ Model the rover as a single Fusion 360 Design with the following component tree.
 ```
 ROVER_P1_040  (root assembly)
   +-- BODY
-  |     +-- BODY_FRONT_HALF
-  |     +-- BODY_REAR_HALF
+  |     +-- BODY_FRONT_LEFT
+  |     +-- BODY_FRONT_RIGHT
+  |     +-- BODY_REAR_LEFT
+  |     +-- BODY_REAR_RIGHT
   |     +-- TOP_DECK_COVER
   |     +-- ELECTRONICS_TRAY
   +-- SUSPENSION_LEFT
@@ -100,8 +102,8 @@ All values are Phase 1 (0.4 scale) in millimetres.
 
 | Part | Dimension | Value (mm) | Tolerance | Notes |
 |------|-----------|------------|-----------|-------|
-| Body (outer) | Length (Y) | 440 | +/-1.0 | Fits 2 prints on 220mm bed |
-| Body (outer) | Width (X) | 260 | +/-1.0 | Fits 1 print with margin |
+| Body (outer) | Length (Y) | 440 | +/-1.0 | 4 quadrant prints on 150x200mm bed |
+| Body (outer) | Width (X) | 260 | +/-1.0 | 4 quadrant prints on 150x200mm bed |
 | Body (outer) | Height (Z) | 80 | +/-0.5 | Open-top box frame |
 | Body (inner cavity) | Length | 434 | derived | 3mm walls each end |
 | Body (inner cavity) | Width | 254 | derived | 3mm walls each side |
@@ -126,7 +128,7 @@ All values are Phase 1 (0.4 scale) in millimetres.
 | Rocker arm | Bogie pivot bore | 8.0 | H7 | For 608ZZ inner race |
 | Rocker arm | Bogie pivot boss OD | 22.1 | +0.0/-0.1 | Press-fit for 608ZZ |
 | Rocker arm | Front motor mount face | 25mm PCD | +/-0.2 | 4x M3 holes on pitch circle |
-| Rocker arm | Weight (each) | ~35g | estimate | PETG, 50% gyroid infill |
+| Rocker arm | Weight (each) | ~35g | estimate | PLA, 50% gyroid infill |
 
 ### 2.3 Bogie Arms (x2)
 
@@ -232,7 +234,7 @@ All values are Phase 1 (0.4 scale) in millimetres.
 | Ventilation slots | Width x count | 3mm x 5 | +/-0.2 | Each side wall |
 | ESP32 standoffs | 4x M3 | PCD per DevKit | +/-0.3 | 69x25mm board |
 | L298N standoffs | 4x M3 | 37mm PCD | +/-0.3 | 43x43mm board, 2 sets |
-| Body join seam | Bolts | 6x M3x12 | -- | 3 per side wall + 3 floor |
+| Body join seams | Bolts | 12x M3x12 | -- | 6 per seam (Y=0 and X=0), see Section 5.3 |
 | Top deck clips | Count | 8 | -- | Snap clips along edges |
 
 ### 2.11 Electronics Components (mounting reference)
@@ -357,7 +359,7 @@ All 10 bearing locations use the same pocket geometry.
 
 | Feature | Dimension (mm) | Notes |
 |---------|---------------|-------|
-| Bearing seat bore diameter | 22.1 | 0.1mm oversize for PETG press fit (PETG shrinks ~0.1-0.2%) |
+| Bearing seat bore diameter | 22.1 | 0.1mm oversize for PLA press fit (PLA shrinks ~0.2-0.4%) |
 | Bearing seat depth | 7.2 | Full 608ZZ width (7mm) + 0.2mm clearance |
 | Shaft through-hole | 8.0 | Bearing inner race sits on shaft |
 | Retention feature | Printed lip (0.5mm) or snap ring groove | Prevents bearing walking out |
@@ -367,7 +369,7 @@ All 10 bearing locations use the same pocket geometry.
 
 ### 4.2 M3 Heat-Set Insert Holes
 
-Per EA-11 specifications for PETG.
+Per EA-11 specifications, adapted for PLA.
 
 | Feature | Dimension (mm) | Notes |
 |---------|---------------|-------|
@@ -377,9 +379,9 @@ Per EA-11 specifications for PETG.
 | Wall thickness around hole | >= 2.4 | 3 perimeters at 0.4mm line width minimum |
 | Chamfer at top | 0.5mm x 45 deg | Guides insert during installation |
 | Bottom | Flat (blind hole) | Unless through-hole specifically needed |
-| Installation temperature | 220 deg C | For PETG |
+| Installation temperature | 170-180 deg C | For PLA (lower than PETG to prevent warping) |
 
-**Quantity needed**: 40 inserts across all parts (body join, standoffs, brackets).
+**Quantity needed**: 46 inserts across all parts (12 body join seams, remainder for standoffs, brackets).
 
 ### 4.3 8mm Shaft Holes
 
@@ -427,8 +429,7 @@ Using snap-fit clip design (not screws).
 
 | Part | Print Orientation | Rationale | Support Needed |
 |------|-------------------|-----------|----------------|
-| Body front half | Flat (XY plane, floor on bed) | Largest face down, structural floor | Minimal (teardrop pivot holes) |
-| Body rear half | Flat (XY plane, floor on bed) | Same as front | Minimal |
+| Body quadrants (x4) | Flat (XY plane, floor on bed) | Largest face down, structural floor; front quadrants ~200x130mm fit flat, rear quadrants ~240x130mm print diagonally on 150x200mm bed | Minimal (teardrop pivot holes on inner quadrants) |
 | Top deck cover | Flat (outer face on bed) | Best surface finish on visible side | None |
 | Rocker arm (x2) | On side (longest axis horizontal) | Load axis along layer lines, not across | Minimal (teardrop bearing holes) |
 | Bogie arm (x2) | On side | Same rationale as rocker | Minimal |
@@ -440,26 +441,54 @@ Using snap-fit clip design (not screws).
 
 ### 5.2 Segmentation Plan
 
-Only the body exceeds the 220x220mm Ender 3 bed.
+The body exceeds the CTC 150x200mm bed in both axes. All other parts fit comfortably.
 
 | Part | Full Size | Exceeds Bed? | Segments | Segment Size | Join Method |
 |------|-----------|-------------|----------|-------------|-------------|
-| Body | 440 x 260 x 80 | Yes (440mm > 220mm in Y) | 2 halves (front/rear) | 220 x 260 x 80 each | 6x M3x12 bolts + heat-set inserts |
-| Rocker arm | 180mm long | No | 1 piece | Fits in 210mm usable | N/A |
+| Body | 440 x 260 x 80 | Yes (both axes) | 4 quadrants (front-left, front-right, rear-left, rear-right) | Front: ~200x130x80, Rear: ~240x130x80 | 12x M3x12 bolts + heat-set inserts + alignment features (see 5.3) |
+| Rocker arm | 180mm long | No | 1 piece | Fits in 200mm axis | N/A |
 | Bogie arm | 120mm long | No | 1 piece | Fits easily | N/A |
 | Diff bar | 200mm rod + adapters | No (adapters are small) | Rod + 3 printed adapters | Adapters ~20mm each | Steel rod core |
 | Wheels | 80mm dia | No | 1 piece each | Fits easily | N/A |
 | Steering brackets | 35 x 25 x 40 | No | 1 piece each | Small | N/A |
 | Fixed mounts | 25 x 25 x 30 | No | 1 piece each | Small | N/A |
 
+**Note on rocker arms**: At 180mm length, the rocker arm fits within the 200mm bed axis but with only 10mm margin per side. Orient the rocker arm along the 200mm axis of the CTC bed. If slicer skirt/brim causes overflow, reduce brim width or rotate slightly.
+
 ### 5.3 Body Join / Interlock Design
 
-The body is split at Y = 0 (the middle axle line, which is also the rocker pivot line).
+The body is split into 4 quadrants at two planes:
+- **Y = +20mm** (front/rear split, offset 20mm forward from middle axle line to keep all segments within 200mm print length; rear quadrants print diagonally)
+- **X = 0** (left/right split at the rover centre line)
+
+Split planes:
+- **X = 0**: Left/right split (260mm / 2 = 130mm per side -- fits 150mm bed axis)
+- **Y = +20mm**: Front/rear split, offset 20mm forward from centre to keep each segment within 200mm (front segments = 200mm, rear segments = 240mm -- see note below)
+
+**Important**: A pure Y=0 split gives 220mm halves which exceed the 200mm bed. Instead, offset the Y split to Y = +20mm, yielding front quadrants of 200mm and rear quadrants of 240mm in Y. The rear quadrants still exceed 200mm, so orient them diagonally on the bed (diagonal = sqrt(150^2 + 200^2) = 250mm, and 240mm x 130mm fits diagonally). Alternatively, split Y into 3 segments (at Y = +73mm and Y = -73mm, giving ~147mm each) for 6 total segments that all fit flat on the bed without diagonal orientation.
+
+Recommended approach: **4 quadrants with Y split at Y = +20mm**, printing rear quadrants diagonally.
 
 ```
-Cross-section at body join seam (looking from side):
+Top view of body quadrants:
 
-Front Half              Rear Half
+              X = 0 (left/right split)
+                |
+    FRONT-LEFT  |  FRONT-RIGHT
+    ~200x130mm  |  ~200x130mm
+                |
+  Y=+20 -------+------- Y=+20 (front/rear split, offset from centre)
+                |
+    REAR-LEFT   |  REAR-RIGHT
+    ~240x130mm  |  ~240x130mm
+    (print diag)|  (print diag)
+                |
+```
+
+```
+Cross-section at Y=+20mm seam (looking from side):
+
+Front quadrant          Rear quadrant
 +----------+  +  +----------+
 |  +-[M3]--+--+--+-[insert]-+  |
 |  |       | lip | |         |  |
@@ -467,16 +496,26 @@ Front Half              Rear Half
 |          |    |              |
 +----------+  +----------+
 
-Overlap lip: 10mm on each panel half
-6x M3x12mm bolts (3 per side wall + 3 through floor)
-Alignment: 2x 3mm steel dowel pins in floor for precise registration
+Same lip/bolt pattern applies to X=0 seam.
 ```
+
+**Fasteners**:
+- Y=+20mm seam (front/rear): 6x M3x12mm bolts (3 per side wall + 3 through floor)
+- X=0 seam (left/right): 6x M3x12mm bolts (3 per front/rear wall + 3 through floor)
+- Total: 12x M3x12mm bolts + 12x M3 heat-set inserts for body join
+
+**Alignment features** (critical for 4-segment registration):
+- **Dowel pin holes**: 4x 3mm steel dowel pins in the floor at each quadrant corner near the centre cross (+/-20mm from origin). Each pin bridges two adjacent quadrants for precise alignment.
+- **Tongue-and-groove joints**: Along both seam lines, add a 2mm x 2mm tongue on one half and a matching 2.2mm x 2.2mm groove on the other. This prevents lateral sliding during assembly and adds shear strength.
+- **Alignment tabs**: 2x 5mm wide x 10mm long x 3mm tall interlocking tabs at each seam midpoint, alternating male/female between adjacent quadrants. Provides positive location during bolt-up.
+
+**Assembly order**: Start with rear-left quadrant. Add rear-right (align X=0 seam, insert dowels, bolt). Then add front-left to rear-left (align Y=+20mm seam). Finally add front-right, aligning both seams simultaneously.
 
 ### 5.4 Support Structure Requirements
 
 | Part | Support Location | Support Type | Removal Notes |
 |------|-----------------|-------------|---------------|
-| Body halves | Rocker pivot holes (horizontal cylinders) | Use teardrop profile to avoid supports | Ream to round after printing |
+| Body quadrants | Rocker pivot holes (horizontal cylinders, on inner quadrants only) | Use teardrop profile to avoid supports | Ream to round after printing |
 | Rocker arm | Bearing boss holes | Teardrop profile | Ream with 22mm drill |
 | Bogie arm | Bearing boss hole | Teardrop profile | Ream |
 | Steering bracket | Motor clip overhang at bottom | Tree supports in slicer | Remove carefully |
@@ -495,7 +534,7 @@ Build from the inside out, bottom to top, one side then the other.
 2. Ream all 608ZZ bearing seats with 22mm drill bit (test fit each bearing)
 3. Ream all 8mm shaft holes
 4. Ream all D-shaft bores in wheel hubs
-5. Install all M3 heat-set inserts (soldering iron at 220 deg C, 3 seconds each)
+5. Install all M3 heat-set inserts (soldering iron at 170-180 deg C, 3 seconds each)
 6. Dry-fit all joints before adding fasteners
 
 **Stage 2: Build Left Suspension**
@@ -517,7 +556,7 @@ Build from the inside out, bottom to top, one side then the other.
 12. Verify both rockers seesaw freely
 
 **Stage 5: Mount Suspension to Body**
-13. Join body front and rear halves (6x M3x12 + dowel pins)
+13. Join body quadrants: rear-left + rear-right first, then front-left + front-right, then front to rear (12x M3x12 + dowel pins + alignment tabs)
 14. Insert M8 bolts through body rocker pivot holes
 15. Slide on rocker arm bearings, add washers and nyloc nuts
 16. Verify +/-25 deg rocker swing range
@@ -589,7 +628,7 @@ Complete each item before exporting STL files for printing.
 - [ ] N20 motor clip dimensions: 12.2mm x 10.2mm inner, 2mm walls
 - [ ] D-shaft bore is 3.1mm with 0.5mm D-flat
 - [ ] SG90 servo pocket and mounting holes match datasheet
-- [ ] Body join seam has 10mm overlap lips and 6x M3 bolt positions
+- [ ] Body join seams (Y=+20mm and X=0) each have 10mm overlap lips, 6x M3 bolt positions, dowel pin holes, and tongue-and-groove joints
 - [ ] Cable routing channels are at least 10mm x 10mm
 
 ### 7.2 Clearance & Motion
@@ -613,7 +652,7 @@ Complete each item before exporting STL files for printing.
 
 ### 7.4 Print Readiness
 
-- [ ] No part segment exceeds 210mm x 210mm x 240mm (Ender 3 usable volume)
+- [ ] No part segment exceeds 140mm x 190mm x 150mm (CTC usable volume with margin)
 - [ ] Print orientation is set per Section 5.1 table
 - [ ] Horizontal bearing holes use teardrop profile (or supports are planned)
 - [ ] Wall thickness around all inserts >= 2.4mm

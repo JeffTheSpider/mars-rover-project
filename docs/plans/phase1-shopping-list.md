@@ -68,7 +68,7 @@
 
 | Item | Qty | Approx Price | Where to Buy | Notes |
 |------|-----|-------------|--------------|-------|
-| M3 Heat-Set Inserts (OD 4.6mm, L 5mm, brass) | 50 pack | £4 | [Amazon UK](https://www.amazon.co.uk/s?k=M3+heat+set+inserts+brass) / [CNC Kitchen style from AliExpress](https://www.aliexpress.com/w/wholesale-m3-heat-set-insert.html) | CNC Kitchen / Ruthex style knurled brass. Need ~40 for Phase 1 body + brackets. Get 100-pack (£6) if planning ahead for Phase 2. |
+| M3 Heat-Set Inserts (OD 4.6mm, L 5mm, brass) | 50 pack | £4 | [Amazon UK](https://www.amazon.co.uk/s?k=M3+heat+set+inserts+brass) / [CNC Kitchen style from AliExpress](https://www.aliexpress.com/w/wholesale-m3-heat-set-insert.html) | CNC Kitchen / Ruthex style knurled brass. Need ~40 for Phase 1 body + brackets (more with 4-segment body). Get 100-pack (£6) if planning ahead for Phase 2. **PLA insert temp: ~170-180C** (lower than PETG's 200-220C) — go slow to avoid melting surrounding plastic. |
 | M3 Socket Cap Screw Assortment (6/8/10/12/16/20mm) | 1 set | £5 | [Amazon UK](https://www.amazon.co.uk/s?k=M3+socket+cap+screw+assortment) | Need ~50 screws in various lengths. A 300-piece assortment box covers Phase 1 and Phase 2. |
 | M3 Nut + Washer Assortment | 1 set | £3 | [Amazon UK](https://www.amazon.co.uk/s?k=M3+nut+washer+assortment) | Often bundled with screw kits. Need ~30 nuts, ~30 washers. |
 | M8 x 40mm Hex Bolt | 4 | £2 | [Amazon UK](https://www.amazon.co.uk/s?k=M8+hex+bolt+40mm) / Local hardware store | Rocker + bogie pivot shafts. Stainless preferred. |
@@ -88,10 +88,15 @@
 
 ## 3D Printing
 
+**Printer**: CTC printer (150x200mm bed) — PLA only (no PETG or TPU capability).
+
+> **Body segmentation**: The CTC's 150x200mm bed is smaller than the typical 220x220mm Ender 3 bed. The rover body needs to be split into **4 segments** instead of 2 to fit the build plate. This adds ~4 joining surfaces with extra wall overlap material, increasing total filament usage by ~50g and requiring ~8 additional heat-set inserts for segment-to-segment bolting.
+
 | Item | Qty | Approx Price | Where to Buy | Notes |
 |------|-----|-------------|--------------|-------|
-| PETG Filament 1.75mm, 1kg spool | 2 | £16 each (£32) | [Amazon UK](https://www.amazon.co.uk/s?k=PETG+filament+1kg) | Recommended brand: eSUN PETG or Sunlu PETG — both print well and are widely available on Amazon UK. Total print weight ~804g + 240g waste/failures = ~1044g. Two spools gives comfortable margin. Colour: grey or black (mars rover aesthetic). |
-| TPU Filament 1.75mm, 500g spool | 1 | £10 | [Amazon UK](https://www.amazon.co.uk/s?k=TPU+filament+95A) | Optional for Phase 1 — only needed if printing rubber tyres (Option B wheels). 95A shore hardness. Can defer until after basic driving works with rigid PETG wheels. |
+| PLA Filament 1.75mm, 1kg spool | 2 | £14 each (£28) | [Amazon UK](https://www.amazon.co.uk/s?k=PLA+filament+1kg) | Recommended brand: eSUN PLA+ or Sunlu PLA — both print well and are widely available on Amazon UK. Total print weight ~850g + 280g waste/failures = ~1130g (extra joining surfaces from 4-segment body). Two spools gives comfortable margin. Colour: grey or black (mars rover aesthetic). |
+
+> **Wheel traction**: Since the CTC printer cannot print TPU, use **rubber O-rings** (e.g. 30-40mm OD, ~3mm cross-section, from Amazon/eBay) or **silicone bands** stretched around the wheel rims for grip on smooth surfaces. These are cheap (~£2-3 for a bag) and provide excellent traction without needing flexible filament. Alternatively, wrap wheels with bicycle inner tube strips glued into a groove.
 
 ---
 
@@ -137,9 +142,9 @@
 | Bearings (12x 608ZZ) | £5 |
 | Fasteners (M3 set + M8 bolts/nuts/washers + heat-set inserts) | £20 |
 | Shafts (8mm rod + collars) | £4 |
-| Filament (2x 1kg PETG) | £32 |
+| Filament (2x 1kg PLA) | £28 |
 | Wiring & connectors | £30 |
-| **Core Total** | **~£149** |
+| **Core Total** | **~£145** |
 
 ### Optional Phase 1 Items
 
@@ -147,8 +152,8 @@
 |----------|---------------|
 | BNO055 IMU | £12 |
 | HC-SR04 ultrasonic (x2) | £3 |
-| TPU filament (tyres) | £10 |
-| **Optional Total** | **~£25** |
+| Rubber O-rings / silicone bands (traction) | £3 |
+| **Optional Total** | **~£18** |
 
 ### Tools (if needed)
 
@@ -165,13 +170,13 @@
 
 | | Cost |
 |---|------|
-| Core components | ~£149 |
-| Optional sensors/TPU | ~£25 |
+| Core components | ~£145 |
+| Optional sensors/traction | ~£18 |
 | Tools (if needed) | ~£58 |
-| **Grand Total (everything)** | **~£232** |
-| **Grand Total (core only, have tools)** | **~£149** |
+| **Grand Total (everything)** | **~£221** |
+| **Grand Total (core only, have tools)** | **~£145** |
 
-> **Note**: The EA-06 estimate of $102/~£80 assumes AliExpress pricing for most components with 2-4 week shipping and only 1x 500g filament spool. The figures above use Amazon UK pricing (typically 1.5-2x AliExpress) and 2x 1kg PETG spools for realistic print margin. To hit the EA-06 budget, order motors, ESP32, servos, drivers, heat-set inserts, and connectors from AliExpress (~£50 saving) and accept the longer delivery time.
+> **Note**: The EA-06 estimate of $102/~£80 assumes AliExpress pricing for most components with 2-4 week shipping and only 1x 500g filament spool. The figures above use Amazon UK pricing (typically 1.5-2x AliExpress) and 2x 1kg PLA spools for realistic print margin. To hit the EA-06 budget, order motors, ESP32, servos, drivers, heat-set inserts, and connectors from AliExpress (~£50 saving) and accept the longer delivery time.
 
 ---
 
@@ -181,7 +186,7 @@
 
 | Item | Cost | Why First |
 |------|------|-----------|
-| 2x PETG filament (1kg) | £32 | ~65 hours of printing ahead. Start with bearing test piece, then wheels, then structural parts. Printing can happen in parallel with electronics shipping. |
+| 2x PLA filament (1kg) | £28 | ~65 hours of printing ahead. Start with bearing test piece, then wheels, then structural parts. Body needs 4 segments (not 2) due to CTC's 150x200mm bed — start printing early. Printing can happen in parallel with electronics shipping. |
 
 ### Order 2: Electronics (buy next — AliExpress for budget, Amazon for speed)
 

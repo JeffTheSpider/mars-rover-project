@@ -11,8 +11,8 @@
 
 | Parameter | Full Scale | 0.4 Scale | Notes |
 |-----------|-----------|-----------|-------|
-| Body length | 1100mm | 440mm | Fits 2 prints on 220mm bed |
-| Body width | 650mm | 260mm | Fits 1 print + margin |
+| Body length | 1100mm | 440mm | Fits 4 segments on 150×200mm bed |
+| Body width | 650mm | 260mm | Fits 2 segments across width |
 | Body height (driving) | 1050mm | 420mm | Without mast (no mast in Phase 1) |
 | Wheelbase (front-rear) | 900mm | 360mm | Per-side, front wheel to rear wheel |
 | Track width (centre-centre) | 700mm | 280mm | Wheel centre to wheel centre |
@@ -65,10 +65,14 @@ The body is a rectangular box frame at 0.4 scale: 440mm × 260mm × 80mm tall. A
 
 | Segment | Dimensions (L×W×H) | Print Orientation | Notes |
 |---------|-------------------|-------------------|-------|
-| Body front half | 220×260×80mm | Flat (XY plane) | Includes front rocker pivot mounts |
-| Body rear half | 220×260×80mm | Flat (XY plane) | Includes rear electronics bay |
+| Body front-left | 220×130×80mm | Flat (XY plane) | Includes left front rocker pivot mount |
+| Body front-right | 220×130×80mm | Flat (XY plane) | Includes right front rocker pivot mount |
+| Body rear-left | 220×130×80mm | Flat (XY plane) | Includes left rear electronics bay |
+| Body rear-right | 220×130×80mm | Flat (XY plane) | Includes right rear electronics bay |
 
-**Join method**: M3 bolts through heat-set inserts at the seam. 6× M3×12mm bolts along the centre join line (3 per side wall + 3 on floor).
+Each segment fits within the CTC printer's 150×200mm bed with margin. The body is split along both the X (left/right) and Y (front/rear) centre lines.
+
+**Join method**: M3 bolts through heat-set inserts at all seams. 6× M3×12mm bolts along the Y-axis (front/rear) join line, 6× M3×12mm bolts along the X-axis (left/right) join line, plus 4× at the centre cross junction (22 bolts total for body joins).
 
 **Wall thickness**: 3mm outer walls, 2mm internal ribs.
 
@@ -85,7 +89,7 @@ The body is a rectangular box frame at 0.4 scale: 440mm × 260mm × 80mm tall. A
 | Parameter | Value |
 |-----------|-------|
 | Dimensions | 440×260×2mm |
-| Material | PLA/PETG, 100% infill (thin panel) |
+| Material | PLA, 100% infill (thin panel) |
 | Attachment | 8× snap clips along edges |
 | Features | Decorative panel lines (Mars rover aesthetic) |
 
@@ -95,14 +99,14 @@ This is cosmetic and can be omitted for easier access during development.
 
 | Setting | Value | Rationale |
 |---------|-------|-----------|
-| Material | PETG preferred (PLA acceptable) | PETG for outdoor testing durability |
+| Material | PLA | Suitable for Phase 1 indoor testing; Phase 2 should use PETG/ASA for outdoor durability |
 | Layer height | 0.2mm | Balance of speed and quality |
 | Walls/perimeters | 4 | Structural frame — needs rigidity |
 | Infill | 30% gyroid | Good strength-to-weight ratio |
 | Top/bottom layers | 5 | Floor takes the weight |
 | Support | Minimal — design for supportless printing | Pivot holes are horizontal cylinders — print as vertical posts with teardrop profile |
-| Estimated print time | ~12 hrs per half (24 hrs total) | At 50mm/s |
-| Estimated weight | ~200g per half (400g total frame) | |
+| Estimated print time | ~7 hrs per segment (28 hrs total for 4 segments) | At 50mm/s |
+| Estimated weight | ~110g per segment (440g total frame, slightly more due to extra joining walls) | |
 
 ---
 
@@ -130,7 +134,7 @@ Side View (left rocker):
 | Body pivot end | 8mm bore for 608ZZ bearing, 22mm OD boss |
 | Bogie pivot mount | 8mm bore for 608ZZ bearing, 22mm OD boss |
 | Front wheel axle mount | Motor mounting face with 4× M3 holes on 25mm PCD |
-| Material | PETG |
+| Material | PLA |
 
 ### 4.2 Rocker Pivot Detail
 
@@ -161,7 +165,7 @@ Shaft: M8 bolt through body frame, nyloc nut
 
 ### 4.4 Reinforcement
 
-At 0.4 scale with ~1 kg total weight, the rocker arms experience very low loads (~0.17 kg per wheel). No metal reinforcement needed — PETG at 50% infill is more than sufficient.
+At 0.4 scale with ~1 kg total weight, the rocker arms experience very low loads (~0.17 kg per wheel). No metal reinforcement needed — PLA at 50% infill is more than sufficient.
 
 **Verification**: Rocker arm bending moment at worst case (single wheel on obstacle, 2× load = 0.34 kg):
 ```
@@ -169,8 +173,8 @@ M = F × d = 0.34 × 9.81 × 0.090 = 0.30 N·m
 Section modulus (20×15mm rectangle, 3mm walls): S ≈ 0.5 cm³
 Stress = M/S = 0.30 / 0.5e-6 = 0.6 MPa
 
-PETG tensile strength: ~50 MPa
-Safety factor: 50 / 0.6 = 83×  ← massively over-engineered at this scale
+PLA tensile strength: ~60 MPa
+Safety factor: 60 / 0.6 = 100×  ← massively over-engineered at this scale
 ```
 
 ---
@@ -199,7 +203,7 @@ Side View (left bogie):
 | Cross-section | 15mm × 12mm outer, 2.5mm walls |
 | Pivot bore | 8mm for 608ZZ bearing |
 | Wheel axle mounts | Motor mounting face with 4× M3 holes |
-| Material | PETG |
+| Material | PLA |
 
 ### 5.2 Bogie Print Settings
 
@@ -237,7 +241,7 @@ Front View:
 | Cross-section | Round tube: 12mm OD, 8mm ID (press-fit 8mm shaft) |
 | Centre pivot | 8mm bore for 608ZZ bearing (attaches to body) |
 | End pivots | 8mm bore for 608ZZ bearing (attaches to rockers) |
-| Material | PETG or steel rod (8mm) with printed end caps |
+| Material | PLA or steel rod (8mm) with printed end caps |
 
 ### 6.2 Design Decision: Printed vs Metal
 
@@ -256,7 +260,7 @@ For Phase 1, the differential bar experiences torsional loads as it averages lef
 | Setting | Value |
 |---------|-------|
 | Qty | 3 (left end, centre, right end) |
-| Material | PETG |
+| Material | PLA |
 | Walls | 4 |
 | Infill | 60% |
 | Print time | ~1 hr each |
@@ -275,17 +279,17 @@ For Phase 1, the differential bar experiences torsional loads as it averages lef
 | Hub bore | Matches N20 motor shaft (3mm D-shaft) |
 | Tread pattern | 12× chevron grousers, 3mm deep |
 | Spoke design | 6-spoke with flex zones (compliant wheel) |
-| Material | PETG (rigid hub + tread) or PLA hub + TPU tread |
+| Material | PLA (rigid hub + tread) with rubber O-ring traction bands |
 
 ### 7.2 Wheel Design Options
 
 | Option | Description | Pros | Cons |
 |--------|-------------|------|------|
-| A: Mono-material | Entire wheel PETG, rigid grousers | Simple, one print | Hard ride, poor grip on pavement |
-| B: Dual-material | PETG hub + TPU tyre ring | Good grip, compliant | Requires TPU printing, multi-part assembly |
-| C: Compliant spoke | PETG with thin flex spokes | Some compliance, one material | Complex geometry, may fatigue |
+| A: Rigid PLA | Entire wheel PLA, rigid grousers only | Simplest, one print | Hard ride, poor grip on smooth surfaces |
+| B: PLA + O-rings | PLA wheel with grooves for rubber O-ring traction bands | Good grip, simple assembly, no TPU needed | Need correctly sized O-rings |
+| C: Compliant spoke | PLA with thin flex spokes + O-rings | Some compliance, good grip | Complex geometry, PLA may be too brittle for flex spokes |
 
-**Recommendation**: Option A for initial testing (simple, fast). Switch to Option B once driving is validated. The N20 motors have enough torque for rigid wheels on grass.
+**Recommendation**: Option B — rigid PLA wheels with circumferential grooves for standard rubber O-rings. The O-rings provide traction on smooth surfaces without requiring TPU printing (which the CTC printer cannot do). Use 2-3 O-rings per wheel in machined grooves. Standard 70mm ID × 3mm cross-section O-rings fit the 80mm OD wheel well.
 
 ### 7.3 Hub-to-Motor Interface
 
@@ -358,7 +362,7 @@ Top View (one steering corner):
 | Servo | SG90, 1.8 kg·cm torque at 4.8V |
 | Steering pivot bearing | 608ZZ (8mm bore) |
 | Servo horn length | 15mm (gives adequate mechanical advantage) |
-| Servo mount | M2 screws into PETG bracket |
+| Servo mount | M2 screws into PLA bracket |
 
 ### 8.3 Steering Bracket
 
@@ -367,7 +371,7 @@ The steering bracket is the rotating part that holds the motor and turns with th
 | Parameter | Value |
 |-----------|-------|
 | Dimensions | 35mm × 25mm × 40mm |
-| Material | PETG, 4 walls, 40% infill |
+| Material | PLA, 4 walls, 40% infill |
 | Features | 608ZZ bearing seat (top), N20 motor clip (bottom), servo horn receiver |
 | Weight | ~12g each |
 | Print orientation | Upright (bearing seat on top, motor clip on bottom) |
@@ -466,16 +470,16 @@ Note: Phase 1 uses 10 bearings (not 19 like Phase 2). Phase 2 adds bearings for 
 
 ### 10.3 Bearing Press-Fit Dimensions
 
-For 3D printed PETG bearing seats:
+For 3D printed PLA bearing seats:
 
 | Feature | Dimension | Notes |
 |---------|-----------|-------|
-| Bearing seat ID | 22.1mm | 0.1mm oversize for press fit (PETG shrinks ~0.1-0.2%) |
+| Bearing seat ID | 22.15mm | 0.15mm oversize for press fit (PLA shrinks slightly less than PETG) |
 | Bearing seat depth | 7.2mm | Full bearing width + 0.2mm |
 | Shaft hole | 8.0mm | Exact — bearing inner race doesn't rotate relative to shaft |
 | Retention | Snap ring groove or printed lip | Prevents bearing walking out |
 
-**Important**: Test-print a bearing test piece first. PETG print tolerance varies by printer — adjust the 22.1mm bore ±0.1mm based on test fit. Target: bearing should press in firmly by hand without needing a hammer.
+**Important**: Test-print a bearing test piece first. PLA print tolerance varies by printer — adjust the 22.15mm bore ±0.1mm based on test fit on the CTC printer. Target: bearing should press in firmly by hand without needing a hammer.
 
 ---
 
@@ -548,7 +552,7 @@ Top View — Electronics Layout:
 | M3 × 8mm socket cap | M3 | 20 | Electronics mounting, motor clips |
 | M3 nut | M3 | 30 | General assembly |
 | M3 washer | M3 | 30 | General assembly |
-| M3 × 5mm heat-set insert | M3 | 40 | Press into PETG for screw bosses |
+| M3 × 5mm heat-set insert | M3 | 40 | Press into PLA for screw bosses (170-180°C, lower than PETG) |
 | M2 × 8mm | M2 | 8 | SG90 servo mounting (4 servos × 2 screws) |
 | M2 × 6mm grub screw | M2 | 6 | Wheel hub set screws (backup retention) |
 
@@ -558,7 +562,7 @@ Top View — Electronics Layout:
 |------|------|---------|
 | Hex key | 2mm | M3 socket cap screws |
 | Hex key | 5mm | M8 hex bolts |
-| Soldering iron | Pointed tip, 220°C | Heat-set insert installation |
+| Soldering iron | Pointed tip, 170-180°C | Heat-set insert installation (PLA requires lower temp than PETG's 200-220°C) |
 | Wire strippers | — | Wiring |
 | Small Phillips screwdriver | #1 | SG90 mounting screws |
 | Multimeter | — | Voltage checks, continuity |
@@ -571,45 +575,50 @@ Top View — Electronics Layout:
 
 | # | Part | Qty | Material | Est. Time | Est. Weight |
 |---|------|-----|----------|-----------|-------------|
-| 1 | Body front half | 1 | PETG | 12 hrs | 200g |
-| 2 | Body rear half | 1 | PETG | 12 hrs | 200g |
-| 3 | Top deck cover | 1 | PETG | 4 hrs | 60g |
-| 4 | Left rocker arm | 1 | PETG | 4 hrs | 35g |
-| 5 | Right rocker arm | 1 | PETG | 4 hrs | 35g |
-| 6 | Left bogie arm | 1 | PETG | 2.5 hrs | 20g |
-| 7 | Right bogie arm | 1 | PETG | 2.5 hrs | 20g |
-| 8 | Differential bar end adapters | 3 | PETG | 3 hrs | 15g |
-| 9 | Wheels | 6 | PETG | 12 hrs | 150g |
-| 10 | Steering brackets | 4 | PETG | 6 hrs | 48g |
-| 11 | Fixed wheel mounts | 2 | PETG | 2 hrs | 16g |
-| 12 | Bearing test piece | 1 | PETG | 0.5 hrs | 5g |
-| | **TOTAL** | **22 parts** | | **~65 hrs** | **~804g** |
+| 1 | Body front-left segment | 1 | PLA | 7 hrs | 110g |
+| 2 | Body front-right segment | 1 | PLA | 7 hrs | 110g |
+| 3 | Body rear-left segment | 1 | PLA | 7 hrs | 110g |
+| 4 | Body rear-right segment | 1 | PLA | 7 hrs | 110g |
+| 5 | Top deck cover | 1 | PLA | 4 hrs | 60g |
+| 6 | Left rocker arm | 1 | PLA | 4 hrs | 35g |
+| 7 | Right rocker arm | 1 | PLA | 4 hrs | 35g |
+| 8 | Left bogie arm | 1 | PLA | 2.5 hrs | 20g |
+| 9 | Right bogie arm | 1 | PLA | 2.5 hrs | 20g |
+| 10 | Differential bar end adapters | 3 | PLA | 3 hrs | 15g |
+| 11 | Wheels | 6 | PLA | 12 hrs | 150g |
+| 12 | Steering brackets | 4 | PLA | 6 hrs | 48g |
+| 13 | Fixed wheel mounts | 2 | PLA | 2 hrs | 16g |
+| 14 | Bearing test piece | 1 | PLA | 0.5 hrs | 5g |
+| | **TOTAL** | **24 parts** | | **~69 hrs** | **~844g** |
 
 ### 13.2 Filament Usage
 
 | Factor | Value |
 |--------|-------|
-| Part weight total | 804g |
-| Support material (~10%) | 80g |
-| Skirt/brim/purge (~5%) | 40g |
-| Failed prints (~15%) | 120g |
-| **Total filament needed** | **~1,044g** |
-| **Spools to buy** | 2× 500g or 1× 1kg PETG |
+| Part weight total | 844g |
+| Extra joining surfaces (~5%) | 42g |
+| Support material (~10%) | 84g |
+| Skirt/brim/purge (~5%) | 42g |
+| Failed prints (~15%) | 127g |
+| **Total filament needed** | **~1,139g** |
+| **Spools to buy** | 2× 1kg PLA (gives good margin for reprints) |
 
-**Recommendation**: Buy 1× 1kg spool PETG (~$18-20) instead of the 500g spool in the EA-06 budget. Only adds ~$8 to the budget but gives margin for reprints and test pieces.
+**Recommendation**: Buy 2× 1kg spools PLA (~$15-18 each). The 4-segment body design uses slightly more filament than the 2-half design due to additional joining walls and overlap surfaces. PLA is cheaper than PETG, which partially offsets the extra material. PLA is suitable for Phase 1 indoor testing; Phase 2 outdoor parts should use PETG or ASA for UV and heat resistance.
 
 ### 13.3 Print Order (Recommended)
 
-1. **Bearing test piece** — validate bore dimensions before printing structural parts
+1. **Bearing test piece** — validate bore dimensions on CTC printer before printing structural parts
 2. **Wheels (6×)** — small, fast, can print overnight while designing larger parts
 3. **Left & right bogie arms** — small, quick validation of pivot geometry
 4. **Left & right rocker arms** — longer prints, do these once bogie fit is confirmed
 5. **Differential bar adapters** — quick prints
 6. **Steering brackets (4×)** — medium complexity
 7. **Fixed wheel mounts (2×)** — simple
-8. **Body front half** — longest print, do overnight
-9. **Body rear half** — longest print, do overnight
-10. **Top deck cover** — last, optional for initial testing
+8. **Body front-left segment** — 7 hrs, fits CTC bed (150×200mm)
+9. **Body front-right segment** — 7 hrs
+10. **Body rear-left segment** — 7 hrs
+11. **Body rear-right segment** — 7 hrs
+12. **Top deck cover** — last, optional for initial testing (may need 2 pieces if 440×260mm exceeds bed)
 
 ---
 
@@ -618,7 +627,7 @@ Top View — Electronics Layout:
 ### Step 1: Prepare Printed Parts
 1. Remove support material (minimal if designed correctly)
 2. Test-fit all 608ZZ bearings — ream with 22mm drill bit if too tight
-3. Install M3 heat-set inserts in all screw bosses (soldering iron, 220°C, 3 seconds each)
+3. Install M3 heat-set inserts in all screw bosses (soldering iron, 170-180°C for PLA, 2-3 seconds each — lower temp than PETG to avoid melting too much surrounding material)
 4. Dry-fit all joints before adding fasteners
 
 ### Step 2: Build Suspension (One Side)
@@ -703,7 +712,7 @@ What carries over from Phase 1 to Phase 2:
 - **Design lessons**: Print tolerances, bearing fit, wiring routing
 
 What does NOT carry over:
-- **Printed parts**: Too small — all parts reprinted at full scale
+- **Printed parts**: Too small and PLA not durable enough outdoors — all parts reprinted at full scale in PETG/ASA
 - **N20 motors**: Replaced with Chihai 37mm gearmotors
 - **SG90 servos**: Replaced with MG996R (much higher torque)
 - **L298N drivers**: Replaced with Cytron MDD10A (much higher current)
@@ -714,4 +723,4 @@ The Phase 1 prototype becomes a display piece / desk toy once Phase 2 is built.
 
 ---
 
-*Document EA-08 v1.0 — 2026-03-15*
+*Document EA-08 v1.1 — 2026-03-22 — Updated for CTC printer (150×200mm bed), PLA material, 4-segment body*
