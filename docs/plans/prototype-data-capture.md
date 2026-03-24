@@ -198,7 +198,7 @@ Use kitchen scale (1g resolution preferred).
 | **Non-Printed** | | | | |
 | N20 motors x6 | ~120 | | | ~20g each |
 | SG90 servos x4 | ~36 | | | ~9g each |
-| 608ZZ bearings x11 | ~132 | | | ~12g each |
+| 608ZZ bearings x9 | ~108 | | | ~12g each |
 | M8 bolts + nuts + washers | ~50 est | | | |
 | M3 hardware (all) | ~30 est | | | |
 | 8mm steel rod (300mm) | ~50 est | | | |

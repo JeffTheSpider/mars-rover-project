@@ -56,7 +56,7 @@ the diff bar — defeating the differential coupling.
 - When left rocker tilts up → bar rotates → right rocker tilts down → body stays level
 - **No separate diff bar adapters needed** — `diff_bar_adapter.py` is DEPRECATED
 
-**Bearing count change:** 11 → 8 (no separate diff bar bearings needed)
+**Bearing count change:** 11 → 9 (no separate diff bar bearings needed; 2 rocker + 2 bogie + 1 diff pivot + 4 steering)
 
 ### 2C. TIRE BORE MISMATCH
 
@@ -250,7 +250,7 @@ BODY (FL+RL quadrants)          BODY (FR+RR quadrants)
 
 | Item | Qty | Specification | Source |
 |------|-----|--------------|--------|
-| 608ZZ bearings | 8 | 8×22×7mm | eBay/Amazon |
+| 608ZZ bearings | 9 | 8×22×7mm | eBay/Amazon |
 | 8mm steel rod | 2m total | Mild steel, smooth | Hardware shop |
 | N20 geared motors | 6 | 100RPM 6V | AliExpress |
 | SG90 micro servos | 4 | 180° | AliExpress |
@@ -514,7 +514,7 @@ INSERT_DEPTH = 0.55          # 5.5mm
 | Diff bar | 300mm | "200" in diff scripts | ✓ Clean |
 | Printer | CTC Bizer | "Ender" | ✓ Clean |
 | Material | PLA (Phase 1) | "PETG" in Phase 1 context | ✓ Clean |
-| Bearings | 8 total | "11 bearings" | **UPDATE** suspension plan |
+| Bearings | 9 total | "11 bearings" | ✓ Updated (EA-26 added diff pivot) |
 | Body | 4 quadrants | "halves" | ✓ Clean |
 
 ---
@@ -537,7 +537,7 @@ INSERT_DEPTH = 0.55          # 5.5mm
 
 ### Immediate (before CAD design)
 1. ✅ Complete this audit document
-2. Update suspension plan with corrected bearing count (11 → 8)
+2. Update suspension plan with corrected bearing count (11 → 9)
 3. Update suspension plan with corrected differential mechanism
 4. Update `rover_tire.py` bore: 70mm → 75mm
 5. Create test socket piece (like bearing test piece) for 8mm rod fit validation
@@ -609,7 +609,7 @@ full kinematic model in the assembly script. The suspension must allow
 | Scale | 0.4× | ~0.3× | ~0.3× | ~0.5× |
 | Frame | 8mm steel rod | 8mm steel rod | Metal/printed | Carbon fibre tube |
 | Connectors | Printed PLA | Printed PLA clips | Printed PLA | Printed (OpenSCAD) |
-| Bearings | 608ZZ (8 total) | 608ZZ | M3 bolts | 608ZZ + thrust |
+| Bearings | 608ZZ (9 total) | 608ZZ | M3 bolts | 608ZZ + thrust |
 | Drive motors | N20 100RPM (6×) | LX-16A smart servo | N20 (6×) | DC geared |
 | Steering | SG90 (4×) | LX-16A smart servo | SG90 (4×) | Servo |
 | Wheels | 80mm PLA + TPU | 124mm PLA | ~80mm PLA + TPU | 150mm PLA |

@@ -86,6 +86,11 @@ The rocker-bogie is a **12-DOF passive suspension** (before drive and steering) 
 
 ### 2.1 Complete DOF Map
 
+> **Coordinate convention note**: This document uses descriptive axis names
+> (lateral, longitudinal, vertical) rather than X/Y/Z letters. The project-wide
+> convention is X = lateral, Y = forward, Z = up (matching EA-08 and all CAD scripts).
+> Computed positions in Section 9.5 use this X-lateral/Y-forward/Z-up frame.
+
 | Joint | Type | Axis | Travel | Continuous? | Limits Set By |
 |-------|------|------|--------|-------------|---------------|
 | Left rocker pivot | Revolute | Y (lateral) | +/- 25-35 deg | No | Hard stops on body |
@@ -211,7 +216,7 @@ For Earth garden use with h_obstacle = 80mm (kerb), D_w >= 160mm. We use **200mm
 | Middle-to-rear spacing | 1.5 - 2.0 * D_w | Bogie arm length, weight distribution |
 | Track width | 3.0 - 4.0 * D_w | Lateral stability (wider = more stable but larger footprint) |
 
-At 0.4x scale (D_w = 80mm): wheelbase = 360mm, track = 280mm — **Claude must verify these against current EA-08 dimensions**.
+At 0.4x scale (D_w = 80mm): wheelbase = 360mm, track = 280mm — **Verified**: matches EA-08 Section 1 table exactly.
 
 ### 4.3 Rocker Arm Length
 
@@ -250,7 +255,7 @@ Where Y_rocker_pivot_offset is the lateral distance from centreline to rocker pi
 - Attached at equal distances from the rocker pivot axis
 - Attached at equal distances from the bar pivot axis
 
-**Claude must calculate**: Link lengths, bar length, and attachment offsets from the user's rocker pivot spacing, desired equalisation ratio, and required articulation range.
+**Computed** (see Section 9.5): Link length = 85.0mm (Phase 1) / 212.1mm (full scale). Bar half-span = 200mm (Phase 1) / 500mm (full). Attachment offsets: r_bar = r_rocker = 30mm (Phase 1) / 75mm (full), giving 1:1 motion ratio. Link angle = 28.1 deg from horizontal.
 
 ### 4.6 Belly Clearance
 
@@ -269,11 +274,11 @@ At 0.4x scale: Z_belly >= 48mm. Our current value is 60mm — adequate.
 | Parameter | Value | Basis |
 |-----------|-------|-------|
 | Nominal angle | 0 deg (level ground) | Flat terrain |
-| Max upward (front wheel high) | +30 deg | Limited by belly clearance and rear wheel ground contact |
-| Max downward (front wheel low) | -30 deg | Limited by front wheel-to-body clearance |
+| Max upward (front wheel high) | +25 deg | Limited by belly clearance and rear wheel ground contact |
+| Max downward (front wheel low) | -25 deg | Limited by front wheel-to-body clearance |
 | Hard stop margin | 5 deg inside max | Prevent metal-on-metal at extremes |
 
-**Why +/- 30 deg**: At 30 deg rocker tilt with the differential, the body tilts only 15 deg. This is the practical limit for electronics stability and CoG safety.
+**Why +/- 25 deg**: At 25 deg rocker tilt with the 1:1 differential, the body tilts only 12.5 deg. This is conservative for PLA hard stops and electronics stability. Matches `generate_rover_params.py` value.
 
 ### 5.2 Bogie Articulation
 
@@ -298,7 +303,7 @@ Before finalising CAD, verify at ALL extreme positions:
 1. **Wheel-to-body clearance**: At max rocker articulation, does any wheel contact the body? Check with steering at full lock simultaneously.
 2. **Wheel-to-arm clearance**: At max bogie articulation + full steering lock, does the wheel contact the rocker or bogie arm?
 3. **Cable routing**: At max articulation + full steering, do cables exceed their minimum bend radius?
-4. **Differential link travel**: At max asymmetric articulation (one side +30, other -30), do the links reach their geometric limit or bind?
+4. **Differential link travel**: At max asymmetric articulation (one side +25, other -25), do the links reach their geometric limit or bind?
 5. **Ground clearance**: At max articulation, does the belly or any structural member contact the ground?
 
 **Recommendation**: Run a CAD motion study sweeping all joints through their full range. Flag any interference distance < 5mm.
@@ -1012,10 +1017,10 @@ All variables that must be defined before CAD can be finalised:
 | 12 | Steering max angle | alpha_max | 35 deg | From turning radius |
 | 13 | Rocker articulation limit | theta_r | +/- 30 deg | From interference |
 | 14 | Bogie articulation limit | theta_b | +/- 25 deg | From interference |
-| 15 | Diff bar length | L_diff | 300mm | From pivot spacing |
-| 16 | Diff link length | L_link | TBD | Must calculate |
-| 17 | Diff link attachment offset (bar) | r_bar | TBD | Must calculate |
-| 18 | Diff link attachment offset (rocker) | r_rocker | TBD | Must calculate |
+| 15 | Diff bar half-span | L_diff_half | 200mm (Phase 1) / 500mm (full) | Bar extends beyond body for link geometry |
+| 16 | Diff link length | L_link | 85.0mm (Phase 1) / 212.1mm (full) | Computed in Section 9.5 |
+| 17 | Diff link attachment offset (bar) | r_bar | 30mm (Phase 1) / 75mm (full) | Computed in Section 9.5 |
+| 18 | Diff link attachment offset (rocker) | r_rocker | 30mm (Phase 1) / 75mm (full) | Computed in Section 9.5 |
 | 19 | Rover mass | M | 1.25 kg | From weight budget |
 | 20 | Bearing type (rocker pivot) | — | 608ZZ | From load calc |
 

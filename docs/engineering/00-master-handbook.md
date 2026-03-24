@@ -542,7 +542,7 @@ Three ordering batches, structured so printing can begin immediately:
 **Batch 3 (assembly hardware + battery)**:
 - 1x 2S LiPo 2200mAh ($12)
 - 1x LiPo charger ($8)
-- 11x 608ZZ bearings — buy 12 ($5)
+- 9x 608ZZ bearings — buy 12 ($5)
 - 1x M3 fastener set ($6)
 - 50x M3 heat-set inserts ($3)
 
@@ -582,7 +582,7 @@ Comprehensive table of every key specification, its value, and the source EA.
 | CoG tilt limit (loaded) | -- / 56.5 deg | -- / P2 | EA-05 s4 |
 | Max steering angle | +/-35 deg | All | EA-10 s2.1 |
 | Min turn radius (Ackermann) | 397 mm / 993 mm | P1 / P2 | EA-10 s2.2 |
-| Total bearings | 11 / 19 | P1 / P2 | EA-01 s4 |
+| Total bearings | 9 / 19 | P1 / P2 | EA-01 s4, EA-25 s2B |
 | Bearing type | 608ZZ (8mm) | P1/P2 | EA-01 s4 |
 | Bearing type (Phase 3) | 6001-2RS sealed | P3 | EA-06 s4 |
 

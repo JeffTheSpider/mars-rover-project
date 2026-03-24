@@ -159,7 +159,7 @@ jobs:
           DOCS_DIR="docs/engineering"
           MISSING=0
 
-          for i in $(seq -w 0 25); do
+          for i in $(seq -w 0 26); do
             PATTERN="${DOCS_DIR}/${i}-*.md"
             COUNT=$(ls -1 $PATTERN 2>/dev/null | wc -l)
             if [ "$COUNT" -eq 0 ]; then

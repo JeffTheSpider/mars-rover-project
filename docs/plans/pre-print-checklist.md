@@ -65,7 +65,7 @@ Measured via `get_stl_info` bounding box. All dimensions in mm.
 
 ## 3. Hardware Fitment Verification
 
-### 608ZZ Bearing Seats (11 locations)
+### 608ZZ Bearing Seats (9 locations)
 
 | Script | Bore (mm) | Depth (mm) | Boss OD (mm) | Status |
 |--------|-----------|------------|--------------|--------|

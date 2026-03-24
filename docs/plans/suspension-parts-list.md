@@ -109,10 +109,9 @@ _Reduced from 33 if you count the old monolithic arms (2 rocker front + 2 rocker
 |---|------|-----|----------|------|
 | 1 | 608ZZ | 2 | Rocker body pivot (L+R) | 22×8×7mm |
 | 2 | 608ZZ | 2 | Bogie pivot (L+R) | 22×8×7mm |
-| 3 | 608ZZ | 1 | Diff bar centre (body mount) | 22×8×7mm |
-| 4 | 608ZZ | 2 | Diff bar ends | 22×8×7mm |
-| 5 | 608ZZ | 4 | Steering pivots (4 corners) | 22×8×7mm |
-| **Total** | **608ZZ** | **11** | | **~£5 for 10-pack on Amazon** |
+| 3 | 608ZZ | 1 | Diff bar body pivot | 22×8×7mm |
+| 4 | 608ZZ | 4 | Steering pivots (4 corners) | 22×8×7mm |
+| **Total** | **608ZZ** | **9** | | **buy 12 (3 spare) ~£5** |
 
 #### B3. Fasteners
 

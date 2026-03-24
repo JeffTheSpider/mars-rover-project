@@ -7,11 +7,11 @@
 
 ## Purpose
 
-Comprehensive engineering plan covering every step from requirements verification through to first drive. This plan was created after a full project deep-dive reading all 25 engineering analyses, 17 plan documents, 22 CAD scripts, 9 firmware modules, PWA, 7 ROS2 packages, CI pipeline, and tooling.
+Comprehensive engineering plan covering every step from requirements verification through to first drive. This plan was created after a full project deep-dive reading all 27 engineering analyses, 17 plan documents, 22 CAD scripts, 9 firmware modules, PWA, 7 ROS2 packages, CI pipeline, and tooling.
 
 ## Executive Summary
 
-The Mars Rover Phase 1 prototype has exceptional documentation and software maturity (25 EAs, full firmware, PWA, 22 CAD scripts, CI/CD). However, **zero physical build work has started**. This plan identifies 25 issues found during the deep-dive and structures 8 phases of work from documentation cleanup through to first drive.
+The Mars Rover Phase 1 prototype has exceptional documentation and software maturity (27 EAs, full firmware, PWA, 22 CAD scripts, CI/CD). However, **zero physical build work has started**. This plan identifies 25 issues found during the deep-dive and structures 8 phases of work from documentation cleanup through to first drive.
 
 **Estimated timeline:** ~3-4 weeks (concurrent ordering + printing + testing)
 **Estimated print time:** ~69 hours across 46 parts
@@ -276,7 +276,7 @@ Order in batches to start printing while waiting for later deliveries:
   - Dupont jumper wires (M-F, F-F assortment)
   - Mini breadboard
 - [ ] **4.3** — **Order 3: Mechanical** (order week 1-2, ~GBP 35)
-  - 11× 608ZZ bearings (8×22×7mm)
+  - 9× 608ZZ bearings (8×22×7mm) + 3 spares = buy 12
   - 1× 8mm steel rod, 350mm length (cut to 300mm)
   - M3 fasteners: 30× M3×12mm socket head, 20× M3 nuts, 50× M3 washers
   - M8 fasteners: 2× M8×60mm bolts, 4× M8 nuts, 8× M8 washers

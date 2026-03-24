@@ -91,7 +91,7 @@
 
 | Item | Qty | Approx Price | Where to Buy | Notes |
 |------|-----|-------------|--------------|-------|
-| 8mm Steel Rod, 1m length | 1 | £3 | [Amazon UK](https://www.amazon.co.uk/s?k=8mm+steel+rod+1m) / Local hardware store / [RS Components](https://uk.rs-online.com) | Cut to lengths: 1× 400mm (diff bar), 2× 150mm (rocker front tubes), 4× 60mm (rocker rear + bogie tubes). 8mm fits 608ZZ bearing inner race. Silver steel or mild steel both fine. Total ~640mm from 1m rod. |
+| 8mm Steel Rod, 1m length | 2 | £3 each (£6) | [Amazon UK](https://www.amazon.co.uk/s?k=8mm+steel+rod+1m) / Local hardware store / [RS Components](https://uk.rs-online.com) | Cut to lengths: 1× 400mm (diff bar, EA-26), 2× 150mm (rocker front tubes), 6× 60mm (2 rocker rear + 2 bogie front + 2 bogie rear). 8mm fits 608ZZ bearing inner race. Silver steel or mild steel both fine. Total ~1060mm — needs 2× 1m rods. |
 | 8mm Shaft Collars (bore 8mm) | 4 | £3 | [Amazon UK](https://www.amazon.co.uk/s?k=8mm+shaft+collar) | Retain diff bar ends + rocker pivot shafts. Alternatively use printed adapters with M3 grub screws. |
 | M3 Rod-End Bearings (Heim joints) | 4 | £3 | [Amazon UK](https://www.amazon.co.uk/s?k=M3+rod+end+bearing+heim+joint) / [AliExpress](https://www.aliexpress.com/w/wholesale-M3+rod+end+bearing.html) | For differential links — ball joints at each end of each link (2 links × 2 ends). Allow angular misalignment between diff bar (X-axis) and rocker (Y-axis). See EA-26 Section 9. |
 | M3 x 20mm Bolts (for diff links) | 4 | £1 | Included in M3 assortment | Through-bolts for attaching rod-end bearings to diff link bar ends. |

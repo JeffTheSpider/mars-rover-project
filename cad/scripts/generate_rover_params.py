@@ -172,7 +172,7 @@ FULL_SCALE_PARAMS = {
         "width":                   7,   # mm
         "press_fit_oversize":   0.15,   # mm, added to OD for PLA seat (22.15mm actual)
         "seat_depth_extra":      0.2,   # mm, added to width for seat depth
-        "quantity_phase1":        12,   # total bearings (11 needed + 1 spare)
+        "quantity_phase1":        12,   # total bearings (9 needed + 3 spares, EA-25/EA-26)
         "quantity_phase2":        19,   # total bearings (adds wheel hub bearings)
         "weight_each_g":          12,   # grams
     },
@@ -350,7 +350,7 @@ FULL_SCALE_PARAMS = {
     "suspension_geometry": {
         "rocker_swing_range_deg":  25,  # +/- degrees
         "bogie_swing_range_deg":   20,  # +/- degrees
-        "diff_bar_range_deg":      20,  # +/- degrees
+        "diff_bar_range_deg":      25,  # +/- degrees (matches differential_bar.angular_range_deg)
         "max_obstacle_height":    150,  # mm (0.75 x wheel diameter)
         "cog_height":             232,  # mm above ground (EA-05 analysis)
         "static_tilt_limit_deg": 49.4,  # before tipover (side tilt)
@@ -490,7 +490,7 @@ def get_params(scale=0.4):
         if not isinstance(group, dict):
             continue
         for param_key, value in group.items():
-            if isinstance(value, (int, float)) and _should_scale(group_key, param_key):
+            if isinstance(value, (int, float)) and not isinstance(value, bool) and _should_scale(group_key, param_key):
                 params[group_key][param_key] = round(value * scale, 2)
 
     # Phase 1 overrides (values from EA-08 that don't follow simple scaling)
@@ -498,7 +498,7 @@ def get_params(scale=0.4):
     params["overall"]["body_height"] = 80
     params["overall"]["driving_height"] = 420    # EA-08: no mast in Phase 1
     params["overall"]["target_speed_kmh"] = 2    # EA-08: 2 km/h for safety
-    params["wheel"]["hub_boss_od"] = 10           # not scaled, print feature
+    params["wheel"]["hub_boss_od"] = 14           # 14mm OD (wider for spoke strength at 0.4 scale, matches V3 CAD)
     params["wheel"]["hub_boss_length"] = 8        # not scaled, shaft engagement
     params["body_features"]["rocker_pivot_x"] = 125  # EA-08: X=+/-125mm
     params["body_features"]["rocker_pivot_z"] = 60   # EA-08: Z=+60mm

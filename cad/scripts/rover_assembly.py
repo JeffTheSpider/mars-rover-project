@@ -611,7 +611,7 @@ def run(context):
         # 1x diff bar centre pivot
         # 2x diff bar end pivots
         # 4x steering pivots (but simplified — some overlap with steering)
-        # Total per EA: 11 bearings (not all are separate visual elements)
+        # Total per EA-25/26: 9 bearings (not all are separate visual elements)
 
         # Show bearings at the key structural pivots as small cylinders
         bearing_positions = {

@@ -41,14 +41,14 @@ Create `docs/dashboard.html` — a single self-contained HTML file with:
 
 **Subsystem Cards (grid):**
 Each card shows status (not started / in progress / complete):
-- CAD Design: X/22 scripts created
-- STL Export: X/23 files exported
+- CAD Design: X/29 scripts created
+- STL Export: X/28 files exported
 - 3D Printing: X/24 parts printed
 - Electronics: ordered/received/assembled
 - Firmware: version, compile status, test results
 - Wiring: harness built yes/no
 - Software: PWA, ROS2 status
-- Documentation: X/25 EA docs
+- Documentation: X/27 EA docs
 
 **Parts Table:**
 Sortable table of all Phase 1 parts:

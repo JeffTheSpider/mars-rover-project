@@ -46,9 +46,9 @@ def run(context):
         BRG_ID_R = BRG_ID / 2
 
         # Housing body
-        BODY_W   = 4.0         # 40mm (X direction)
-        BODY_L   = 4.0         # 40mm (Y direction)
-        BODY_H   = 2.5         # 25mm (Z direction, height)
+        BODY_W   = 3.0         # 30mm (X direction, Phase 1 per params)
+        BODY_L   = 3.0         # 30mm (Y direction, Phase 1 per params)
+        BODY_H   = 2.0         # 20mm (Z direction, Phase 1 per params)
         WALL     = 0.4         # 4mm minimum wall
         FILLET_R = 0.15        # 1.5mm edge fillets
 

@@ -20,7 +20,7 @@
 | 5 | 2S LiPo 2200mAh | 7.4V, XT60 | 1 | $12 | $12 | HobbyKing/Amazon |
 | 6 | LiPo charger | 2S balance charger | 1 | $8 | $8 | Amazon |
 | 7 | PLA filament | 1kg spool | 1 | $20 | $20 | Amazon | <!-- Aligned with EA-08 (1kg PLA rec.) and EA-17 ($20 estimate) -->
-| 8 | 608ZZ bearings (Phase 1 pivot) | 8mm bore, 22mm OD | 11 (buy 12) | $0.50 | $6 | Amazon |
+| 8 | 608ZZ bearings (Phase 1 pivot) | 8mm bore, 22mm OD | 9 (buy 12) | $0.50 | $6 | Amazon |
 | 9 | M3 fastener set | Bolts, nuts, washers | 1 set | $6 | $6 | Amazon |
 | 10 | M3 heat-set inserts | Brass, for PLA | 50 | $0.06 | $3 | AliExpress |
 | 11 | Breadboard + jumper wires | For prototyping | 1 | $5 | $5 | Amazon |

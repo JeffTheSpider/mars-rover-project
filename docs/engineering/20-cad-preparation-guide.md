@@ -54,7 +54,7 @@ ROVER_P1_040  (root assembly)
   +-- WHEEL_RL
   +-- WHEEL_RR
   +-- MOTOR_N20_x6  (reusable component, 6 instances)
-  +-- BEARING_608ZZ  (reusable component, 11 instances)
+  +-- BEARING_608ZZ  (reusable component, 9 instances)
   +-- FASTENERS  (folder of reusable bolts/nuts)
 ```
 
@@ -67,7 +67,7 @@ Examples:
   ROCKER_ARM_LEFT_v1
   STEERING_BRACKET_FL_v2
   WHEEL_GENERIC_v1  (instanced 6 times)
-  BEARING_608ZZ_v1  (instanced 11 times)
+  BEARING_608ZZ_v1  (instanced 9 times)
 ```
 
 - Use UPPER_SNAKE_CASE for component names.
@@ -355,7 +355,7 @@ The wheel rotates about the motor shaft axis (horizontal, parallel to X). This a
 
 ### 4.1 608ZZ Bearing Press-Fit Holes
 
-All 11 bearing locations use the same pocket geometry.
+All 9 bearing locations use the same pocket geometry.
 
 | Feature | Dimension (mm) | Notes |
 |---------|---------------|-------|

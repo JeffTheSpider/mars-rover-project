@@ -494,20 +494,18 @@ All pivot points use 608ZZ bearings (the same as skateboard bearings — cheap a
 
 | Location | Qty | Shaft | Notes |
 |----------|-----|-------|-------|
-| Body left rocker pivot | 1 | M8 bolt | Rocker rotates on bearing |
-| Body right rocker pivot | 1 | M8 bolt | Rocker rotates on bearing |
-| Left rocker-bogie pivot | 1 | M8 bolt | Bogie swings on bearing |
-| Right rocker-bogie pivot | 1 | M8 bolt | Bogie swings on bearing |
-| Differential bar centre | 1 | 8mm rod | Bar rotates freely |
-| Differential bar left end | 1 | 8mm rod | Connects to left rocker |
-| Differential bar right end | 1 | 8mm rod | Connects to right rocker |
+| Body left rocker pivot | 1 | 8mm rod (diff bar) | Rocker hub clamps to bar; bar rotates in body bearing |
+| Body right rocker pivot | 1 | 8mm rod (diff bar) | Rocker hub clamps to bar; bar rotates in body bearing |
+| Left rocker-bogie pivot | 1 | 8mm rod | Bogie swings on bearing |
+| Right rocker-bogie pivot | 1 | 8mm rod | Bogie swings on bearing |
+| Differential bar body pivot | 1 | 8mm rod | Bar rotates freely in body boss (EA-25 corrected mechanism) |
 | Steering pivot FL | 1 | M8 bolt | Wheel turns for steering |
 | Steering pivot FR | 1 | M8 bolt | Wheel turns for steering |
 | Steering pivot RL | 1 | M8 bolt | Wheel turns for steering |
 | Steering pivot RR | 1 | M8 bolt | Wheel turns for steering |
-| **Total** | **11** | | ~$5.50 total cost |
+| **Total** | **9** | | ~$4.50 total cost |
 
-Note: Phase 1 uses 11 bearings (not 19 like Phase 2). Buy 12 to have a spare in case of fit issues. Phase 2 adds bearings for wheel hubs, arm joints, and mast — not needed at 0.4 scale.
+Note: Phase 1 uses 9 bearings (not 19 like Phase 2). Buy 12 to have spares in case of fit issues. Phase 2 adds bearings for wheel hubs, arm joints, and mast — not needed at 0.4 scale. The 9 bearings are: 2 rocker pivot + 2 bogie pivot + 1 diff bar pivot + 4 steering pivot.
 
 ### 10.3 Bearing Press-Fit Dimensions
 

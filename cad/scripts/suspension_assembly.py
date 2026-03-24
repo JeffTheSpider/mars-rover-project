@@ -96,7 +96,7 @@ def run(context):
 
         # --- Bogie geometry ---
         BOGIE_PIV_Y  = -P["bogie_arm"]["pivot_to_wheel"]
-        BOGIE_PIV_Z  = 45.0     # bogie pivot Z (between rocker and wheel)
+        BOGIE_PIV_Z  = WHEEL_R + 5  # bogie pivot Z (5mm above wheel centre, parametric)
 
         # --- Differential geometry (EA-26) ---
         DIFF_PIV_Z      = P["differential_computed"]["diff_pivot_z"]
@@ -109,7 +109,7 @@ def run(context):
         # --- Steel rod ---
         ROD_R        = P["differential_bar"]["rod_od"] / 2.0
         BALL_R       = P["differential_link"]["ball_joint_od"] / 2.0
-        CONN_SIZE    = 20.0     # connector block half-size (visual)
+        # (CONN_SIZE removed — unused)
 
         # --- Motor envelope ---
         MOTOR_L      = P["motor_n20"]["body_length"]
@@ -251,13 +251,13 @@ def run(context):
 
         # Left differential link (bar end → left rocker)
         create_tube(diff_comp, 'DiffLink_L', LINK_BAR_L, LINK_RKR_L, DIFF_LINK_ROD)
-        create_sphere(diff_comp, 'BallJoint_L_Top', LINK_BAR_L, BALL_R)
-        create_sphere(diff_comp, 'BallJoint_L_Bot', LINK_RKR_L, BALL_R)
+        create_sphere(diff_comp, 'BallJoint_L_BarEnd', LINK_BAR_L, BALL_R)
+        create_sphere(diff_comp, 'BallJoint_L_RockerEnd', LINK_RKR_L, BALL_R)
 
         # Right differential link (bar end → right rocker)
         create_tube(diff_comp, 'DiffLink_R', LINK_BAR_R, LINK_RKR_R, DIFF_LINK_ROD)
-        create_sphere(diff_comp, 'BallJoint_R_Top', LINK_BAR_R, BALL_R)
-        create_sphere(diff_comp, 'BallJoint_R_Bot', LINK_RKR_R, BALL_R)
+        create_sphere(diff_comp, 'BallJoint_R_BarEnd', LINK_BAR_R, BALL_R)
+        create_sphere(diff_comp, 'BallJoint_R_RockerEnd', LINK_RKR_R, BALL_R)
 
         # ----------------------------------------------------------
         # BODY OUTLINE (simplified box for reference)
@@ -278,13 +278,14 @@ def run(context):
                     ( ROCKER_PIV_X - 10, 0, ROCKER_PIV_Z),
                     ( ROCKER_PIV_X + 10, 0, ROCKER_PIV_Z), BRG_OD / 2)
 
-        # Diff bar pass-through holes in body (where bar enters/exits)
+        # Diff bar pass-through holes in body (at body wall, where bar exits)
+        body_half_w = body_w / 2
         create_tube(body_comp, 'DiffBarPassL',
-                    (-ROCKER_PIV_X, 0, DIFF_PIV_Z),
-                    (-ROCKER_PIV_X - 5, 0, DIFF_PIV_Z), 6)
+                    (-body_half_w, 0, DIFF_PIV_Z),
+                    (-body_half_w - 5, 0, DIFF_PIV_Z), 6)
         create_tube(body_comp, 'DiffBarPassR',
-                    ( ROCKER_PIV_X, 0, DIFF_PIV_Z),
-                    ( ROCKER_PIV_X + 5, 0, DIFF_PIV_Z), 6)
+                    ( body_half_w, 0, DIFF_PIV_Z),
+                    ( body_half_w + 5, 0, DIFF_PIV_Z), 6)
 
         # Body cross-member (structural beam under diff pivot)
         xmember_z = DIFF_PIV_Z - DPIV_HH / 2 - 5
@@ -395,10 +396,10 @@ def run(context):
                            MOTOR_W, MOTOR_L, MOTOR_H)
 
             # === BOGIE HARD STOPS (on rocker near bogie pivot) ===
-            create_box(side_comp, f'BogieHardStop_{s}_Up',
+            create_box(side_comp, f'BogieHardStop_{s}_Fwd',
                        (bogie[0], bogie[1] + 12, bogie[2] + 10),
                        6, 6, 6)
-            create_box(side_comp, f'BogieHardStop_{s}_Dn',
+            create_box(side_comp, f'BogieHardStop_{s}_Rear',
                        (bogie[0], bogie[1] - 12, bogie[2] + 10),
                        6, 6, 6)
 
@@ -459,7 +460,7 @@ def run(context):
             '    3x Wheel connectors\n'
             '    2x Steering knuckles + servos\n'
             '    3x Wheels + Motors\n'
-            '    3x Cable clips\n\n'
+            '    4x Cable clips\n\n'
             'All geometry is parametric primitives.\n'
             'Replace with detailed STLs as they are exported.\n\n'
             'Reference: EA-26 Suspension Design Package',

@@ -14,7 +14,7 @@ Inspired by jakkra/Mars-Rover (PVC tubes), Sawppy (8mm rod frame), and MrOver (w
 
 - **8mm steel rods** for structural arms (rocker + bogie tubes)
 - **3D-printed PLA connectors** at every joint (bearing seats, tube sockets, wire channels)
-- **608ZZ bearings** at all pivot points (8 total — EA-25 corrected from 11)
+- **608ZZ bearings** at all pivot points (9 total — 2 rocker + 2 bogie + 1 diff pivot + 4 steering; EA-26 added diff pivot)
 - **Chunky 5-spoke wheels** (jakkra-style, strong at 0.4 scale PLA)
 - **2-part wheels**: PLA rim + removable TPU tire
 - **Wire pass-through channels** in every connector (MrOver approach)
@@ -198,11 +198,12 @@ the diff bar ends via M3 grub screws. No separate adapters needed.
 | Body diff-bar pivot bosses (L+R) | 2 | 608ZZ (22×8×7mm) |
 | Bogie pivot (L+R) | 2 | 608ZZ |
 | Steering pivots (FL, FR, RL, RR) | 4 | 608ZZ |
-| **Total** | **8** | **~£5 for 10-pack (2 spare)** |
+| Diff bar body pivot | 1 | 608ZZ |
+| **Total** | **9** | **buy 12 (3 spare)** |
 
-**EA-25 correction**: Reduced from 11 to 8. Diff bar bearings are in the body
-pivot bosses (not separate adapters). Rocker hub connectors clamp to diff bar
-(rigid, no bearing).
+**EA-25/EA-26 correction**: Reduced from 11 to 9. The diff bar passes through
+one 608ZZ bearing in the body (the diff pivot). Rocker hub connectors clamp
+rigidly to the diff bar (no bearing at hub). Two diff bar end bearings removed.
 
 #### Fasteners
 

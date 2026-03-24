@@ -8,7 +8,7 @@ allowed-tools: Bash(*), Read, Glob, Grep
 Automate running the BatchExportAll script in Fusion 360 to re-export all rover STL files.
 
 ## Context
-- BatchExportAll script produces **27 STL files** (4 body quadrants, 4 top deck tiles, 5 suspension connectors, 1 cable clip, 1 tube test piece, plus individual parts)
+- BatchExportAll script produces **28 STL files** (4 body quadrants, 4 top deck tiles, 5 suspension connectors, 1 cable clip, 1 tube test piece, plus individual parts)
 - Scripts are at `%APPDATA%\Autodesk\Autodesk Fusion 360\API\Scripts\BatchExportAll\`
 - Repo copies at `cad/scripts/BatchExportAll/`
 - STL output dirs: `3d-print/{calibration,wheels,suspension,steering,drivetrain,body,gcode}`
@@ -38,12 +38,12 @@ If the PowerShell script is unavailable, use the system MCP tools:
 ### 3. Wait and Monitor
 - Wait for export to complete (watch for messageBox dialog with OK button)
 - Use `tools/click_ok_dialog.ps1` to dismiss completion dialogs
-- Typical export time: 2-5 minutes for all 27 parts
+- Typical export time: 2-5 minutes for all 28 parts
 
 ### 4. Verify Exports
 After completion, verify all expected STL files exist and are recent:
 ```
-Expected STL files (27 total):
+Expected STL files (28 total):
 - 3d-print/calibration/calibration_test_card.stl
 - 3d-print/calibration/bearing_test_piece.stl
 - 3d-print/calibration/tube_socket_test.stl
@@ -54,7 +54,10 @@ Expected STL files (27 total):
 - 3d-print/suspension/front_wheel_connector.stl
 - 3d-print/suspension/middle_wheel_connector.stl
 - 3d-print/suspension/cable_clip.stl
+- 3d-print/suspension/differential_pivot_housing.stl
+- 3d-print/suspension/differential_link.stl
 - 3d-print/steering/steering_bracket.stl
+- 3d-print/steering/steering_knuckle.stl
 - 3d-print/steering/fixed_wheel_mount.stl
 - 3d-print/steering/servo_mount.stl
 - 3d-print/body/body_quadrant_fl.stl
@@ -75,4 +78,4 @@ Expected STL files (27 total):
 - Report any missing files
 
 ### 5. Summary
-Report: X/27 STL files exported successfully, any failures, total export size.
+Report: X/28 STL files exported successfully, any failures, total export size.

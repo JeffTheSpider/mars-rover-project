@@ -42,13 +42,13 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 | 22 | Requirements Spec | Formal FR/PR/DIM/ELEC/LEARN/DFT/MOD requirements for Phase 1 |
 | 23 | Wire Harness | 58-wire schedule, connectors, cable routing, colour codes, build order |
 | 24 | Robotic Arm Study | Phase 2 arm feasibility, 3-DOF concept, Phase 1 mount prep |
-| 25 | Suspension Audit | Tube+connector approach, 8 bearings, 48 parts, dim matrix, wire routing |
+| 25 | Suspension Audit | Tube+connector approach, 9 bearings (EA-26 added diff pivot), dim matrix, wire routing |
 | 26 | Suspension Design Package | Full 18-section design: diff mechanism (bar+link+ball joints), steering knuckles, parametric ratios, DOF map |
 
 ## Key Specs
 - Size: 1100mm x 650mm x 1050mm (full) / 440x260mm (0.4 scale Phase 1)
 - Weight: ~1.25kg (Phase 1, ~1024g PLA + battery + hardware) / 16.7kg (Phase 2) / 20.8kg (Phase 3)
-- Suspension: Rocker-bogie, 8× 608ZZ bearings, 8mm steel rods + printed connectors (EA-25)
+- Suspension: Rocker-bogie, 9× 608ZZ bearings, 8mm steel rods + printed connectors (EA-25/EA-26)
 - Power: 2S LiPo 2200mAh (Phase 1) / 6S 20Ah + 100W solar (Phase 2)
 - Compute: ESP32-S3 DevKitC-1 N16R8 (Phase 1) / + Jetson Orin Nano Super (Phase 2)
 - Motors: N20 100RPM (Phase 1) / Chihai 37mm 80RPM (Phase 2)
@@ -153,7 +153,7 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 
 ## Project Status (as of 2026-03-24)
 - All 27 engineering analyses complete (EA-00 through EA-26; EA-26 = suspension design package)
-- Full engineering audit complete: all stale values swept (bogie 180mm, diff bar 300mm, CTC Bizer, PLA, 8 bearings — EA-25)
+- Full engineering audit complete: all stale values swept (bogie 180mm, diff bar, CTC Bizer, PLA, 9 bearings — EA-25/EA-26)
 - All ROS2 nodes scaffolded (10 nodes across 7 packages)
 - All ESP32 firmware modules complete (9 headers: config, motors, steering, sensors, webserver, uart_nmea, uart_binary, ota, leds)
 - ESP32-S3 firmware compiles successfully (1045KB flash 79%, 53KB RAM 16%, v0.3.0)
@@ -164,8 +164,8 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 - ESP32 firmware unit tests: 42 pytest host-based tests (all passing)
 - CI/CD: GitHub Actions (ESP32 compile, firmware tests, ROS2 build, Python lint, docs check EA-00 to EA-26)
 - 32 Fusion 360 CAD scripts (EA-26: diff pivot housing, diff link, steering knuckle + EA-25 connectors; 3 deprecated)
-- EA-25 suspension audit complete: tube+connector approach, 8 bearings (not 11), 48 printed parts total
-- BatchExportAll updated: 30 STL exports (was 27), EA-26 parts added (diff housing, diff link, steering knuckle)
+- EA-25/EA-26 suspension complete: tube+connector approach, 9 bearings (not 11), diff bar+link mechanism
+- BatchExportAll updated: 28 STL exports, EA-26 parts added (diff housing, diff link, steering knuckle)
 - 4 wiring diagrams rendered to SVG (power, signal, tray layout, cable routing)
 - Print strategy, Phase 1 BOM, maintenance guide, disassembly guide, data capture template all complete
 - ESP32 Arduino core v3.3.7 installed locally, pytest + flake8 + mmdc installed

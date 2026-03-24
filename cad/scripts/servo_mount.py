@@ -58,7 +58,7 @@ def run(context):
 
         # M2 mounting holes for servo tabs
         M2_SPACING = 2.75   # 27.5mm centre-to-centre
-        M2_HOLE_R = 0.12    # 2.4mm clearance for M2
+        M2_HOLE_R = 0.11    # 2.2mm clearance for M2
 
         # Horn slot (circular for ±35° horn sweep clearance)
         HORN_SLOT_R = 0.6   # 12mm diameter (6mm radius) — clears horn at ±35°

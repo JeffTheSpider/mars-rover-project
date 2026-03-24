@@ -165,7 +165,7 @@
   - [ ] HC-SR04 ultrasonic sensors (x6)
   - [ ] 2S LiPo battery (7.4V, for Phase 1)
   - [ ] LM2596 buck converters (Phase 2 only — not needed for Phase 1)
-  - [ ] 608ZZ bearings (x10+)
+  - [ ] 608ZZ bearings (x12, 9 needed + 3 spares)
   - [ ] M3 heat-set inserts (CNC Kitchen style, 100-pack)
   - [ ] M3 screws assorted (M3x8, M3x12, M3x16, M3x20)
   - [ ] JST connectors (for modular wiring)
