@@ -263,19 +263,44 @@ def run(context):
         # BODY OUTLINE (simplified box for reference)
         # ----------------------------------------------------------
         body_occ, body_comp = add_comp(root, 'Body_Reference')
-        body_w = ROCKER_PIV_X * 2  # body width = distance between pivots
-        body_l = 200.0             # body length (Y)
-        body_h = 30.0              # body height
+        body_w = P["body"]["width"]
+        body_l = P["body"]["length"]
+        body_h = P["body"]["height"]
         body_cz = GND_CLR + body_h / 2
         create_box(body_comp, 'BodyShell', (0, 0, body_cz), body_w, body_l, body_h)
 
-        # Rocker pivot mounts on body (visible bosses)
+        # Rocker pivot mounts on body (visible bosses with bearing)
+        BRG_OD = P["computed"]["bearing_seat_od"]
         create_tube(body_comp, 'RockerPivotMount_L',
                     (-ROCKER_PIV_X - 10, 0, ROCKER_PIV_Z),
-                    (-ROCKER_PIV_X + 10, 0, ROCKER_PIV_Z), 12)
+                    (-ROCKER_PIV_X + 10, 0, ROCKER_PIV_Z), BRG_OD / 2)
         create_tube(body_comp, 'RockerPivotMount_R',
                     ( ROCKER_PIV_X - 10, 0, ROCKER_PIV_Z),
-                    ( ROCKER_PIV_X + 10, 0, ROCKER_PIV_Z), 12)
+                    ( ROCKER_PIV_X + 10, 0, ROCKER_PIV_Z), BRG_OD / 2)
+
+        # Diff bar pass-through holes in body (where bar enters/exits)
+        create_tube(body_comp, 'DiffBarPassL',
+                    (-ROCKER_PIV_X, 0, DIFF_PIV_Z),
+                    (-ROCKER_PIV_X - 5, 0, DIFF_PIV_Z), 6)
+        create_tube(body_comp, 'DiffBarPassR',
+                    ( ROCKER_PIV_X, 0, DIFF_PIV_Z),
+                    ( ROCKER_PIV_X + 5, 0, DIFF_PIV_Z), 6)
+
+        # Body cross-member (structural beam under diff pivot)
+        xmember_z = DIFF_PIV_Z - DPIV_HH / 2 - 5
+        create_box(body_comp, 'BodyCrossMember',
+                   (0, 0, xmember_z), body_w * 0.8, 20, 8)
+
+        # Hard stop blocks on body (rocker rotation limiters)
+        HARD_STOP_SIZE = 8
+        for sign in [-1, 1]:
+            x = sign * ROCKER_PIV_X
+            # Forward hard stop (limits rocker tilt forward)
+            create_box(body_comp, f'HardStop_{"L" if sign < 0 else "R"}_Fwd',
+                       (x, 15, ROCKER_PIV_Z), HARD_STOP_SIZE, HARD_STOP_SIZE, HARD_STOP_SIZE)
+            # Rearward hard stop
+            create_box(body_comp, f'HardStop_{"L" if sign < 0 else "R"}_Rear',
+                       (x, -15, ROCKER_PIV_Z), HARD_STOP_SIZE, HARD_STOP_SIZE, HARD_STOP_SIZE)
 
         # ----------------------------------------------------------
         # SUSPENSION SIDES
@@ -318,21 +343,45 @@ def run(context):
                        30, 25, 25)
 
             # === STEERING KNUCKLES (front + rear only) ===
+            steer_pivot_bore = P["steering"]["pivot_bore"]
             for tag, pos in [('F', front), ('R', rear)]:
-                # Steering pivot shaft (vertical)
-                shaft_top = (pos[0], pos[1], pos[2] + 20)
-                shaft_bot = (pos[0], pos[1], pos[2] - 15)
+                # Steering pivot shaft (vertical Z-axis, passes through
+                # connector bearing into knuckle below)
+                shaft_top = (pos[0], pos[1], pos[2] + 15)
+                shaft_bot = (pos[0], pos[1], pos[2] - 25)
                 create_tube(side_comp, f'SteerShaft_{tag}{s}',
-                            shaft_top, shaft_bot, 3.0)
-                # Knuckle (box hanging below)
+                            shaft_top, shaft_bot, steer_pivot_bore / 2)
+
+                # Upper bearing boss (in connector, above wheel centre)
+                create_tube(side_comp, f'SteerBrgUp_{tag}{s}',
+                            (pos[0], pos[1], pos[2] + 10),
+                            (pos[0], pos[1], pos[2] + 17),
+                            BRG_OD / 2)
+                # Lower bearing boss
+                create_tube(side_comp, f'SteerBrgLo_{tag}{s}',
+                            (pos[0], pos[1], pos[2] - 3),
+                            (pos[0], pos[1], pos[2] - 10),
+                            BRG_OD / 2)
+
+                # Knuckle body (hangs below connector, carries motor+wheel)
+                knuckle_z = pos[2] - 15
                 create_box(side_comp, f'Knuckle_{tag}{s}',
-                           (pos[0], pos[1], pos[2] - 10),
-                           20, 15, 20)
-                # Servo envelope
-                servo_y = pos[1] - 25 if tag == 'F' else pos[1] + 25
+                           (pos[0], pos[1], knuckle_z),
+                           25, 30, 20)
+
+                # Servo envelope (beside connector, drives horn on knuckle)
+                servo_y = pos[1] - 20 if tag == 'F' else pos[1] + 20
+                sg90_w = P["servo_sg90"]["body_width"]
+                sg90_d = P["servo_sg90"]["body_depth"]
+                sg90_h = P["servo_sg90"]["body_height"]
                 create_box(side_comp, f'Servo_{tag}{s}',
                            (pos[0], servo_y, pos[2] + 5),
-                           23, 12, 23)
+                           sg90_w, sg90_d, sg90_h)
+
+                # Steering hard stop tabs on connector
+                create_box(side_comp, f'SteerStop_{tag}{s}',
+                           (pos[0], pos[1], pos[2] + 12),
+                           6, 20, 4)
 
             # === WHEELS (3x) ===
             for tag, pos in [('F', front), ('M', mid), ('R', rear)]:
@@ -345,15 +394,30 @@ def run(context):
                 create_box(side_comp, f'Motor_{tag}{s}', motor_c,
                            MOTOR_W, MOTOR_L, MOTOR_H)
 
+            # === BOGIE HARD STOPS (on rocker near bogie pivot) ===
+            create_box(side_comp, f'BogieHardStop_{s}_Up',
+                       (bogie[0], bogie[1] + 12, bogie[2] + 10),
+                       6, 6, 6)
+            create_box(side_comp, f'BogieHardStop_{s}_Dn',
+                       (bogie[0], bogie[1] - 12, bogie[2] + 10),
+                       6, 6, 6)
+
             # === CABLE CLIPS (on tube midpoints) ===
             for tag, a, b in [
                 ('RkrF', hub, front),
                 ('RkrR', hub, bogie),
+                ('BogF', bogie, mid),
                 ('BogR', bogie, rear),
             ]:
                 mp = midpt(a, b)
                 create_box(side_comp, f'CableClip_{s}_{tag}',
                            mp, 12, 8, 10)
+
+            # === SERVICE LOOP ZONES (at each pivot) ===
+            # Visual indicator of where cable slack must be provided
+            for tag, pos in [('Hub', hub), ('Bogie', bogie)]:
+                create_sphere(side_comp, f'ServiceLoop_{s}_{tag}',
+                              (pos[0], pos[1], pos[2] - 10), 8)
 
         # Build left side
         build_side(root, 'L', HUB_L, FRONT_L, BOGIE_L, MID_L, REAR_L,

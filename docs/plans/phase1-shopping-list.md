@@ -70,7 +70,7 @@
 
 | Item | Qty | Approx Price | Where to Buy | Notes |
 |------|-----|-------------|--------------|-------|
-| 608ZZ Bearings (8x22x7mm) | 12 | £0.40 each (£5) | [Amazon UK](https://www.amazon.co.uk/s?k=608ZZ+bearings) | Phase 1 needs 11 (2 rocker pivots, 2 bogie pivots, 3 differential bar, 4 steering pivots). Buy 12 for spares. Same as skateboard bearings — buy a 10-pack + 2 singles, or a 20-pack for Phase 2 stock. |
+| 608ZZ Bearings (8x22x7mm) | 12 | £0.40 each (£5) | [Amazon UK](https://www.amazon.co.uk/s?k=608ZZ+bearings) | Phase 1 needs 9: 2 rocker pivots, 2 bogie pivots, 1 diff pivot, 4 steering pivots (EA-25/EA-26). Buy 12 for spares. Same as skateboard bearings — buy a 10-pack + 2 singles, or a 20-pack for Phase 2 stock. |
 
 ### 2. Fasteners
 
@@ -91,8 +91,10 @@
 
 | Item | Qty | Approx Price | Where to Buy | Notes |
 |------|-----|-------------|--------------|-------|
-| 8mm Steel Rod, 300mm length | 1 | £2 | [Amazon UK](https://www.amazon.co.uk/s?k=8mm+steel+rod+300mm) / Local hardware store / [RS Components](https://uk.rs-online.com) | For the differential bar. Use full 300mm length (rocker pivots at X=±125mm = 250mm span + 25mm overhang each side for diff bar adapters). 8mm ID is a perfect fit through 608ZZ bearing inner race. Silver steel or mild steel both fine. |
-| 8mm Shaft Collars (bore 8mm) | 2 | £2 | [Amazon UK](https://www.amazon.co.uk/s?k=8mm+shaft+collar) | Retain differential bar rod ends. Alternatively use printed adapters with grub screws. |
+| 8mm Steel Rod, 1m length | 1 | £3 | [Amazon UK](https://www.amazon.co.uk/s?k=8mm+steel+rod+1m) / Local hardware store / [RS Components](https://uk.rs-online.com) | Cut to lengths: 1× 400mm (diff bar), 2× 150mm (rocker front tubes), 4× 60mm (rocker rear + bogie tubes). 8mm fits 608ZZ bearing inner race. Silver steel or mild steel both fine. Total ~640mm from 1m rod. |
+| 8mm Shaft Collars (bore 8mm) | 4 | £3 | [Amazon UK](https://www.amazon.co.uk/s?k=8mm+shaft+collar) | Retain diff bar ends + rocker pivot shafts. Alternatively use printed adapters with M3 grub screws. |
+| M3 Rod-End Bearings (Heim joints) | 4 | £3 | [Amazon UK](https://www.amazon.co.uk/s?k=M3+rod+end+bearing+heim+joint) / [AliExpress](https://www.aliexpress.com/w/wholesale-M3+rod+end+bearing.html) | For differential links — ball joints at each end of each link (2 links × 2 ends). Allow angular misalignment between diff bar (X-axis) and rocker (Y-axis). See EA-26 Section 9. |
+| M3 x 20mm Bolts (for diff links) | 4 | £1 | Included in M3 assortment | Through-bolts for attaching rod-end bearings to diff link bar ends. |
 
 ---
 

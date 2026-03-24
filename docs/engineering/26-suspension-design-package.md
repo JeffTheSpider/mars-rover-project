@@ -531,14 +531,25 @@ Rationale:
 
 **Link type**: Rigid rods with **ball joints at both ends** (M3 rod-end bearings / Heim joints). Length adjustable via turnbuckle (threaded rod with LH + RH ends) for alignment tuning.
 
-### 9.5 What Must Be Calculated
+### 9.5 Computed Differential Dimensions
 
-Claude must calculate from the user's dimensions:
-1. Bar length (from rocker pivot spacing)
-2. Link length (from bar pivot height, rocker attachment height, and desired motion ratio)
-3. Link attachment offsets (r_bar and r_rocker)
-4. Bar pivot height above body top surface (clearance for link sweep)
-5. Required ball joint angular range (from max rocker articulation)
+Calculated from rover geometry (see `generate_rover_params.py` differential_computed):
+
+| Parameter | Phase 1 (0.4x) | Full Scale | Notes |
+|-----------|:--------------:|:----------:|-------|
+| Diff bar half-span | 200mm | 500mm | Bar extends ±this from pivot |
+| Diff pivot Z | 80mm | 200mm | 20mm / 50mm above rocker pivot |
+| Link bar attach offset (below bar end) | 30mm | 75mm | `r_bar` for motion ratio |
+| Link rocker attach offset (above rocker pivot) | 30mm | 75mm | `r_rocker` for motion ratio |
+| **Link length** | **85.0mm** | **212.1mm** | sqrt(dx² + dz²) |
+| Link angle from horizontal | 28.1° | 28.1° | Constant across scales |
+| Link top position | (±200, 0, 50) | (±500, 0, 125) | Ball joint on bar end |
+| Link bottom position | (±125, 0, 90) | (±313, 0, 225) | Ball joint on rocker |
+| Motion ratio (r_bar / r_rocker) | 1.0 | 1.0 | Equal = 1:1 coupling |
+
+**Ball joint specification**: M3 rod-end bearing (Heim joint), ~±15° angular range, housing OD 10mm. 4 required (2 per link × 2 links).
+
+**Link construction (Phase 1)**: Printed PLA flat bar (dog-bone shape), 85mm long × 15mm wide × 6mm thick, 80% infill, 5 perimeters. M3 bolt through-holes at each end for rod-end bearings.
 
 ---
 
