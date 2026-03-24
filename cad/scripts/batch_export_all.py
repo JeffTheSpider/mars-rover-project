@@ -10,7 +10,7 @@ Usage:
   1. Open Fusion 360
   2. Shift+S (Scripts and Add-Ins)
   3. Select "BatchExportAll" > Run
-  4. Wait for completion (~5-10 min, exports 27+ STL files)
+  4. Wait for completion (~5-10 min, exports 30+ STL files)
   5. Check D:/Mars Rover Project/3d-print/ for output
 
 Output: STL files in D:/Mars Rover Project/3d-print/<category>/
@@ -20,7 +20,8 @@ Note: EA-25 suspension audit deprecated BogieArm, RockerArm, and
 DiffBarAdapter in favour of tube + printed connector approach.
 Those scripts are excluded. New scripts: RoverWheelV3,
 CableClip, BogiePivotConnector, FrontWheelConnector,
-MiddleWheelConnector, RockerHubConnector, TubeSocketTest.
+MiddleWheelConnector, RockerHubConnector, TubeSocketTest,
+DifferentialPivotHousing, DifferentialLink, SteeringKnuckle.
 """
 
 import adsk.core
@@ -58,14 +59,17 @@ COMPONENTS = [
     ('SteeringBracket',  'steering', 'steering_bracket.stl',  None, 'Stage 3 — print x4'),
     ('FixedWheelMount',  'steering', 'fixed_wheel_mount.stl', None, 'Stage 3 — print x2'),
     ('ServoMount',       'steering', 'servo_mount.stl',       None, 'Stage 3 — print x4'),
+    ('SteeringKnuckle',  'steering', 'steering_knuckle.stl', 'Steering Knuckle', 'Stage 3 — print x4'),
 
-    # Stage 4: Suspension Connectors (EA-25 tube + connector approach)
+    # Stage 4: Suspension Connectors (EA-25 tube + connector, EA-26 diff mechanism)
     # Note: BogieArm, RockerArm, DiffBarAdapter DEPRECATED per EA-25
-    ('RockerHubConnector',    'suspension', 'rocker_hub_connector.stl',    'Rocker Hub Connector',    'Stage 4 — print x2'),
-    ('BogiePivotConnector',   'suspension', 'bogie_pivot_connector.stl',   'Bogie Pivot Connector',   'Stage 4 — print x2'),
-    ('FrontWheelConnector',   'suspension', 'front_wheel_connector.stl',   'Front Wheel Connector',   'Stage 4 — print x4'),
-    ('MiddleWheelConnector',  'suspension', 'middle_wheel_connector.stl',  'Middle Wheel Connector',  'Stage 4 — print x2'),
-    ('CableClip',             'suspension', 'cable_clip.stl',              'Cable Clip',              'Stage 4 — print x12'),
+    ('RockerHubConnector',          'suspension', 'rocker_hub_connector.stl',          'Rocker Hub Connector',          'Stage 4 — print x2'),
+    ('BogiePivotConnector',         'suspension', 'bogie_pivot_connector.stl',         'Bogie Pivot Connector',         'Stage 4 — print x2'),
+    ('FrontWheelConnector',         'suspension', 'front_wheel_connector.stl',         'Front Wheel Connector',         'Stage 4 — print x4'),
+    ('MiddleWheelConnector',        'suspension', 'middle_wheel_connector.stl',        'Middle Wheel Connector',        'Stage 4 — print x2'),
+    ('DifferentialPivotHousing',    'suspension', 'differential_pivot_housing.stl',    'Diff Pivot Housing',            'Stage 4 — print x1'),
+    ('DifferentialLink',            'suspension', 'differential_link.stl',             'Differential Link',             'Stage 4 — print x2'),
+    ('CableClip',                   'suspension', 'cable_clip.stl',                    'Cable Clip',                    'Stage 4 — print x12'),
 
     # Stage 5: Body (BodyQuadrant handled specially — 4 runs)
     ('BodyQuadrant', 'body', None,             None, 'Stage 5 — 4 quadrants'),

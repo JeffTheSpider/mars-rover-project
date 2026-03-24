@@ -10,6 +10,9 @@ Generates all parts as primitive solids (cylinders, spheres, boxes)
 so it runs immediately with NO STL dependencies. This serves as the
 master spatial reference for the suspension system.
 
+All dimensions are loaded from generate_rover_params.py so changes
+propagate automatically from the parametric model.
+
 Component count per side:
   Rocker arm (tube):           1  (hub → front wheel)
   Rocker arm (tube):           1  (hub → bogie pivot)
@@ -30,8 +33,9 @@ Component count per side:
 Shared:
   Differential bar:            1  (tube, pivots about X-axis)
   Differential pivot:          1  (sphere at centre)
+  Diff pivot housing:          1  (box at centre)
 
-Total: ~25 parts x 2 sides + 3 shared = ~53 components
+Total: ~25 parts x 2 sides + 4 shared = ~54 components
 
 Coordinate System:
   Origin = differential pivot centre
@@ -49,6 +53,7 @@ import adsk.fusion
 import traceback
 import math
 import os
+import sys
 
 
 def run(context):
@@ -64,44 +69,57 @@ def run(context):
             return
 
         # ==============================================================
-        # GEOMETRY CONSTANTS (all mm, from EA-26 + EA-08)
+        # LOAD PARAMETERS from generate_rover_params.py
         # ==============================================================
+        params_path = r"D:\Mars Rover Project\cad\scripts"
+        if params_path not in sys.path:
+            sys.path.insert(0, params_path)
+        from generate_rover_params import get_params
+
+        P = get_params(scale=0.4)  # Phase 1
 
         # --- Wheel & terrain ---
-        WHEEL_DIA    = 80.0     # 0.4x scale wheel diameter
+        WHEEL_DIA    = P["wheel"]["outer_diameter"]
         WHEEL_R      = WHEEL_DIA / 2.0
-        WHEEL_WIDTH  = 35.0     # tyre width
-        TYRE_THICK   = 3.0      # tyre over rim
+        WHEEL_WIDTH  = P["wheel"]["width"]
+        TYRE_THICK   = 3.0      # tyre over rim (visual)
 
         # --- Layout (rover coordinate frame) ---
-        TRACK_HALF   = 140.0    # wheel centre X from centreline
-        WB_HALF      = 180.0    # front/rear wheel Y from centre
-        GND_CLR      = 60.0     # belly clearance (body bottom Z)
-        WHEEL_Z      = WHEEL_R  # wheel centre Z (sitting on ground)
+        TRACK_HALF   = P["overall"]["track_width"] / 2.0
+        WB_HALF      = P["overall"]["wheelbase"] / 2.0
+        GND_CLR      = P["overall"]["ground_clearance"]
+        WHEEL_Z      = WHEEL_R
 
         # --- Rocker geometry ---
-        ROCKER_PIV_X = 125.0    # rocker pivot X (on body sides)
-        ROCKER_PIV_Z = 60.0     # rocker pivot Z (at body bottom)
+        ROCKER_PIV_X = P["body_features"]["rocker_pivot_x"]
+        ROCKER_PIV_Z = P["body_features"]["rocker_pivot_z"]
 
         # --- Bogie geometry ---
-        BOGIE_PIV_Y  = -90.0    # bogie pivot Y (behind body centre)
-        BOGIE_PIV_Z  = 45.0     # bogie pivot Z
+        BOGIE_PIV_Y  = -P["bogie_arm"]["pivot_to_wheel"]
+        BOGIE_PIV_Z  = 45.0     # bogie pivot Z (between rocker and wheel)
 
-        # --- Differential geometry (NEW in EA-26) ---
-        DIFF_PIV_Z   = 80.0     # diff pivot Z (above body, on top deck)
-        DIFF_BAR_LEN = 200.0    # diff bar half-length (extends ±100mm from pivot)
-        DIFF_LINK_BAR_R = 30.0  # link attachment offset on bar (from pivot, along Z)
-        DIFF_LINK_RKR_R = 30.0  # link attachment offset on rocker (from pivot, along Z)
+        # --- Differential geometry (EA-26) ---
+        DIFF_PIV_Z      = P["differential_computed"]["diff_pivot_z"]
+        DIFF_BAR_LEN    = P["differential_bar"]["bar_half_span"]
+        DIFF_LINK_BAR_R = P["differential_link"]["bar_attach_offset_z"]
+        DIFF_LINK_RKR_R = P["differential_link"]["rocker_attach_offset_z"]
+        DIFF_LINK_LEN   = P["differential_computed"]["link_length"]
+        DIFF_LINK_ROD   = P["differential_link"]["rod_od"] / 2.0
 
         # --- Steel rod ---
-        ROD_R        = 4.0      # 8mm diameter rod
-        BALL_R       = 5.0      # ball joint sphere radius (visual)
+        ROD_R        = P["differential_bar"]["rod_od"] / 2.0
+        BALL_R       = P["differential_link"]["ball_joint_od"] / 2.0
         CONN_SIZE    = 20.0     # connector block half-size (visual)
 
         # --- Motor envelope ---
-        MOTOR_L      = 25.0     # N20 gearbox length
-        MOTOR_W      = 12.0     # N20 width
-        MOTOR_H      = 10.0     # N20 height
+        MOTOR_L      = P["motor_n20"]["body_length"]
+        MOTOR_W      = P["motor_n20"]["body_width"]
+        MOTOR_H      = P["motor_n20"]["body_height"]
+
+        # --- Differential housing ---
+        DPIV_HW = P["differential_bar"]["pivot_housing_w"]
+        DPIV_HL = P["differential_bar"]["pivot_housing_l"]
+        DPIV_HH = P["differential_bar"]["pivot_housing_h"]
 
         # ==============================================================
         # KEY POSITIONS (mm)
@@ -229,15 +247,15 @@ def run(context):
         create_sphere(diff_comp, 'DiffPivot', DIFF_PIV, 8.0)
 
         # Pivot bearing housing (box around pivot)
-        create_box(diff_comp, 'DiffPivotMount', DIFF_PIV, 30, 30, 20)
+        create_box(diff_comp, 'DiffPivotMount', DIFF_PIV, DPIV_HW, DPIV_HL, DPIV_HH)
 
         # Left differential link (bar end → left rocker)
-        create_tube(diff_comp, 'DiffLink_L', LINK_BAR_L, LINK_RKR_L, 3.0)
+        create_tube(diff_comp, 'DiffLink_L', LINK_BAR_L, LINK_RKR_L, DIFF_LINK_ROD)
         create_sphere(diff_comp, 'BallJoint_L_Top', LINK_BAR_L, BALL_R)
         create_sphere(diff_comp, 'BallJoint_L_Bot', LINK_RKR_L, BALL_R)
 
         # Right differential link (bar end → right rocker)
-        create_tube(diff_comp, 'DiffLink_R', LINK_BAR_R, LINK_RKR_R, 3.0)
+        create_tube(diff_comp, 'DiffLink_R', LINK_BAR_R, LINK_RKR_R, DIFF_LINK_ROD)
         create_sphere(diff_comp, 'BallJoint_R_Top', LINK_BAR_R, BALL_R)
         create_sphere(diff_comp, 'BallJoint_R_Bot', LINK_RKR_R, BALL_R)
 

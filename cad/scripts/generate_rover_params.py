@@ -93,18 +93,30 @@ FULL_SCALE_PARAMS = {
     },
 
     # ------------------------------------------------------------------
-    # Differential bar
+    # Differential mechanism (EA-26 Section 9)
     # ------------------------------------------------------------------
     "differential_bar": {
-        "length":                500,   # mm, centre to centre of rocker pivots
-        "half_length":           250,   # mm, centre pivot to each end
         "rod_od":                  8,   # mm, steel rod outer diameter
-        "adapter_tube_od":        12,   # mm, printed end cap OD
-        "adapter_tube_id":         8,   # mm, press-fit onto rod
-        "bearing_seat_od":        22,   # mm, nominal (see bearing oversize below)
+        "bar_half_span":         500,   # mm, bar extends ±500mm from pivot centre
+        "pivot_z_above_rocker":   50,   # mm, diff pivot Z above rocker pivot Z
+        "bearing_seat_od":        22,   # mm, nominal 608ZZ OD (for central pivot)
         "bearing_seat_depth":      7,   # mm, nominal 608ZZ width
-        "angular_range_deg":      20,   # +/- degrees from horizontal
-        "adapter_count":           3,   # left, centre, right
+        "angular_range_deg":      25,   # +/- degrees from horizontal
+        "pivot_housing_w":        40,   # mm, central pivot housing width (X)
+        "pivot_housing_l":        40,   # mm, central pivot housing length (Y)
+        "pivot_housing_h":        25,   # mm, central pivot housing height (Z)
+    },
+
+    "differential_link": {
+        "count":                   2,   # one per side
+        "rod_od":                  6,   # mm, link rod diameter (M6 threaded rod)
+        "bar_attach_offset_z":    75,   # mm, link attaches this far below bar end
+        "rocker_attach_offset_z": 75,   # mm, link attaches this far above rocker pivot
+        "ball_joint_bore":         3,   # mm, M3 rod-end bearing bore
+        "ball_joint_od":          10,   # mm, rod-end bearing housing OD
+        "ball_joint_length":      20,   # mm, rod-end bearing body length
+        "ball_joint_angle_deg":   15,   # +/- degrees, typical M3 rod-end range
+        "turnbuckle":           True,   # adjustable length via LH+RH thread ends
     },
 
     # ------------------------------------------------------------------
@@ -370,14 +382,20 @@ _NO_SCALE_KEYS = {
     "bogie_arm.wall_thickness",
     "bogie_arm.pivot_bore",
 
-    # Differential bar
+    # Differential bar — hardware constants
     "differential_bar.rod_od",
-    "differential_bar.adapter_tube_od",
-    "differential_bar.adapter_tube_id",
     "differential_bar.bearing_seat_od",
     "differential_bar.bearing_seat_depth",
     "differential_bar.angular_range_deg",
-    "differential_bar.adapter_count",
+
+    # Differential links — hardware constants
+    "differential_link.count",
+    "differential_link.rod_od",
+    "differential_link.ball_joint_bore",
+    "differential_link.ball_joint_od",
+    "differential_link.ball_joint_length",
+    "differential_link.ball_joint_angle_deg",
+    "differential_link.turnbuckle",
 
     # Wheel -- bore/grouser are print minimums
     "wheel.hub_bore_d_shaft",
@@ -499,6 +517,15 @@ def get_params(scale=0.4):
     params["suspension_geometry"]["max_obstacle_height"] = 60  # 0.75 x 80mm wheel
     params["suspension_geometry"]["cog_height"] = 120  # estimated at 0.4 scale
 
+    # Differential mechanism Phase 1 overrides (from EA-26 assembly geometry)
+    params["differential_bar"]["bar_half_span"] = 200     # 500 * 0.4 = 200mm
+    params["differential_bar"]["pivot_z_above_rocker"] = 20  # 50 * 0.4 = 20mm
+    params["differential_bar"]["pivot_housing_w"] = 30    # smaller at 0.4 scale
+    params["differential_bar"]["pivot_housing_l"] = 30
+    params["differential_bar"]["pivot_housing_h"] = 20
+    params["differential_link"]["bar_attach_offset_z"] = 30    # 75 * 0.4 = 30mm
+    params["differential_link"]["rocker_attach_offset_z"] = 30  # 75 * 0.4 = 30mm
+
     # Add computed fields
     _add_computed(params, scale)
 
@@ -527,6 +554,36 @@ def _add_computed(params, scale):
         "RR": {"x":  hw, "y": -hb, "z": wr},
         "MR": {"x":  hw, "y": 0.0, "z": wr},
         "FR": {"x":  hw, "y":  hb, "z": wr},
+    }
+
+    # Differential link geometry (computed from EA-26 mechanism)
+    db = params["differential_bar"]
+    dl = params["differential_link"]
+    bf = params["body_features"]
+    rpz = bf["rocker_pivot_z"]                    # rocker pivot Z
+    dpz = rpz + db["pivot_z_above_rocker"]        # diff pivot Z
+    rpx = bf["rocker_pivot_x"]                    # rocker pivot X
+
+    # Link endpoints (vertical)
+    link_top_z = dpz - dl["bar_attach_offset_z"]   # bar end, offset below
+    link_bot_z = rpz + dl["rocker_attach_offset_z"]  # rocker, offset above
+    # Link endpoints (horizontal)
+    link_top_x = db["bar_half_span"]               # at bar end
+    link_bot_x = rpx                                # at rocker pivot X
+
+    dx = link_top_x - link_bot_x
+    dz = link_top_z - link_bot_z
+    link_len = (dx**2 + dz**2) ** 0.5
+    link_angle = math.degrees(math.atan2(abs(dz), abs(dx)))
+
+    params["differential_computed"] = {
+        "diff_pivot_z":           round(dpz, 1),
+        "link_top_z":             round(link_top_z, 1),
+        "link_bot_z":             round(link_bot_z, 1),
+        "link_length":            round(link_len, 1),
+        "link_angle_from_horiz_deg": round(link_angle, 1),
+        "link_top_pos":           f"(±{link_top_x}, 0, {link_top_z})",
+        "link_bot_pos":           f"(±{link_bot_x}, 0, {link_bot_z})",
     }
 
 

@@ -6,7 +6,7 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 ## Project Location
 - Root: `D:\Mars Rover Project\`
 - Design doc: `docs/plans/2026-03-14-mars-rover-design.md` (v1.3)
-- Engineering analyses: `docs/engineering/` (EA-00 through EA-24)
+- Engineering analyses: `docs/engineering/` (EA-00 through EA-26)
 - Shopping list: `docs/plans/phase1-shopping-list.md`
 - Master todo: `docs/plans/todo-master.md`
 - Firmware: `firmware/esp32/` (ESP32-S3 Phase 1 motor controller)
@@ -43,6 +43,7 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 | 23 | Wire Harness | 58-wire schedule, connectors, cable routing, colour codes, build order |
 | 24 | Robotic Arm Study | Phase 2 arm feasibility, 3-DOF concept, Phase 1 mount prep |
 | 25 | Suspension Audit | Tube+connector approach, 8 bearings, 48 parts, dim matrix, wire routing |
+| 26 | Suspension Design Package | Full 18-section design: diff mechanism (bar+link+ball joints), steering knuckles, parametric ratios, DOF map |
 
 ## Key Specs
 - Size: 1100mm x 650mm x 1050mm (full) / 440x260mm (0.4 scale Phase 1)
@@ -151,7 +152,7 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 - UK magnetic declination: -0.0175 rad (for navsat_transform)
 
 ## Project Status (as of 2026-03-24)
-- All 25 engineering analyses complete and audited (EA-00 through EA-24)
+- All 27 engineering analyses complete (EA-00 through EA-26; EA-26 = suspension design package)
 - Full engineering audit complete: all stale values swept (bogie 180mm, diff bar 300mm, CTC Bizer, PLA, 8 bearings — EA-25)
 - All ROS2 nodes scaffolded (10 nodes across 7 packages)
 - All ESP32 firmware modules complete (9 headers: config, motors, steering, sensors, webserver, uart_nmea, uart_binary, ota, leds)
@@ -161,10 +162,10 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 - Gazebo garden world + 21 simulation test scenarios
 - ROS2 unit tests: 164 pytest tests across 6 test files (with mock framework)
 - ESP32 firmware unit tests: 42 pytest host-based tests (all passing)
-- CI/CD: GitHub Actions (ESP32 compile, firmware tests, ROS2 build, Python lint, docs check EA-00 to EA-25)
-- 29 Fusion 360 CAD scripts (6 new suspension connectors + wheel V3 + cable clip + tube test piece; 3 deprecated)
+- CI/CD: GitHub Actions (ESP32 compile, firmware tests, ROS2 build, Python lint, docs check EA-00 to EA-26)
+- 32 Fusion 360 CAD scripts (EA-26: diff pivot housing, diff link, steering knuckle + EA-25 connectors; 3 deprecated)
 - EA-25 suspension audit complete: tube+connector approach, 8 bearings (not 11), 48 printed parts total
-- BatchExportAll updated: 27 STL exports (was 23), deprecated scripts removed, new connectors added
+- BatchExportAll updated: 30 STL exports (was 27), EA-26 parts added (diff housing, diff link, steering knuckle)
 - 4 wiring diagrams rendered to SVG (power, signal, tray layout, cable routing)
 - Print strategy, Phase 1 BOM, maintenance guide, disassembly guide, data capture template all complete
 - ESP32 Arduino core v3.3.7 installed locally, pytest + flake8 + mmdc installed
