@@ -41,9 +41,9 @@ Create `docs/dashboard.html` — a single self-contained HTML file with:
 
 **Subsystem Cards (grid):**
 Each card shows status (not started / in progress / complete):
-- CAD Design: X/29 scripts created
+- CAD Design: X/29 active scripts (34 total, 3 deprecated, 2 superseded)
 - STL Export: X/28 files exported
-- 3D Printing: X/24 parts printed
+- 3D Printing: X/28 parts to print (suspension redesign EA-25/EA-26)
 - Electronics: ordered/received/assembled
 - Firmware: version, compile status, test results
 - Wiring: harness built yes/no

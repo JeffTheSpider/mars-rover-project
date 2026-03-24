@@ -11,9 +11,11 @@ Calculate the optimal order for printing and assembling Mars Rover Phase 1 parts
 1. **EA-08 Phase 1 Spec**: Part list and dimensions
 2. **EA-17 Build Guide**: Step-by-step assembly (14-day timeline)
 3. **EA-11 3D Printing**: Print settings and strategies
-4. **CAD Scripts**: `cad/scripts/*/` for part details
-5. **Print Log**: `docs/plans/print-log.md` (what's already printed)
-6. **BOM**: `docs/plans/phase1-shopping-list.md`
+4. **EA-25 Suspension Audit**: Tube+connector approach, parts list
+5. **EA-26 Suspension Design Package**: Differential mechanism, full geometry
+6. **CAD Scripts**: `cad/scripts/` for part details
+7. **Print Log**: `docs/plans/print-log.md` (what's already printed)
+8. **BOM**: `docs/plans/phase1-shopping-list.md`
 
 ## Steps
 
@@ -23,28 +25,32 @@ Map which parts depend on others for assembly:
 ```
 Bearing Test Piece → (validates print settings)
   ↓
+Tube Socket Test → (validates rod fit and grub screw)
+  ↓
 Calibration Test Card → (validates tolerances)
   ↓
-Wheels (×6) ─────────────────────────────┐
-Bogie Arms (×2) ──────┐                  │
-Rocker Arms Front (×2)─┤                  │
-Rocker Arms Rear (×2) ─┤                  │
-                       ├→ Suspension Assembly
-Fixed Wheel Mounts (×2)┘                  │
-                                          │
-Steering Brackets (×4) ──→ Steering Assembly
-Servo Mounts (×4) ────────┘               │
-                                          │
-Diff Bar Adapters (×2) ──→ Drivetrain ────┤
-                                          │
-Body Quadrants (×4) ─────→ Body Assembly ─┤
-Top Deck Tiles (×4) ─────┘               │
-Electronics Tray ────────→ Electronics ───┤
-                                          │
-Strain Relief Clips ─────┐               │
-Fuse Holder Bracket ─────┤→ Wiring ──────┤
-Switch Mount Plate ──────┘               │
-                                          │
+Wheels V3 (×6) ─────────────────────────────┐
+RockerHubConnector (×2) ────┐               │
+BogiePivotConnector (×2) ───┤               │
+FrontWheelConnector (×4) ───┤               │
+MiddleWheelConnector (×2) ──┤→ Suspension   │
+DifferentialPivotHousing ───┤  Assembly     │
+DifferentialLink (×2) ──────┤               │
+SteeringKnuckle (×4) ───────┤               │
+CableClip (×8-12) ──────────┘               │
+                                             │
+SteeringBracket (×4) ──→ Steering Assembly  │
+ServoMount (×4) ────────┘                   │
+FixedWheelMount (×2) ──┘                    │
+                                             │
+Body Quadrants (×4) ─────→ Body Assembly ───┤
+Top Deck Tiles (×4) ────┘                   │
+Electronics Tray ────────→ Electronics ─────┤
+                                             │
+Strain Relief Clips ─────┐                  │
+Fuse Holder Bracket ─────┤→ Wiring ────────┤
+Switch Mount Plate ──────┘                  │
+                                             │
                               ROVER COMPLETE
 ```
 
@@ -69,6 +75,7 @@ Identify what can happen in parallel:
 - While Part X is printing, what assembly/prep can be done?
 - Which purchased parts need to arrive before assembly?
 - Heat-set insert installation batches
+- Steel rod cutting (2× 1m rods → per `/rod-cutting` plan)
 
 ### 5. Output: Recommended Schedule
 ```
@@ -76,22 +83,41 @@ Identify what can happen in parallel:
 
 Day 1: Test & Calibrate
   Print: BearingTestPiece (45min) → test fit
+  Print: TubeSocketTest (30min) → test rod fit
   Print: CalibrationTestCard (30min) → measure
   Prep: Level bed, clean nozzle, test adhesion
 
-Day 2-3: Wheels & Suspension
-  Print: 6× RoverWheel (~2h each = 12h total)
-  While printing: Sort bearings, prep shafts
-  ...
+Day 2-3: Wheels & Connectors
+  Print: 6× RoverWheelV3 (~2h each = 12h total)
+  Print: 2× RockerHubConnector, 2× BogiePivotConnector
+  While printing: Cut steel rods, sort bearings
 
-Day X: Final Assembly
-  Assemble: [order]
-  Wire: [order per EA-23]
-  Test: [per EA-21]
+Day 4-5: Suspension Connectors
+  Print: 4× FrontWheelConnector, 2× MiddleWheelConnector
+  Print: 1× DiffPivotHousing, 2× DiffLink, 4× SteeringKnuckle
+  Print: 8-12× CableClip
+  While printing: Install heat-set inserts in completed parts
+
+Day 6-7: Steering & Mounts
+  Print: 4× SteeringBracket, 4× ServoMount, 2× FixedWheelMount
+  Assemble: Suspension (rods + connectors + bearings)
+
+Day 8-10: Body & Electronics
+  Print: 4× BodyQuadrant (~4h each)
+  Print: 4× TopDeckTile, 1× ElectronicsTray
+  While printing: Wire harness prep
+
+Day 11-12: Small Parts & Wiring
+  Print: StrainReliefClips, FuseHolderBracket, SwitchMountPlate
+  Assemble: Body, mount electronics, wire harness
+
+Day 13-14: Integration & Test
+  Final assembly per EA-17
+  Test per EA-21
 
 Total print time: ~69h
-Total assembly time: ~Xh
-Critical path: [longest chain]
+Total assembly time: ~8-12h
+Critical path: Wheels → Suspension → Body → Integration
 ```
 
 ### 6. Generate Checklist

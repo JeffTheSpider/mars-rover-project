@@ -11,21 +11,26 @@ Show all available tools, skills, and commands for this project.
 
 ---
 
-### Project Commands (type `/command-name`)
+### Project Commands (18 total — type `/command-name`)
 
 | Command | What it does |
 |---------|-------------|
-| `/preflight <part>` | Pre-print checklist — verify STL, bed fit, filament estimate, Cura settings |
-| `/fusion-export` | Run BatchExportAll in Fusion 360 to re-export all 23 STLs |
+| `/session-start` | Load all context at the start of a new session |
+| `/session-handoff` | Save structured handoff for seamless next-session pickup |
+| `/quick-audit` | Fast stale-count scan across all files (bearings, STLs, EAs) |
+| `/cad-audit [name\|all]` | Re-run engineering audit on CAD scripts for fitment and consistency |
+| `/deploy-scripts [name\|all]` | Copy CAD scripts to Fusion 360 Scripts directory |
+| `/fusion-export` | Run BatchExportAll in Fusion 360 to re-export all 28 STLs |
+| `/stl-check <part>` | Validate STL — dimensions, manifold, bed fit, print estimate |
+| `/preflight <part>` | Pre-print checklist — verify STL, bed fit, filament, Cura/GPX |
+| `/print-log <part>` | Log a print attempt with settings and results |
+| `/tolerance-calc <feature> <dim>` | Calculate fit tolerances for PLA on CTC Bizer |
+| `/rod-cutting` | Calculate 8mm steel rod cutting plan from parametric dimensions |
+| `/assembly-order` | Optimal print and assembly sequence with timeline |
 | `/bom-check` | Cross-reference BOM against CAD, STL, print, and order status |
 | `/firmware-validate` | Full pipeline: compile + 42 tests + lint + stale constant check |
 | `/wiring-check` | Cross-check wiring diagrams vs firmware pins vs EA docs |
-| `/cad-audit [name\|all]` | Re-run engineering audit on CAD scripts for fitment and consistency |
-| `/session-handoff` | Save structured handoff for seamless next-session pickup |
 | `/esp32-deploy` | Compile firmware and generate/run upload command |
-| `/print-log <part>` | Log a print attempt with settings and results |
-| `/tolerance-calc <feature> <dim>` | Calculate fit tolerances for PLA on CTC Bizer |
-| `/assembly-order` | Optimal print and assembly sequence with timeline |
 | `/project-dashboard` | Generate interactive HTML status dashboard |
 | `/skill-guide` | This guide |
 
@@ -53,6 +58,7 @@ Show all available tools, skills, and commands for this project.
 
 | Skill | When it activates |
 |-------|------------------|
+| orchestrator | Every task — prompts proactive use of all 18 commands + MCP tools |
 | code-simplifier | After writing/editing code |
 | frontend-design | When building web UI components |
 | security-guidance | When editing files (hook checks for vulnerabilities) |
@@ -62,14 +68,14 @@ Show all available tools, skills, and commands for this project.
 | operations (process, vendor, compliance) | When discussing operations |
 | superpowers (debugging, TDD, verification) | 14 auto-skills for various dev workflows |
 
-### MCP Servers (always available)
+### MCP Servers (10 configured)
 
 | Server | Key Tools |
 |--------|-----------|
 | fusion360 | python, system (UI automation), terminal (serial/SSH), context7 (docs), sqlite |
-| 3dprint | get_stl_info, slice, scale, rotate, visualize |
+| 3dprint | get_stl_info, slice, scale, rotate, visualize, print_3mf |
 | github | Issues, PRs, code search, repository management |
-| mermaid | Generate diagrams (SVG/PNG) |
+| mermaid | Generate diagrams (SVG/PNG/PDF) |
 | math | SymPy/SciPy calculations, unit conversion |
 | kicad | PCB/schematic tools (needs KiCad) |
 | cadquery | Parametric CAD modelling |
@@ -79,12 +85,13 @@ Show all available tools, skills, and commands for this project.
 ### Quick Reference
 
 ```
-Print workflow:  /preflight → /fusion-export → /print-log
+Session:         /session-start (begin) → /session-handoff (end)
+Audit:           /quick-audit → /cad-audit → /wiring-check → /bom-check
+Print workflow:  /stl-check → /preflight → print → /print-log
+CAD workflow:    edit script → /deploy-scripts → /fusion-export
 Dev workflow:    /feature-dev → /firmware-validate → /esp32-deploy → /commit
-Audit workflow:  /cad-audit → /wiring-check → /bom-check
-Session:         /session-handoff (end of session)
+Planning:        /assembly-order → /rod-cutting → /tolerance-calc
 Status:          /project-dashboard → /bom-check
-Planning:        /assembly-order → /brainstorm → /write-plan
 ```
 
 ---
