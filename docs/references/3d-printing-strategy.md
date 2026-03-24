@@ -1,8 +1,15 @@
 # 3D Printing Strategy — Mars Rover Garden Robot
 
-**Printer**: Ender 3 (220x220x250mm build volume)
-**Date**: 2026-03-15
-**Applies to**: Phase 1 (0.4 scale) and Phase 2 (full scale)
+> **SUPERSEDED**: This document is outdated. The authoritative 3D printing strategy is now
+> **EA-11** (`docs/engineering/11-3d-printing-strategy.md`) and
+> **Print Strategy** (`docs/plans/print-strategy.md`).
+> Key changes: Printer is CTC Bizer (225x145x150mm, not Ender 3), material is PLA (not PETG),
+> body splits into 4 quadrants (not 2 halves). This file is retained for historical reference only.
+
+~~**Printer**: Ender 3 (220x220x250mm build volume)~~
+**Printer**: CTC Bizer (225x145x150mm) — see EA-11
+**Date**: 2026-03-15 (STALE — see EA-11 updated 2026-03-24)
+**Applies to**: ~~Phase 1 (0.4 scale) and Phase 2 (full scale)~~ HISTORICAL ONLY
 
 ---
 
@@ -317,7 +324,7 @@ For rocker and bogie arms that span long distances and experience bending loads,
 | Location | Phase 1 (0.4x) | Phase 2 (1.0x) |
 |----------|----------------|-----------------|
 | Rocker arms | Printed only (short enough at 180mm) | 12mm aluminium tube core |
-| Bogie arms | Printed only (120mm) | 10mm aluminium tube core |
+| Bogie arms | Printed only (180mm) | 10mm aluminium tube core |
 | Differential bar | Printed only | 8mm steel rod |
 | Wheel axles | 4mm steel shaft | 8mm steel shaft |
 | Pivot pins | M3 bolts | 8mm steel shaft + 608 bearings |

@@ -43,8 +43,11 @@ node_modules/
 .gazebo/
 
 # === 3D Printing ===
-# Keep STLs and gcode
+# Keep STLs, ignore sliced/converted files
 *.3mf.bak
+*.x3g
+*.gcode
+3d-print/gcode/
 
 # === OS ===
 .DS_Store
@@ -67,3 +70,32 @@ desktop.ini
 *.tmp
 *.log
 *.bak
+temp/
+
+# === MCP / Vendor tools (large, install locally) ===
+tools/cadquery-mcp/
+tools/kicad-mcp/
+tools/math-mcp/
+cad/cadquery-mcp-server-rishi/
+cad/mcp-cadquery-bert/
+cad/fusion-mcp/
+cad/mcp-link-server/
+cad/reference/
+.mcp.json
+
+# === Fusion 360 UI screenshots (debug only) ===
+cad/*.png
+cad/fusion360_*.png
+cad/f360_*.png
+cad/scripts_*.png
+cad/batch_*.png
+cad/fusion_*.png
+
+# === Claude Code local config ===
+.claude/settings.local.json
+
+# === Test/CI ===
+.pytest_cache/
+firmware-test-results.xml
+htmlcov/
+.coverage

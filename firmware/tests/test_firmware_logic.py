@@ -10,7 +10,6 @@ Covers: NMEA checksums, Ackermann geometry, battery SoC, servo math.
 
 import math
 import struct
-import pytest
 
 # ============================================================
 # Constants from config.h (0.4 scale prototype)
@@ -23,10 +22,10 @@ MIN_TURN_RADIUS = 397.0
 STEER_MAX_ANGLE = 35.0
 STEER_DEADBAND = 1.0
 
-SERVO_MIN_US = 500
+SERVO_MIN_US = 544
 SERVO_MAX_US = 2400
-SERVO_CENTER_US = 1500
-SERVO_US_PER_DEG = 11.11
+SERVO_CENTER_US = 1500  # SG90 standard centre (matches config.h)
+SERVO_US_PER_DEG = 10.31  # (2400-544)/180 (matches config.h)
 
 BATT_CELLS = 2
 BATT_FULL_V = 8.4

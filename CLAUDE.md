@@ -6,7 +6,7 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 ## Project Location
 - Root: `D:\Mars Rover Project\`
 - Design doc: `docs/plans/2026-03-14-mars-rover-design.md` (v1.3)
-- Engineering analyses: `docs/engineering/` (EA-00 through EA-21)
+- Engineering analyses: `docs/engineering/` (EA-00 through EA-24)
 - Shopping list: `docs/plans/phase1-shopping-list.md`
 - Master todo: `docs/plans/todo-master.md`
 - Firmware: `firmware/esp32/` (ESP32-S3 Phase 1 motor controller)
@@ -28,7 +28,7 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 | 08 | Phase 1 Spec | 24 parts (4-segment body), all CAD dimensions, 69hr print |
 | 09 | GPIO Pin Map | ESP32-S3 N16R8, Phase 1: 20 pins, Phase 2: 28 pins |
 | 10 | Ackermann Steering | 3 modes, min radius 993mm, servo mapping |
-| 11 | 3D Printing | PETG/ASA, settings, heat-set inserts, segmentation |
+| 11 | 3D Printing | PLA (Phase 1), CTC Bizer, settings, heat-set inserts, 4-quadrant body |
 | 12 | UART Protocol | NMEA-style text, 115200 baud, 18 msg types, 50Hz (Phase 1/debug) |
 | 13 | ROS2 Architecture | Node graph, Nav2, SLAM, EKF, YOLO, behaviour trees |
 | 14 | Weatherproofing | IP44/IP54, zones, cable glands, thermal |
@@ -39,11 +39,15 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 | 19 | Wiring Diagram | Phase 1 complete wiring reference, ASCII diagrams, connector strategy |
 | 20 | CAD Preparation | Parametric dimensions from EA-08, Fusion 360 assembly structure |
 | 21 | Test Procedures | Acceptance criteria for firmware, electronics, integration, autonomy |
+| 22 | Requirements Spec | Formal FR/PR/DIM/ELEC/LEARN/DFT/MOD requirements for Phase 1 |
+| 23 | Wire Harness | 58-wire schedule, connectors, cable routing, colour codes, build order |
+| 24 | Robotic Arm Study | Phase 2 arm feasibility, 3-DOF concept, Phase 1 mount prep |
+| 25 | Suspension Audit | Tube+connector approach, 8 bearings, 48 parts, dim matrix, wire routing |
 
 ## Key Specs
 - Size: 1100mm x 650mm x 1050mm (full) / 440x260mm (0.4 scale Phase 1)
-- Weight: ~1.1kg (Phase 1) / 16.7kg (Phase 2) / 20.8kg (Phase 3)
-- Suspension: Rocker-bogie, 608ZZ bearings, 8mm shafts
+- Weight: ~1.25kg (Phase 1, ~1024g PLA + battery + hardware) / 16.7kg (Phase 2) / 20.8kg (Phase 3)
+- Suspension: Rocker-bogie, 8× 608ZZ bearings, 8mm steel rods + printed connectors (EA-25)
 - Power: 2S LiPo 2200mAh (Phase 1) / 6S 20Ah + 100W solar (Phase 2)
 - Compute: ESP32-S3 DevKitC-1 N16R8 (Phase 1) / + Jetson Orin Nano Super (Phase 2)
 - Motors: N20 100RPM (Phase 1) / Chihai 37mm 80RPM (Phase 2)
@@ -58,11 +62,16 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 3. **Phase 3** (full scale): Machined aluminium/steel, IP54 weatherproof ($299 additional)
 
 ## 3D Printer
-- **Model**: CTC printer
-- **Bed size**: 150×200mm
+- **Model**: CTC 3D Bizer (MakerBot Replicator 1 Dual clone)
+- **Bed size**: 225×145×150mm
 - **Material**: PLA only (no PETG, no TPU)
+- **File format**: x3g (NOT standard gcode) — uses GPX converter
+- **Slicer workflow**: Fusion 360 → STL → Cura → gcode → GPX (`gpx -m cr1d`) → x3g → SD card
+- **GPX**: v2.6.8 installed at `C:\Users\charl\bin\gpx.exe`, machine type `cr1d`
+- **Extruders**: Dual (use left only), remove/park right nozzle
 - **Impact**: Body splits into 4 quadrants (not 2 halves). Rigid PLA wheels with rubber O-ring traction bands.
 - **Heat-set inserts**: 170-180°C for PLA (lower than PETG's 200-220°C)
+- **Bed adhesion**: Heated bed 60°C + glue stick or painter's tape, brim for large parts
 - **Phase 2 upgrade**: Will need PETG/ASA-capable printer for outdoor durability
 
 ## CAD Workflow
@@ -108,9 +117,23 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 - ESP32 board: `esp32:esp32:esp32s3` (DevKitC-1 N16R8)
 - Node.js: v24.13.1
 - Python: 3.14
-- CAD: Fusion 360 (to be installed)
-- 3D Printer: Ender 3 (220×220×250mm bed)
+- CAD: Fusion 360 Personal (installed, MCP-Link add-in connected)
+- 3D Printer: CTC Bizer (225×145×150mm bed, x3g via GPX 2.6.8 `cr1d`, Cura slicer)
+- GPX: v2.6.8 (`C:\Users\charl\bin\gpx.exe`) — `gpx -m cr1d input.gcode output.x3g`
 - Jetson: Ubuntu 22.04 + ROS2 Humble (Phase 2)
+
+## MCP Servers (`.mcp.json`)
+| Server | Purpose | Notes |
+|--------|---------|-------|
+| fusion360 | Fusion 360 via MCP-Link (AuraFriday) | 13 sub-tools: python, system, terminal, sqlite, context7, etc. |
+| 3dprint | STL manipulation, slicing, printer control | get_stl_info, slice, scale, rotate, visualize |
+| github | GitHub API (issues, PRs, code search) | PAT from `gh auth token` |
+| mermaid | Diagram generation (preview + save) | SVG/PNG/PDF output |
+| math | SymPy/SciPy math computations | Algebra, calculus, unit conversion |
+| kicad | KiCad PCB/schematic tools | Needs KiCad installed (Phase 2) |
+| cadquery | CadQuery parametric CAD | Python-based CSG modeling |
+| text-to-model | 64 Fusion 360 CAD tools (JIS parts, sketches) | Disabled — enable when Fusion 360 running with add-in |
+| jlcpcb | JLCPCB component search & BOM | For parts ordering |
 
 ## Conventions
 - ESP32 firmware follows Clock/Lamp project patterns (single translation unit, .h includes, non-blocking state machines)
@@ -127,20 +150,25 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 - Gazebo diff_drive plugin: set `publish_odom_tf: false` when EKF publishes odom→base_link TF
 - UK magnetic declination: -0.0175 rad (for navsat_transform)
 
-## Project Status (as of 2026-03-15)
-- All 22 engineering analyses complete (EA-00 master handbook through EA-21)
+## Project Status (as of 2026-03-24)
+- All 25 engineering analyses complete and audited (EA-00 through EA-24)
+- Full engineering audit complete: all stale values swept (bogie 180mm, diff bar 300mm, CTC Bizer, PLA, 8 bearings — EA-25)
 - All ROS2 nodes scaffolded (10 nodes across 7 packages)
-- All ESP32 firmware modules scaffolded (7 modules incl. OTA, NMEA, binary UART)
-- ESP32-S3 firmware compiles successfully (1042KB flash 79%, 53KB RAM 16%, v0.2.0)
-- PWA phone app complete (telemetry, drive, map, mission, settings, camera stream, OTA)
+- All ESP32 firmware modules complete (9 headers: config, motors, steering, sensors, webserver, uart_nmea, uart_binary, ota, leds)
+- ESP32-S3 firmware compiles successfully (1045KB flash 79%, 53KB RAM 16%, v0.3.0)
+- Firmware safety: arm-before-drive, battery speed limit, stall detect, rate-limited steering, 5 LED patterns
+- PWA phone app complete (ARM/DISARM, telemetry, drive, map, mission, settings, camera, OTA)
 - Gazebo garden world + 21 simulation test scenarios
-- ROS2 unit tests: 134 pytest tests across 5 test files
-- ESP32 firmware unit tests: 42 pytest host-based tests (NMEA, Ackermann, battery, COBS)
-- Research references: YOLO garden detection, Gazebo simulation best practices
-- CI/CD: GitHub Actions (ESP32 compile, ROS2 build, Python lint, docs check)
-- All config/launch files corrected to match EA research
-- Fusion 360 MCP setup guide ready (`docs/plans/fusion360-mcp-setup.md`)
-- **Next step**: Install Fusion 360 + MCP server, then CAD design + order Phase 1 components
+- ROS2 unit tests: 164 pytest tests across 6 test files (with mock framework)
+- ESP32 firmware unit tests: 42 pytest host-based tests (all passing)
+- CI/CD: GitHub Actions (ESP32 compile, firmware tests, ROS2 build, Python lint, docs check EA-00 to EA-25)
+- 29 Fusion 360 CAD scripts (6 new suspension connectors + wheel V3 + cable clip + tube test piece; 3 deprecated)
+- EA-25 suspension audit complete: tube+connector approach, 8 bearings (not 11), 48 printed parts total
+- BatchExportAll updated: 27 STL exports (was 23), deprecated scripts removed, new connectors added
+- 4 wiring diagrams rendered to SVG (power, signal, tray layout, cable routing)
+- Print strategy, Phase 1 BOM, maintenance guide, disassembly guide, data capture template all complete
+- ESP32 Arduino core v3.3.7 installed locally, pytest + flake8 + mmdc installed
+- **Next step**: Re-run BatchExportAll in Fusion 360, set up CTC Bizer printer, order Phase 1 parts
 
 ## Key Learnings
 - ESP32 Arduino Core v3.x: `esp_task_wdt_init()` takes `esp_task_wdt_config_t*` struct, not int+bool

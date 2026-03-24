@@ -65,6 +65,9 @@ UartBridgeNode::UartBridgeNode(const rclcpp::NodeOptions & options)
   estop_sub_ = this->create_subscription<std_msgs::msg::Bool>(
     "/estop", 10,
     std::bind(&UartBridgeNode::estop_callback, this, std::placeholders::_1));
+  arm_sub_ = this->create_subscription<std_msgs::msg::Bool>(
+    "/rover/arm", 10,
+    std::bind(&UartBridgeNode::arm_callback, this, std::placeholders::_1));
 
   // Open serial port
   if (!open_serial()) {
@@ -345,6 +348,17 @@ void UartBridgeNode::estop_callback(const std_msgs::msg::Bool::SharedPtr msg)
     write_serial(format_nmea("STP", "1"));
   } else {
     RCLCPP_INFO(this->get_logger(), "E-stop released");
+  }
+}
+
+void UartBridgeNode::arm_callback(const std_msgs::msg::Bool::SharedPtr msg)
+{
+  if (msg->data) {
+    RCLCPP_INFO(this->get_logger(), "ARM command sent to ESP32");
+    write_serial(format_nmea("ARM", ""));
+  } else {
+    RCLCPP_INFO(this->get_logger(), "DISARM command sent to ESP32");
+    write_serial(format_nmea("DSA", ""));
   }
 }
 

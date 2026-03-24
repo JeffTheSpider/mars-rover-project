@@ -383,13 +383,41 @@ Typical hall encoder specification:
 | Component | Phase 1 | Phase 2 | Phase 3 |
 |-----------|---------|---------|---------|
 | Drive motors | N20 6V 100RPM | Chihai 37mm 12V 80RPM | Same (or upgrade) |
-| Motor torque (stall) | 0.5 kg·cm | 35 kg·cm | 35+ kg·cm |
+| Motor torque (rated) | ~2 kg·cm† | 20 kg·cm | 20+ kg·cm |
+| Motor torque (stall) | ~10-16 kg·cm† | 35 kg·cm | 35+ kg·cm |
 | Motor drivers | 2× L298N | 3× Cytron MDD10A | Same |
 | Steering servos | SG90 (1.8 kg·cm) | MG996R (13 kg·cm) | DS3218 (21 kg·cm) |
 | Wheel encoders | None | Hall effect (built-in) | Hall effect (built-in) |
 | Top speed | 3 km/h | 5 km/h | 5 km/h |
-| Min turning radius | ~300mm | 870mm | 870mm |
+| Min turning radius | 397mm | 993mm | 993mm |
 | Max slope | 15° | 30° | 30° |
+
+---
+
+### † Phase 1 N20 Torque Clarification
+
+The original 0.5 kg·cm figure likely referred to a low gear ratio N20 variant (1:10 or 1:30).
+For the **GA12-N20 6V 100RPM with 1:100 gear ratio** (the correct Phase 1 motor):
+
+| Parameter | Value | Source |
+|-----------|-------|--------|
+| No-load speed | 100 RPM | Datasheet |
+| Rated torque | ~2 kg·cm (0.2 N·m) | GA12-N20 1:100 datasheet |
+| Stall torque | ~10-16 kg·cm (1.0-1.6 N·m) | GA12-N20 1:100 datasheet |
+| Stall current | ~0.8-1.5A | Depends on supplier |
+| No-load current | ~60mA | Typical |
+
+**Ordering specification**: When ordering, confirm:
+- Model: **GA12-N20** (not plain N20)
+- Voltage: **6V**
+- Speed: **100RPM** (implies 1:100 ratio)
+- Gearbox: **Metal** (not plastic — plastic strips under load)
+- Shaft: **D-flat 3mm** (for wheel coupling)
+
+With 6 motors at ~2 kg·cm rated torque pushing a ~1.25 kg rover:
+- Required per-motor torque on flat: 0.033 kg·cm
+- **Safety margin: 60× (rated) / 300× (stall)** — massively oversized for Phase 1
+- Even on 15° slope: 0.17 kg·cm per motor → 12× safety margin
 
 ---
 

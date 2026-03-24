@@ -13,7 +13,7 @@
 
 | Tool | Purpose | Estimated Cost |
 |------|---------|---------------|
-| 3D Printer (Ender 3) | Print all structural parts | Already owned |
+| 3D Printer (CTC Bizer) | Print all structural parts (225×145×150mm bed, x3g via GPX) | Already owned |
 | Soldering iron + solder | Heat-set inserts, wiring | Already owned |
 | Wire strippers | Motor/servo wiring | Already owned |
 | Hex key set (1.5mm, 2mm, 5mm) | M2, M3, M8 fasteners | ~$5 |
@@ -30,8 +30,9 @@
 | Software | Purpose | Status |
 |----------|---------|--------|
 | Arduino IDE 2.x or arduino-cli | ESP32 programming | Install ESP32-S3 board support |
-| Slicer (Cura or PrusaSlicer) | Generate 3D print G-code | Install and configure for Ender 3 |
-| Fusion 360 | CAD modelling | To be installed |
+| Slicer (Cura) | Generate G-code for CTC Bizer | Install and configure for CTC Bizer |
+| GPX 2.6.8 | Convert gcode → x3g for CTC Bizer | Installed at `C:\Users\charl\bin\gpx.exe` |
+| Fusion 360 | CAD modelling | Installed with MCP-Link add-in |
 | Web browser | Rover control UI | Already available |
 
 ---
@@ -44,14 +45,14 @@ Order these first — filament arrives first so you can start printing while wai
 
 | # | Item | Qty | Source | Est. Cost |
 |---|------|-----|--------|-----------|
-| 1 | PETG filament 1kg (grey or white) | 1 | Amazon | $20 |
+| 1 | PLA filament 1kg (grey or white) | 2 | Amazon | $30 |
 | 2 | M3 heat-set inserts (brass, 5.7mm OD × 4.6mm) | 50 | AliExpress/Amazon | $3 |
 | 3 | M3 bolt assortment (8mm, 12mm, 16mm socket cap) | 1 set | Amazon | $6 |
 | 4 | M3 nut assortment | 1 set | included | — |
 | 5 | M8 × 40mm hex bolts | 8 | Hardware store | $3 |
 | 6 | M8 nyloc nuts | 8 | Hardware store | $2 |
 | 7 | M8 washers | 16 | Hardware store | $1 |
-| 8 | 608ZZ bearings | 10 | Amazon | $5 |
+| 8 | 608ZZ bearings | 12 | Amazon | $5 |
 
 **Subtotal: ~$40**
 
@@ -60,7 +61,7 @@ Order these first — filament arrives first so you can start printing while wai
 | # | Item | Qty | Source | Est. Cost |
 |---|------|-----|--------|-----------|
 | 9 | ESP32-S3 DevKitC-1 (N16R8, USB-C) | 1 | AliExpress | $8 |
-| 10 | N20 DC gearmotors (6V, 100RPM, with encoder) | 6 | AliExpress | $18 |
+| 10 | GA12-N20 DC gearmotors (6V, 100RPM, 1:100 ratio, metal gearbox) | 6 | AliExpress | $18 |
 | 11 | SG90 micro servos | 4 | AliExpress | $8 |
 | 12 | L298N motor driver modules | 2 | AliExpress | $6 |
 
@@ -70,7 +71,7 @@ Order these first — filament arrives first so you can start printing while wai
 
 | # | Item | Qty | Source | Est. Cost |
 |---|------|-----|--------|-----------|
-| 13 | 2S LiPo 2200mAh (7.4V, XT30) | 1 | Amazon/HobbyKing | $12 |
+| 13 | 2S LiPo 2200mAh (7.4V, XT60) | 1 | Amazon/HobbyKing | $12 |
 | 14 | 2S LiPo balance charger | 1 | Amazon | $8 |
 | 15 | Power switch (toggle or rocker) | 1 | Amazon | $2 |
 | 16 | Jumper wire set (M-M, M-F) | 1 | Amazon | $3 |
@@ -88,11 +89,13 @@ Order these first — filament arrives first so you can start printing while wai
 
 ### 2.1 Printer Setup
 
-1. Level bed (paper method — slight drag)
-2. Load PETG filament
-3. Set PETG temperature: **235°C nozzle, 75°C bed**
-4. Apply PEI sheet or blue painter's tape for adhesion
-5. Run a calibration cube (20×20×20mm) to verify dimensions ±0.2mm
+1. Level bed (paper or 0.1mm feeler gauge — slight drag)
+2. Load PLA filament (left extruder only)
+3. Set PLA temperature: **200-210°C nozzle, 60°C bed**
+4. Apply glue stick or painter's tape for adhesion
+5. Right nozzle: remove or park (raise 1-2mm above left)
+6. Run calibration test card (from `3d-print/calibration/`) to verify dimensions
+7. See `docs/plans/ctc-bizer-guide.md` for full CTC Bizer setup
 
 ### 2.2 Print Order
 
@@ -109,17 +112,23 @@ Print parts in this order — each validates dimensions for subsequent parts.
 | 5 | Differential bar adapters | 3 | 3 hr | 15g | Small, quick |
 | 5-6 | Steering brackets | 4 | 6 hr | 48g | Print 2 at a time |
 | 6 | Fixed motor mounts | 2 | 2 hr | 16g | Simple parts |
-| 7-8 | Body front half | 1 | 12 hr | 200g | **Overnight print** — largest part |
-| 8-9 | Body rear half | 1 | 12 hr | 200g | **Overnight print** |
-| 10 | Top deck cover (optional) | 1 | 4 hr | 60g | Cosmetic only |
+| 7 | Body quadrant FL | 1 | 8 hr | ~60g | Open face up, 8mm brim |
+| 7-8 | Body quadrant FR | 1 | 8 hr | ~60g | **Overnight print** |
+| 8-9 | Body quadrant RL | 1 | 10 hr | ~100g | **Overnight print** (rocker pivot boss) |
+| 9-10 | Body quadrant RR | 1 | 10 hr | ~100g | **Overnight print** (rocker pivot boss) |
+| 10 | Top deck tiles (×4) | 4 | 4 hr | ~20g | Flat panel down |
+| 10 | Electronics tray | 1 | 3 hr | ~30g | Flat bottom down |
+| 10 | Small parts (clips, brackets) | ~12 | 2 hr | ~15g | Strain relief, fuse, switch mount |
 
 ### 2.3 Print Settings Summary
 
-All parts use the same base settings:
-- **PETG, 0.2mm layer, 4 walls, 50% gyroid infill** (structural)
-- **PETG, 0.2mm layer, 3 walls, 25% gyroid infill** (wheels, panels)
-- **235°C nozzle, 75°C bed, 45mm/s, 30-50% cooling fan**
-- See EA-11 for full settings per part category
+All parts use PLA on CTC Bizer:
+- **PLA, 0.2mm layer, 4 walls, 50% gyroid infill** (structural)
+- **PLA, 0.2mm layer, 3 walls, 20% gyroid infill** (body panels, top deck)
+- **200-210°C nozzle, 60°C bed, 40mm/s, 100% cooling after layer 3**
+- See `docs/plans/print-strategy.md` for per-part slicer profiles
+- See `docs/plans/ctc-bizer-guide.md` for CTC Bizer specifics
+- **File workflow**: Cura → gcode → `gpx -m cr1d input.gcode output.x3g` → SD card
 
 ### 2.4 After Each Print
 
@@ -135,12 +144,14 @@ All parts use the same base settings:
 
 ### 3.1 Install Heat-Set Inserts
 
-Using soldering iron at **220°C** with a pointed tip:
+Using soldering iron at **170-180°C** with a pointed tip (PLA — lower than PETG's 220°C!):
 
 | Part | Number of Inserts | Locations |
 |------|-------------------|-----------|
-| Body front half | 8 | Join seam (6) + electronics mounts (2) |
-| Body rear half | 8 | Join seam (6) + electronics mounts (2) |
+| Body quadrant FL | ~6 | Seam edges (X + Y seam) |
+| Body quadrant FR | ~6 | Seam edges (X + Y seam) |
+| Body quadrant RL | ~6 | Seam edges (X + Y seam) |
+| Body quadrant RR | ~6 | Seam edges (X + Y seam) |
 | Rocker arms (×2) | 4 each | Motor mount + bogie pivot |
 | Bogie arms (×2) | 4 each | Motor mounts + rocker pivot |
 | Steering brackets (×4) | 2 each | Servo mount |
@@ -151,7 +162,7 @@ Using soldering iron at **220°C** with a pointed tip:
 
 ### 3.2 Prepare Differential Bar
 
-1. Cut 8mm steel rod to 200mm length (hacksaw or Dremel cutoff wheel)
+1. Cut 8mm steel rod to 300mm length (hacksaw or Dremel cutoff wheel)
 2. Deburr both ends with file
 3. Test-fit through 608ZZ bearings (should slide smoothly through 8mm bore)
 4. Press-fit printed adapters onto rod ends (friction fit + M3 grub screw if needed)

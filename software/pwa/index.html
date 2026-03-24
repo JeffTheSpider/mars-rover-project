@@ -741,6 +741,66 @@ input[type="range"]::-moz-range-thumb {
     background: var(--bg-input);
 }
 
+/* Arm/Disarm Controls */
+.arm-section {
+    padding: 8px 16px;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+}
+
+.arm-toggle {
+    padding: 10px 24px;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--border);
+    font-size: 0.875rem;
+    font-weight: 700;
+    font-family: var(--font-heading);
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.arm-toggle--arm {
+    background: var(--success);
+    color: var(--ctp-base);
+    border-color: var(--success);
+}
+
+.arm-toggle--arm:active {
+    filter: brightness(0.85);
+}
+
+.arm-toggle--disarm {
+    background: var(--danger);
+    color: var(--ctp-base);
+    border-color: var(--danger);
+}
+
+.arm-toggle--disarm:active {
+    filter: brightness(0.85);
+}
+
+.arm-state {
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-family: var(--font-heading);
+    padding: 4px 12px;
+    border-radius: 6px;
+    letter-spacing: 0.05em;
+}
+
+.arm-state--armed {
+    background: var(--success);
+    color: var(--ctp-base);
+}
+
+.arm-state--disarmed {
+    background: var(--danger);
+    color: var(--ctp-base);
+}
+
 /* Quick Actions */
 .actions-section {
     padding: 8px 16px;
@@ -1565,6 +1625,17 @@ select:focus {
                     <span class="tilt-row__value" id="telem-pitch">0.0&deg;</span>
                 </div>
             </div>
+            <!-- Rover Status -->
+            <div class="telem-card">
+                <div class="telem-card__label">Arm State</div>
+                <div class="telem-card__value" id="telem-armed">DISARMED</div>
+                <div class="telem-card__sub" id="telem-speed-limit">Limit: 100%</div>
+            </div>
+            <!-- Stall -->
+            <div class="telem-card">
+                <div class="telem-card__label">Stall Detect</div>
+                <div class="telem-card__value" id="telem-stall">OK</div>
+            </div>
             <!-- Uptime -->
             <div class="telem-card telem-card--wide">
                 <div class="telem-card__label">Uptime</div>
@@ -1630,6 +1701,13 @@ select:focus {
             <button class="mode-btn mode-btn--active" data-mode="0">Ackermann</button>
             <button class="mode-btn" data-mode="1">Point Turn</button>
             <button class="mode-btn" data-mode="2">Crab Walk</button>
+        </div>
+
+        <!-- Arm/Disarm Control -->
+        <div class="arm-section" id="arm-section">
+            <button class="arm-toggle arm-toggle--arm" id="arm-btn">ARM</button>
+            <span class="arm-state arm-state--disarmed" id="arm-state">DISARMED</span>
+            <button class="arm-toggle arm-toggle--disarm" id="disarm-btn">DISARM</button>
         </div>
 
         <!-- Quick Actions -->
@@ -2037,6 +2115,14 @@ select:focus {
             return this.send({ cmd: 'estop' });
         }
 
+        sendArm() {
+            return this.send({ cmd: 'arm' });
+        }
+
+        sendDisarm() {
+            return this.send({ cmd: 'disarm' });
+        }
+
         get isConnected() {
             return this.connected && this.ws && this.ws.readyState === WebSocket.OPEN;
         }
@@ -2120,6 +2206,7 @@ select:focus {
     // ============================================================
     var conn = new RoverConnection();
     var estopEngaged = false;
+    var roverArmed = false;
     var activeCmd = null;
     var speed = 50;
     var steeringMode = 0;
@@ -2130,7 +2217,8 @@ select:focus {
         batt: 0, pct: 0, ml: 0, mr: 0,
         heading: 0, lat: 0, lon: 0,
         roll: 0, pitch: 0, uptime: 0,
-        mission: 'idle'
+        mission: 'idle',
+        armed: false, limit: 100, stall: false
     };
 
     // Mission state
@@ -2169,6 +2257,7 @@ select:focus {
         initDpad();
         initSpeedSlider();
         initModeButtons();
+        initArm();
         initEstop();
         initActionButtons();
         initCameraControls();
@@ -2446,6 +2535,24 @@ select:focus {
             setEstop(data.estop);
         }
 
+        // Arm state
+        if (data.armed !== undefined) {
+            telemetry.armed = data.armed;
+            updateArmUI(data.armed);
+        }
+
+        // Battery speed limit
+        if (data.limit !== undefined) {
+            telemetry.limit = data.limit;
+            updateSpeedLimitUI(data.limit);
+        }
+
+        // Stall detection
+        if (data.stall !== undefined) {
+            telemetry.stall = data.stall;
+            updateStallUI(data.stall);
+        }
+
         // Steering mode
         if (data.mode !== undefined) {
             updateModeButtonUI(data.mode);
@@ -2485,6 +2592,14 @@ select:focus {
     // ============================================================
     // Telemetry UI Updaters
     // ============================================================
+    // Battery thresholds aligned with firmware:
+    // BATT_WARN_V=7.0V → ~30% (linear 6.4-8.4V), BATT_CUTOFF_V=6.4V → 0%
+    function batteryColor(pct) {
+        if (pct > 30) return 'var(--success)';
+        if (pct > 5) return 'var(--warning)';
+        return 'var(--danger)';
+    }
+
     function updateBatteryUI(voltage, percent) {
         var pct = Math.round(percent || 0);
 
@@ -2493,11 +2608,7 @@ select:focus {
         if (battVal) battVal.textContent = pct + '%';
 
         var battDisplay = document.getElementById('battery-display');
-        if (battDisplay) {
-            if (pct > 50) battDisplay.style.color = 'var(--success)';
-            else if (pct > 20) battDisplay.style.color = 'var(--warning)';
-            else battDisplay.style.color = 'var(--danger)';
-        }
+        if (battDisplay) battDisplay.style.color = batteryColor(pct);
 
         // Telemetry card
         var telemPct = document.getElementById('telem-batt-pct');
@@ -2510,9 +2621,7 @@ select:focus {
         var barFill = document.getElementById('batt-bar-fill');
         if (barFill) {
             barFill.style.width = pct + '%';
-            if (pct > 50) barFill.style.background = 'var(--success)';
-            else if (pct > 20) barFill.style.background = 'var(--warning)';
-            else barFill.style.background = 'var(--danger)';
+            barFill.style.background = batteryColor(pct);
         }
     }
 
@@ -2521,6 +2630,44 @@ select:focus {
         if (el) el.textContent = 'L: ' + left;
         var er = document.getElementById('telem-speed-r');
         if (er) er.textContent = 'R: ' + right;
+    }
+
+    function updateArmUI(armed) {
+        roverArmed = armed;
+
+        // Telemetry card
+        var telemEl = document.getElementById('telem-armed');
+        if (telemEl) {
+            telemEl.textContent = armed ? 'ARMED' : 'DISARMED';
+            telemEl.style.color = armed ? 'var(--success)' : 'var(--danger)';
+        }
+
+        // Drive tab arm state indicator
+        var stateEl = document.getElementById('arm-state');
+        if (stateEl) {
+            stateEl.textContent = armed ? 'ARMED' : 'DISARMED';
+            stateEl.className = armed ? 'arm-state arm-state--armed' : 'arm-state arm-state--disarmed';
+        }
+
+        addLog(armed ? 'info' : 'warn', 'Rover ' + (armed ? 'ARMED' : 'DISARMED'));
+    }
+
+    function updateSpeedLimitUI(limit) {
+        var el = document.getElementById('telem-speed-limit');
+        if (el) {
+            el.textContent = 'Limit: ' + limit + '%';
+            if (limit < 100) el.style.color = 'var(--warning)';
+            else el.style.color = '';
+        }
+    }
+
+    function updateStallUI(stalled) {
+        var el = document.getElementById('telem-stall');
+        if (el) {
+            el.textContent = stalled ? 'STALL!' : 'OK';
+            el.style.color = stalled ? 'var(--danger)' : 'var(--success)';
+        }
+        if (stalled) addLog('error', 'Motor stall detected!');
     }
 
     var prevCompassHeading = 0;
@@ -2641,6 +2788,10 @@ select:focus {
 
     function onDpadPress(cmd, btn) {
         if (estopEngaged) return;
+        if (!roverArmed && cmd !== 'stop') {
+            addLog('warn', 'Cannot drive — rover not armed');
+            return;
+        }
         if (debounceTimer) return;
         debounceTimer = setTimeout(function() { debounceTimer = null; }, 50);
 
@@ -2703,6 +2854,28 @@ select:focus {
         });
         var active = document.querySelector('#mode-section .mode-btn[data-mode="' + mode + '"]');
         if (active) active.classList.add('mode-btn--active');
+    }
+
+    // ============================================================
+    // Arm/Disarm Controls
+    // ============================================================
+    function initArm() {
+        var armBtn = document.getElementById('arm-btn');
+        var disarmBtn = document.getElementById('disarm-btn');
+
+        if (armBtn) {
+            armBtn.addEventListener('click', function() {
+                conn.send({ cmd: 'arm' });
+                addLog('info', 'ARM command sent');
+            });
+        }
+
+        if (disarmBtn) {
+            disarmBtn.addEventListener('click', function() {
+                conn.send({ cmd: 'disarm' });
+                addLog('warn', 'DISARM command sent');
+            });
+        }
     }
 
     // ============================================================
@@ -3357,7 +3530,7 @@ select:focus {
         // Send if any input active, stop on release
         if (Math.abs(linear) > 0.01 || Math.abs(angular) > 0.01) {
             gamepadDriving = true;
-            if (!estopEngaged) {
+            if (!estopEngaged && roverArmed) {
                 conn.send({
                     cmd: 'gamepad',
                     linear: Math.round(linear * 100) / 100,

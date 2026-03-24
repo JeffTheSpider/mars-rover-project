@@ -1,0 +1,114 @@
+%% Mars Rover Phase 1 — Signal Wiring Diagram
+%% ESP32-S3 GPIO → L298N logic, servo signals, sensors
+%% Render with: mmdc -i signal-wiring.mmd -o signal-wiring.svg -t dark
+
+graph LR
+    subgraph ESP["ESP32-S3 DevKitC-1 N16R8"]
+        direction TB
+        G4["GPIO4 PWM"]
+        G5["GPIO5"]
+        G6["GPIO6"]
+        G7["GPIO7 PWM"]
+        G15["GPIO15"]
+        G16["GPIO16"]
+        G8["GPIO8 PWM"]
+        G9["GPIO9"]
+        G10["GPIO10"]
+        G11["GPIO11 PWM"]
+        G12["GPIO12"]
+        G13["GPIO13"]
+        G1["GPIO1 PWM"]
+        G2["GPIO2 PWM"]
+        G41["GPIO41 PWM"]
+        G42["GPIO42 PWM"]
+        G14["GPIO14 ADC"]
+        G46["GPIO46 IN"]
+        G38["GPIO38"]
+        G39["GPIO39"]
+        G40["GPIO40"]
+        G48["GPIO48"]
+        G0["GPIO0 OUT"]
+        G43["GPIO43 TX"]
+        G44["GPIO44 RX"]
+    end
+
+    subgraph L1["L298N #1 — Left Side"]
+        ENA1["ENA → LF PWM"]
+        IN1_1["IN1"]
+        IN2_1["IN2"]
+        ENB1["ENB → LR PWM"]
+        IN3_1["IN3"]
+        IN4_1["IN4"]
+    end
+
+    subgraph L2["L298N #2 — Right Side"]
+        ENA2["ENA → RF PWM"]
+        IN1_2["IN1"]
+        IN2_2["IN2"]
+        ENB2["ENB → RR PWM"]
+        IN3_2["IN3"]
+        IN4_2["IN4"]
+    end
+
+    subgraph Servos["Steering Servos Signal"]
+        SFL["SG90 FL"]
+        SFR["SG90 FR"]
+        SRL["SG90 RL"]
+        SRR["SG90 RR"]
+    end
+
+    subgraph Sensors["Sensors"]
+        VDIV["Batt V-Divider"]
+        ESTOP["E-Stop Button"]
+        ENC1A["Encoder W1 Ch.A"]
+        ENC1B["Encoder W1 Ch.B"]
+        ENC6A["Encoder W6 Ch.A"]
+        ENC6B["Encoder W6 Ch.B"]
+    end
+
+    subgraph Status["Status & Comms"]
+        LED["Status LED + 330R"]
+        UART["Jetson UART1<br/>(Phase 2: binary COBS)"]
+    end
+
+    %% L298N #1 connections (left motors)
+    G4  -->|"22AWG"| ENA1
+    G5  -->|"22AWG"| IN1_1
+    G6  -->|"22AWG"| IN2_1
+    G7  -->|"22AWG"| ENB1
+    G15 -->|"22AWG"| IN3_1
+    G16 -->|"22AWG"| IN4_1
+
+    %% L298N #2 connections (right motors)
+    G8  -->|"22AWG"| ENA2
+    G9  -->|"22AWG"| IN1_2
+    G10 -->|"22AWG"| IN2_2
+    G11 -->|"22AWG"| ENB2
+    G12 -->|"22AWG"| IN3_2
+    G13 -->|"22AWG"| IN4_2
+
+    %% Servo signals
+    G1  -->|"22AWG Signal"| SFL
+    G2  -->|"22AWG Signal"| SFR
+    G41 -->|"22AWG Signal"| SRL
+    G42 -->|"22AWG Signal"| SRR
+
+    %% Sensors
+    G14 <---|"Analog"| VDIV
+    G46 <---|"Digital"| ESTOP
+    G38 <---|"Interrupt"| ENC1A
+    G39 <---|"Interrupt"| ENC1B
+    G40 <---|"Interrupt"| ENC6A
+    G48 <---|"Interrupt"| ENC6B
+
+    %% Status & Comms
+    G0  -->|"Digital"| LED
+    G43 -->|"UART TX"| UART
+    G44 <---|"UART RX"| UART
+
+    style ESP fill:#89b4fa,color:#1e1e2e
+    style L1 fill:#fab387,color:#1e1e2e
+    style L2 fill:#fab387,color:#1e1e2e
+    style Servos fill:#a6e3a1,color:#1e1e2e
+    style Sensors fill:#f9e2af,color:#1e1e2e
+    style Status fill:#cba6f7,color:#1e1e2e

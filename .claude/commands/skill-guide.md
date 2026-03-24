@@ -1,0 +1,90 @@
+---
+description: List all available skills, commands, plugins, and MCP tools with usage examples
+allowed-tools: Read, Glob, Grep
+---
+
+# Skill Guide — Mars Rover Project
+
+Show all available tools, skills, and commands for this project.
+
+## Display the following reference to the user:
+
+---
+
+### Project Commands (type `/command-name`)
+
+| Command | What it does |
+|---------|-------------|
+| `/preflight <part>` | Pre-print checklist — verify STL, bed fit, filament estimate, Cura settings |
+| `/fusion-export` | Run BatchExportAll in Fusion 360 to re-export all 23 STLs |
+| `/bom-check` | Cross-reference BOM against CAD, STL, print, and order status |
+| `/firmware-validate` | Full pipeline: compile + 42 tests + lint + stale constant check |
+| `/wiring-check` | Cross-check wiring diagrams vs firmware pins vs EA docs |
+| `/cad-audit [name\|all]` | Re-run engineering audit on CAD scripts for fitment and consistency |
+| `/session-handoff` | Save structured handoff for seamless next-session pickup |
+| `/esp32-deploy` | Compile firmware and generate/run upload command |
+| `/print-log <part>` | Log a print attempt with settings and results |
+| `/tolerance-calc <feature> <dim>` | Calculate fit tolerances for PLA on CTC Bizer |
+| `/assembly-order` | Optimal print and assembly sequence with timeline |
+| `/project-dashboard` | Generate interactive HTML status dashboard |
+| `/skill-guide` | This guide |
+
+### Installed Plugin Commands
+
+| Command | Plugin | What it does |
+|---------|--------|-------------|
+| `/commit` | commit-commands | Create a git commit from current changes |
+| `/commit-push-pr` | commit-commands | Commit, push, and create a PR in one go |
+| `/clean-gone` | commit-commands | Clean up local branches deleted on remote |
+| `/feature-dev <desc>` | feature-dev | 7-phase guided feature development |
+| `/brainstorm` | superpowers | Structured brainstorming session |
+| `/write-plan` | superpowers | Create an implementation plan |
+| `/execute-plan` | superpowers | Execute a previously written plan |
+| `/ralph-loop "task"` | ralph-loop | Autonomous loop — Claude keeps working until done |
+| `/cancel-ralph` | ralph-loop | Stop the Ralph loop |
+| `/hookify <rule>` | hookify | Create hook rules to prevent unwanted behaviours |
+| `/hookify:list` | hookify | List all hookify rules |
+| `/hookify:configure` | hookify | Enable/disable hookify rules |
+| `/revise-claude-md` | claude-md-management | Update CLAUDE.md with session learnings |
+| `/coderabbit:review` | coderabbit | Run CodeRabbit AI code review |
+| `/simplify` | code-simplifier | Simplify and refine recently changed code |
+
+### Auto-Skills (trigger automatically)
+
+| Skill | When it activates |
+|-------|------------------|
+| code-simplifier | After writing/editing code |
+| frontend-design | When building web UI components |
+| security-guidance | When editing files (hook checks for vulnerabilities) |
+| engineering (standup, architecture, etc.) | When discussing engineering workflows |
+| design (critique, UX, accessibility) | When discussing design |
+| productivity (tasks, memory) | When managing tasks and context |
+| operations (process, vendor, compliance) | When discussing operations |
+| superpowers (debugging, TDD, verification) | 14 auto-skills for various dev workflows |
+
+### MCP Servers (always available)
+
+| Server | Key Tools |
+|--------|-----------|
+| fusion360 | python, system (UI automation), terminal (serial/SSH), context7 (docs), sqlite |
+| 3dprint | get_stl_info, slice, scale, rotate, visualize |
+| github | Issues, PRs, code search, repository management |
+| mermaid | Generate diagrams (SVG/PNG) |
+| math | SymPy/SciPy calculations, unit conversion |
+| kicad | PCB/schematic tools (needs KiCad) |
+| cadquery | Parametric CAD modelling |
+| jlcpcb | Component search and BOM |
+| text-to-model | 64 Fusion 360 CAD tools (disabled — enable when F360 running) |
+
+### Quick Reference
+
+```
+Print workflow:  /preflight → /fusion-export → /print-log
+Dev workflow:    /feature-dev → /firmware-validate → /esp32-deploy → /commit
+Audit workflow:  /cad-audit → /wiring-check → /bom-check
+Session:         /session-handoff (end of session)
+Status:          /project-dashboard → /bom-check
+Planning:        /assembly-order → /brainstorm → /write-plan
+```
+
+---

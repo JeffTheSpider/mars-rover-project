@@ -27,9 +27,9 @@ robocopy "D:\Mars Rover Project" "E:\Backup\Mars Rover Project" /MIR /XD .git __
 echo Backup complete.
 ```
 
-Save as `D:\Mars Rover Project\scripts\backup.bat` and run:
+Save as `D:\Mars Rover Project\tools\backup.bat` and run:
 ```bash
-cmd.exe //c "D:\\Mars Rover Project\\scripts\\backup.bat"
+cmd.exe //c "D:\\Mars Rover Project\\tools\\backup.bat"
 ```
 
 ### Git Bash Workaround

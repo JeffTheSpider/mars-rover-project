@@ -2,7 +2,7 @@
 
 **Document**: EA-00
 **Date**: 2026-03-15
-**Purpose**: Comprehensive reference compiling all engineering analyses (EA-01 through EA-21) into one authoritative document. Summarises key specifications, decisions, and cross-references for the Mars Rover Garden Robot project.
+**Purpose**: Comprehensive reference compiling all engineering analyses (EA-01 through EA-24) into one authoritative document. Summarises key specifications, decisions, and cross-references for the Mars Rover Garden Robot project.
 **Status**: Living document -- updated as EAs are revised.
 
 ---
@@ -32,7 +32,7 @@ A Mars rover-inspired outdoor garden robot capable of autonomous navigation, obj
 
 | Phase | Scale | Body | Brain | Goal |
 |-------|-------|------|-------|------|
-| Phase 1 | 0.4x | 3D printed (PETG) | ESP32-S3 only | Validate rocker-bogie mechanics, basic WiFi driving |
+| Phase 1 | 0.4x | 3D printed (PLA) | ESP32-S3 only | Validate rocker-bogie mechanics, basic WiFi driving |
 | Phase 2 | 1.0x | 3D printed (PETG/ASA) + aluminium extrusion | ESP32-S3 + Jetson Orin Nano Super | Full feature set: AI vision, SLAM, arms, solar, fridge |
 | Phase 3 | 1.0x | Aluminium sheet + tube | Same as Phase 2 | Durability, weatherproofing (IP54), outdoor permanence |
 
@@ -71,7 +71,7 @@ The design draws from three NASA-derived open-source rover projects:
 | Sawppy | Hybrid construction (extrusion skeleton + 3D printed connectors + heat-set inserts) | Specific CAD files (we design our own) |
 | ExoMy (ESA) | All-printed prototype approach for Phase 1 validation | Simplified suspension (no rocker-bogie) |
 
-**Selected approach**: Sawppy-inspired hybrid construction. 2020 aluminium V-slot extrusion forms the structural skeleton; 3D-printed PETG connectors join extrusions and house bearings; M3 brass heat-set inserts provide threaded attachment points.
+**Selected approach**: Sawppy-inspired hybrid construction. 2020 aluminium V-slot extrusion forms the structural skeleton; 3D-printed connectors (PLA for Phase 1, PETG for Phase 2) join extrusions and house bearings; M3 brass heat-set inserts provide threaded attachment points.
 
 ---
 
@@ -153,17 +153,17 @@ Ackermann geometry is computed in firmware using `atan()` from the wheelbase and
 
 | Parameter | Phase 1 | Phase 2 | Source |
 |-----------|---------|---------|--------|
-| Primary material | PETG | ASA (structural) + PETG (internal) | EA-11 s2 |
-| Printer | Ender 3 (220x220x250 mm) | Same | EA-11 s3 |
-| Total parts | 22 | ~65 | EA-08 s4, EA-11 s4 |
-| Print time | ~65 hrs | ~317 hrs | EA-08 s4, EA-11 s5 |
+| Primary material | PLA | ASA (structural) + PETG (internal) | EA-11 s2 |
+| Printer | CTC Bizer (225x145x150 mm) | TBD (PETG-capable) | EA-11 s3 |
+| Total parts | 26 | ~65 | EA-08 s4, EA-11 s4 |
+| Print time | ~69 hrs | ~317 hrs | EA-08 s4, EA-11 s5 |
 | Filament mass | ~1 kg | ~5.5 kg | EA-08 s4, EA-11 s5 |
 | Filament cost | ~$20 | $130-160 | EA-11 s5 |
 | Insert type | M3 brass heat-set (5.7 mm OD) | Same | EA-11 s6 |
 | Insert pull-out force | 600-900 N | 600-900 N | EA-11 s6 |
 | UV protection | None (indoor use) | ASA inherent + optional clear coat | EA-11 s7 |
 
-Phase 1 prints are designed to fit the 220x220 mm bed. Larger Phase 2 parts split into interlocking segments with heat-set insert joints.
+Phase 1 prints are designed to fit the 225x145 mm CTC Bizer bed (body splits into 4 quadrants). Larger Phase 2 parts split into interlocking segments with heat-set insert joints.
 
 **Print Settings (recommended)**:
 
@@ -194,7 +194,7 @@ Phase 1 prints are designed to fit the 220x220 mm bed. Larger Phase 2 parts spli
 | Parameter | Value | Source |
 |-----------|-------|--------|
 | Battery | 2S LiPo 2200 mAh, 7.4 V, XT60 | EA-03 s2.1 |
-| Main fuse | 20A blade (ATC) | EA-19 s1.3 |
+| Main fuse | 5A blade (ATC) | EA-19 s1.3 |
 | Motor drivers | 2x L298N dual H-bridge | EA-02 s3.1 |
 | 5V regulation | L298N onboard 78M05 (0.5-1A) | EA-19 s1.4 |
 | Typical draw | ~3-4A | EA-03 s3.1 |
@@ -265,7 +265,7 @@ Phase 1 prints are designed to fit the 220x220 mm bed. Larger Phase 2 parts spli
 
 Phase 1 wiring uses a simple topology:
 
-1. **Battery** (2S LiPo, XT60) -> **20A fuse** -> **kill switch** -> **power distribution point**
+1. **Battery** (2S LiPo, XT60) -> **5A fuse** -> **kill switch** -> **power distribution point**
 2. Distribution splits to 2x L298N VCC (7.4V) and voltage divider (GPIO14 ADC)
 3. L298N #1 onboard 5V regulator powers **5V bus** (ESP32 VIN + 4 servos)
 4. All grounds connect via **star topology** to battery negative
@@ -405,7 +405,7 @@ The transition from text to binary in Phase 2 provides 5x lower latency, 6x lowe
 
 | Layer | Components | Response Time | Source |
 |-------|-----------|---------------|--------|
-| **Hardware** | E-stop button (GPIO46), main fuse (20A), kill switch, relay | <1 ms (interrupt) | EA-15 s2.1 |
+| **Hardware** | E-stop button (GPIO46), main fuse (5A), kill switch, relay | <1 ms (interrupt) | EA-15 s2.1 |
 | **Firmware** | Watchdog (5s), UART timeout (200/500 ms), stall detection, tilt protection, battery undervoltage | 20-500 ms | EA-15 s2.2 |
 | **Software** | Obstacle avoidance zones, geofence, human detection (YOLO), speed limits | 100-500 ms | EA-15 s2.3 |
 | **Operational** | Pre-flight checks, manual override, remote E-stop via PWA | User-dependent | EA-15 s2.4 |
@@ -529,7 +529,7 @@ A 14-day plan with 3 ordering batches:
 Three ordering batches, structured so printing can begin immediately:
 
 **Batch 1 (order first, start printing while waiting for batches 2-3)**:
-- 1x PETG filament 1kg spool ($20)
+- 1x PLA filament 1kg spool ($20)
 
 **Batch 2 (electronics)**:
 - 1x ESP32-S3 DevKit N16R8 ($8)
@@ -542,7 +542,7 @@ Three ordering batches, structured so printing can begin immediately:
 **Batch 3 (assembly hardware + battery)**:
 - 1x 2S LiPo 2200mAh ($12)
 - 1x LiPo charger ($8)
-- 10x 608ZZ bearings ($5)
+- 11x 608ZZ bearings — buy 12 ($5)
 - 1x M3 fastener set ($6)
 - 50x M3 heat-set inserts ($3)
 
@@ -575,14 +575,14 @@ Comprehensive table of every key specification, its value, and the source EA.
 | Wheelbase | 360 mm / 900 mm | P1 / P2 | EA-01 s2.1 |
 | Track width | 280 mm / 700 mm | P1 / P2 | EA-01 s2.1 |
 | Rocker arm length | 180 mm / 450 mm | P1 / P2 | EA-01 s2.3 |
-| Bogie arm length | 120 mm / 300 mm | P1 / P2 | EA-01 s2.3 |
+| Bogie arm length | 180 mm / 300 mm | P1 / P2 | EA-01 s2.3 |
 | Ground clearance | 60 mm / 150 mm | P1 / P2 | EA-01 s2.4 |
 | Max obstacle height | 60 mm / 150 mm | P1 / P2 | EA-01 s3.1 |
 | Body tilt limit | -- / ~49 deg | -- / P2 | EA-01 s3.2 |
 | CoG tilt limit (loaded) | -- / 56.5 deg | -- / P2 | EA-05 s4 |
 | Max steering angle | +/-35 deg | All | EA-10 s2.1 |
 | Min turn radius (Ackermann) | 397 mm / 993 mm | P1 / P2 | EA-10 s2.2 |
-| Total bearings | 10 / 19 | P1 / P2 | EA-01 s4 |
+| Total bearings | 11 / 19 | P1 / P2 | EA-01 s4 |
 | Bearing type | 608ZZ (8mm) | P1/P2 | EA-01 s4 |
 | Bearing type (Phase 3) | 6001-2RS sealed | P3 | EA-06 s4 |
 
@@ -618,7 +618,7 @@ Comprehensive table of every key specification, its value, and the source EA.
 | AI computer | Jetson Orin Nano Super, 67 TOPS | P2+ | EA-04 s2.1 |
 | Battery (Phase 1) | 2S LiPo 2200 mAh, 7.4V | P1 | EA-03 s2.1 |
 | Battery (Phase 2) | 2x 6S LiPo 10000 mAh, 22.2V, 444 Wh | P2 | EA-03 s2.2 |
-| Main fuse | 20A blade (Phase 1), per-rail (Phase 2) | All | EA-19 s1.3, EA-15 s3.2 |
+| Main fuse | 5A blade (Phase 1), 20A + per-rail (Phase 2) | All | EA-19 s1.3, EA-15 s3.2 |
 | Solar | 4x 25W mono (100W total, 2S2P) | P2 | EA-03 s5 |
 | MPPT | CN3722 module | P2 | EA-03 s5.2 |
 | Typical power draw | 3-4A (P1) / 97.5W (P2) | P1/P2 | EA-03 s3 |
@@ -682,7 +682,7 @@ Comprehensive table of every key specification, its value, and the source EA.
 
 | Spec | Phase 1 | Phase 2 | Source EA |
 |------|---------|---------|----------|
-| Material | PETG | ASA (structural) + PETG (internal) | EA-11 s2 |
+| Material | PLA | ASA (structural) + PETG (internal) | EA-11 s2 |
 | Printer bed | 220 x 220 mm | Same | EA-11 s3 |
 | Part count | 22 | ~65 | EA-08 s4, EA-11 s4 |
 | Total print time | ~65 hrs | ~317 hrs | EA-08 s4, EA-11 s5 |
@@ -745,7 +745,7 @@ Comprehensive table of every key specification, its value, and the source EA.
 | EA-08 | Phase 1 Prototype Spec | `08-phase1-prototype-spec.md` | 0.4 scale dimensions (440x260x80mm), 22 printed parts, 65hr print, assembly sequence, coordinate system | EA-01, EA-07 |
 | EA-09 | ESP32-S3 GPIO Pin Map | `09-esp32-gpio-pinmap.md` | All GPIO assignments: motor control, servo, encoder, ADC, I2C, UART, LEDC channel mapping, Phase 1 vs Phase 2 | EA-02, EA-04 |
 | EA-10 | Ackermann Steering | `10-ackermann-steering.md` | 3 steering modes, turn radius formula, speed-dependent limits, firmware implementation with C code | EA-01, EA-02 |
-| EA-11 | 3D Printing Strategy | `11-3d-printing-strategy.md` | PETG vs ASA selection, Ender 3 constraints, heat-set inserts (600-900N pull-out), print times, UV protection | EA-01, EA-05, EA-08 |
+| EA-11 | 3D Printing Strategy | `11-3d-printing-strategy.md` | PLA (Phase 1) / ASA+PETG (Phase 2), CTC Bizer constraints, heat-set inserts (600-900N pull-out), print times, UV protection | EA-01, EA-05, EA-08 |
 | EA-12 | UART Protocol (Text) | `12-uart-protocol.md` | Phase 1 text NMEA protocol, 115200 baud, 18 message types, XOR checksum, 200ms safety timeout | EA-09 |
 | EA-13 | ROS2 Architecture | `13-ros2-architecture.md` | ROS2 Humble, 6 packages, Nav2 config, dual EKF, SLAM, YOLO TensorRT, behaviour trees, resource estimates | EA-04, EA-09, EA-12 |
 | EA-14 | Weatherproofing | `14-weatherproofing.md` | 3-zone strategy (A/B/C), IP20->IP44->IP54 progression, cable glands, thermal management, seasonal maintenance | EA-03, EA-04, EA-11 |
@@ -756,6 +756,9 @@ Comprehensive table of every key specification, its value, and the source EA.
 | EA-19 | Phase 1 Wiring Guide | `19-phase1-wiring.md` | Complete wiring reference, power distribution diagram, L298N config, motor/servo/sensor connections, E-stop circuit, test procedures, checklist | EA-03, EA-08, EA-09, EA-15 |
 | EA-20 | CAD Preparation Guide | `20-cad-preparation-guide.md` | Parametric dimensions from EA-08, Fusion 360 assembly structure, component reference for CAD modelling | EA-08, EA-11 |
 | EA-21 | Test Procedures & Acceptance Criteria | `21-test-procedures.md` | Acceptance criteria for firmware, electronics, integration, and autonomy testing across all phases | EA-08, EA-09, EA-15, EA-17 |
+| EA-22 | Phase 1 Requirements Specification | `22-requirements-specification.md` | Formal requirements (FR, PR, DIM, ELEC, LEARN, DFT, MOD) with traceability to tests | EA-08, EA-10, EA-21 |
+| EA-23 | Wire Harness Specification | `23-wire-harness.md` | Wire schedule (58 wires), connector schedule, cable routing, colour codes, harness build order | EA-09, EA-19 |
+| EA-24 | Robotic Arm Feasibility Study | `24-robotic-arm-study.md` | Phase 2 arm concept (3-DOF), weight/CoG analysis, Phase 1 mount preparation | EA-05, EA-08 |
 
 
 ### 8.1 Document Dependency Graph

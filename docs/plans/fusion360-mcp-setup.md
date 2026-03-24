@@ -67,7 +67,7 @@ The exact config depends on which MCP server is chosen — check the repo's READ
 
 Once connected, Claude will use the dimensions from EA-08 to create:
 
-1. **Chassis body** (440x260mm base plate, segmented for Ender 3)
+1. **Chassis body** (440x260mm base plate, segmented for CTC Bizer 225x145mm bed)
 2. **Rocker arms** (2x, with 608ZZ bearing mounts)
 3. **Bogie arms** (2x, with wheel mounts)
 4. **Differential bar** (connects left/right rockers)
@@ -77,5 +77,5 @@ Once connected, Claude will use the dimensions from EA-08 to create:
 8. **Electronics enclosure** (ESP32 + L298N mount)
 9. **Battery tray** (2S LiPo holder)
 
-All parts designed for PETG printing on Ender 3 (220x220mm bed).
+All parts designed for PLA printing on CTC Bizer (225x145mm bed). Phase 2 upgrade to PETG/ASA printer.
 Parametric dimensions linked to EA-08 constants for easy scaling.

@@ -4,12 +4,12 @@
 // ============================================================
 // Mars Rover Phase 1 — Configuration
 // ESP32-S3 DevKitC-1 (N16R8)
-// Version: 0.2.0
+// Version: 0.3.0
 // See EA-09 for full GPIO pin map
 // ============================================================
 
 // --- Firmware Version ---
-#define FW_VERSION "0.2.0"
+#define FW_VERSION "0.3.0"
 #define FW_NAME "MarsRover-P1"
 
 // --- WiFi ---
@@ -67,10 +67,10 @@
 #define SERVO_LEDC_TIMER   1
 
 // Servo pulse widths (microseconds)
-#define SERVO_MIN_US    500
+#define SERVO_MIN_US    544      // SG90 safe minimum (was 500)
 #define SERVO_MAX_US    2400
 #define SERVO_CENTER_US 1500
-#define SERVO_US_PER_DEG 11.11f
+#define SERVO_US_PER_DEG 10.31f  // (2400-544)/180
 
 // Steering limits (degrees)
 #define STEER_MAX_ANGLE   35.0f
@@ -117,5 +117,38 @@
 // --- Safety ---
 #define SPEED_LIMIT_PCT  100     // Max motor speed (0-100%)
 #define RAMP_RATE        10      // Max speed change per update (% per tick)
+#define CMD_TIMEOUT_MS   2000    // Motor safety timeout (no command = stop)
+#define ARM_REQUIRED     true    // Require ARM command before accepting motor commands
+#define BATT_WARN_SPEED_PCT 50   // Speed limit when battery warning (percent of normal)
+#define BATT_CRIT_SPEED_PCT 0    // Speed limit at critical battery (full stop)
+#define STALL_DETECT_MS  2000    // If encoder unchanged for this long at PWM>20%, trigger stall
+#define STALL_PWM_THRESH 51      // PWM duty above which stall is checked (20% of 255)
+
+// --- Arm Servo Pin Reserves (Phase 2 robotic arm, EA-24) ---
+// #define ARM_SHOULDER_PIN 3   // Reserved for Phase 2 arm shoulder servo
+// #define ARM_ELBOW_PIN    17  // Reserved for Phase 2 arm elbow servo
+
+// --- Ackermann Turn Presets (used by WebSocket commands) ---
+#define TURN_RADIUS_WIDE_MM    1500.0f  // Normal Ackermann turn
+#define TURN_RADIUS_TIGHT_MM   1000.0f  // Tight Ackermann turn
+#define TURN_INNER_SPEED_WIDE  0.83f    // Inner wheel ratio: (1500-140)/(1500+140) = 0.829
+#define TURN_INNER_SPEED_TIGHT 0.75f    // Inner wheel ratio: (1000-140)/(1000+140) = 0.754
+
+// --- Per-Motor Trim (adjust after bench testing for straight-line) ---
+#define MOTOR_TRIM_LF  0   // Left front speed offset (-10 to +10)
+#define MOTOR_TRIM_LR  0   // Left mid+rear speed offset
+#define MOTOR_TRIM_RF  0   // Right front speed offset
+#define MOTOR_TRIM_RR  0   // Right mid+rear speed offset
+
+// --- Math Constants (not provided by all Arduino toolchains) ---
+#ifndef RAD_TO_DEG
+#define RAD_TO_DEG (180.0f / 3.14159265359f)
+#endif
+#ifndef DEG_TO_RAD
+#define DEG_TO_RAD (3.14159265359f / 180.0f)
+#endif
+
+// --- OTA ---
+#define OTA_PORT 3232
 
 #endif // CONFIG_H

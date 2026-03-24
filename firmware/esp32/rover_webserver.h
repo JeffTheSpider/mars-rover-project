@@ -7,6 +7,9 @@
 // Forward declarations
 void processCommand(String cmd, int speed, int mode);
 extern unsigned long lastCommandTime;
+extern bool roverArmed;
+extern uint8_t batterySpeedLimit;
+extern bool stallDetected;
 
 // ============================================================
 // WiFi Web Server + WebSocket for Phase 1 control
@@ -46,6 +49,14 @@ h1 { font-size: 1.5rem; margin-bottom: 12px; color: #f5c2e7; }
 .mode-btn { background: #313244; border: 2px solid #45475a; color: #cdd6f4; padding: 8px 16px;
             border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
 .mode-btn.active { border-color: #f5c2e7; background: #45475a; }
+.arm-row { display: flex; gap: 8px; margin-bottom: 16px; justify-content: center; }
+.arm-btn { padding: 10px 28px; border-radius: 8px; border: 2px solid #45475a; font-size: 1rem;
+           font-weight: bold; cursor: pointer; }
+.arm-btn.arm { background: #a6e3a1; color: #1e1e2e; border-color: #a6e3a1; }
+.arm-btn.disarm { background: #f38ba8; color: #1e1e2e; border-color: #f38ba8; }
+#armState { font-size: 0.85rem; align-self: center; padding: 4px 12px; border-radius: 6px; }
+#armState.armed { background: #a6e3a1; color: #1e1e2e; }
+#armState.disarmed { background: #f38ba8; color: #1e1e2e; }
 .slider-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; width: 100%; max-width: 300px; }
 .slider-row label { width: 60px; font-size: 0.85rem; }
 .slider-row input { flex: 1; }
@@ -63,12 +74,20 @@ h1 { font-size: 1.5rem; margin-bottom: 12px; color: #f5c2e7; }
   <div class="stat"><div class="label">Percent</div><div class="value" id="pct">--%</div></div>
   <div class="stat"><div class="label">Speed L</div><div class="value" id="spdL">0</div></div>
   <div class="stat"><div class="label">Speed R</div><div class="value" id="spdR">0</div></div>
+  <div class="stat"><div class="label">Limit</div><div class="value" id="limit">100%</div></div>
+  <div class="stat"><div class="label">Stall</div><div class="value" id="stall">--</div></div>
 </div>
 
 <div class="mode-btns">
   <button class="mode-btn active" onclick="setMode(0)">Ackermann</button>
   <button class="mode-btn" onclick="setMode(1)">Point Turn</button>
   <button class="mode-btn" onclick="setMode(2)">Crab Walk</button>
+</div>
+
+<div class="arm-row">
+  <button class="arm-btn arm" onclick="sendArm('arm')">ARM</button>
+  <span id="armState" class="disarmed">DISARMED</span>
+  <button class="arm-btn disarm" onclick="sendArm('disarm')">DISARM</button>
 </div>
 
 <div class="slider-row">
@@ -116,6 +135,19 @@ function connect() {
         document.getElementById('pct').textContent = d.pct + '%';
         document.getElementById('spdL').textContent = d.ml;
         document.getElementById('spdR').textContent = d.mr;
+        if (d.armed !== undefined) {
+          var el = document.getElementById('armState');
+          el.textContent = d.armed ? 'ARMED' : 'DISARMED';
+          el.className = d.armed ? 'armed' : 'disarmed';
+        }
+        if (d.limit !== undefined) {
+          document.getElementById('limit').textContent = d.limit + '%';
+        }
+        if (d.stall !== undefined) {
+          var s = document.getElementById('stall');
+          s.textContent = d.stall ? 'YES' : 'OK';
+          s.style.color = d.stall ? '#f38ba8' : '#a6e3a1';
+        }
       }
     } catch(ex) {}
   };
@@ -124,6 +156,12 @@ function connect() {
 function drive(dir) {
   if (ws && ws.readyState === 1) {
     ws.send(JSON.stringify({cmd: dir, speed: speed, mode: mode}));
+  }
+}
+
+function sendArm(action) {
+  if (ws && ws.readyState === 1) {
+    ws.send(JSON.stringify({cmd: action}));
   }
 }
 
@@ -163,14 +201,18 @@ void handleRoot() {
 }
 
 void handleStatus() {
-  char buf[256];
+  char buf[384];
   int len = snprintf(buf, sizeof(buf),
     "{\"version\":\"%s\",\"battery\":%.2f,\"percent\":%d,\"motors\":[%d,%d,%d,%d],"
-    "\"steering\":[%.1f,%.1f,%.1f,%.1f],\"estop\":%s,\"uptime\":%lu}",
+    "\"steering\":[%.1f,%.1f,%.1f,%.1f],\"estop\":%s,\"armed\":%s,"
+    "\"limit\":%d,\"stall\":%s,\"uptime\":%lu}",
     FW_VERSION, batteryVoltage, batteryPercent,
     motorSpeed[0], motorSpeed[1], motorSpeed[2], motorSpeed[3],
     steerAngle[0], steerAngle[1], steerAngle[2], steerAngle[3],
     isEStopPressed() ? "true" : "false",
+    roverArmed ? "true" : "false",
+    (int)batterySpeedLimit,
+    stallDetected ? "true" : "false",
     millis() / 1000
   );
   if (len >= (int)sizeof(buf)) {
@@ -236,7 +278,26 @@ void onWebSocketEvent(uint8_t num, WStype_t type, uint8_t* payload, size_t lengt
 
 void processCommand(String cmd, int speed, int mode) {
   lastCommandTime = millis();
+
+  // Handle ARM/DISARM commands (EA-22 safety)
+  if (cmd == "arm") {
+    armRover();  // from leds.h
+    return;
+  }
+  if (cmd == "disarm") {
+    disarmRover();  // from leds.h
+    return;
+  }
+
+  // Motor commands require armed state
+  if (ARM_REQUIRED && !roverArmed) {
+    return;  // Silently ignore drive commands when not armed
+  }
+
   speed = constrain(speed, 0, 100);
+
+  // Apply battery-based speed limiting (EA-22 FR-06)
+  speed = (int)(speed * batterySpeedLimit / 100);
 
   if (cmd == "stop") {
     setDrive(0, 0);
@@ -277,7 +338,10 @@ void processCommand(String cmd, int speed, int mode) {
     return;
   }
 
-  // Ackermann mode (default)
+  // Ackermann mode (default) — radii and speed ratios from config.h
+  int innerWide  = (int)(speed * TURN_INNER_SPEED_WIDE);
+  int innerTight = (int)(speed * TURN_INNER_SPEED_TIGHT);
+
   if (cmd == "fwd") {
     applyStraight();
     setDrive(speed, speed);
@@ -285,23 +349,23 @@ void processCommand(String cmd, int speed, int mode) {
     applyStraight();
     setDrive(-speed, -speed);
   } else if (cmd == "left") {
-    applyAckermann(-1500);  // ~1.5m turn radius left
-    setDrive(speed * 7 / 10, speed);
+    applyAckermann(-TURN_RADIUS_WIDE_MM);
+    setDrive(innerWide, speed);
   } else if (cmd == "right") {
-    applyAckermann(1500);   // ~1.5m turn radius right
-    setDrive(speed, speed * 7 / 10);
+    applyAckermann(TURN_RADIUS_WIDE_MM);
+    setDrive(speed, innerWide);
   } else if (cmd == "fl") {
-    applyAckermann(-1000);  // Tight left
-    setDrive(speed * 5 / 10, speed);
+    applyAckermann(-TURN_RADIUS_TIGHT_MM);
+    setDrive(innerTight, speed);
   } else if (cmd == "fr") {
-    applyAckermann(1000);   // Tight right
-    setDrive(speed, speed * 5 / 10);
+    applyAckermann(TURN_RADIUS_TIGHT_MM);
+    setDrive(speed, innerTight);
   } else if (cmd == "bl") {
-    applyAckermann(-1500);
-    setDrive(-speed * 7 / 10, -speed);
+    applyAckermann(-TURN_RADIUS_WIDE_MM);
+    setDrive(-innerWide, -speed);
   } else if (cmd == "br") {
-    applyAckermann(1500);
-    setDrive(-speed, -speed * 7 / 10);
+    applyAckermann(TURN_RADIUS_WIDE_MM);
+    setDrive(-speed, -innerWide);
   }
 }
 
@@ -310,11 +374,15 @@ void processCommand(String cmd, int speed, int mode) {
 void sendWsStatus() {
   if (!wsConnected) return;
 
-  char buf[128];
+  char buf[256];
   snprintf(buf, sizeof(buf),
-    "{\"batt\":%.1f,\"pct\":%d,\"ml\":%d,\"mr\":%d}",
+    "{\"batt\":%.1f,\"pct\":%d,\"ml\":%d,\"mr\":%d,\"armed\":%s,\"limit\":%d,\"stall\":%s,\"estop\":%s}",
     batteryVoltage, batteryPercent,
-    motorSpeed[0], motorSpeed[2]
+    motorSpeed[0], motorSpeed[2],
+    roverArmed ? "true" : "false",
+    (int)batterySpeedLimit,
+    stallDetected ? "true" : "false",
+    isEStopPressed() ? "true" : "false"
   );
   ws.broadcastTXT(buf);
 }

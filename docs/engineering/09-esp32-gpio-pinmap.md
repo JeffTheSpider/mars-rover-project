@@ -142,8 +142,8 @@ Wiring W2+W3 in parallel from one L298N channel: both motors see the same voltag
 |----------|------|------------|-------|
 | Servo FL steering | GPIO1 | LEDC Ch4 | SG90, PWM 50Hz |
 | Servo FR steering | GPIO2 | LEDC Ch5 | SG90, PWM 50Hz |
-| Servo RL steering | GPIO42 | LEDC Ch6 | SG90, PWM 50Hz |
-| Servo RR steering | GPIO41 | LEDC Ch7 | SG90, PWM 50Hz |
+| Servo RL steering | GPIO41 | LEDC Ch6 | SG90, PWM 50Hz |
+| Servo RR steering | GPIO42 | LEDC Ch7 | SG90, PWM 50Hz |
 
 *ESP32-S3 has 8 LEDC channels (Ch0-Ch7). Phase 1 uses Ch0-Ch3 for 4 motor groups and Ch4-Ch7 for 4 servos (all 50Hz, sharing Timer 1). This matches the allocation in Section 5.3.
 
@@ -166,16 +166,16 @@ The ESP32-S3 has hardware Pulse Counter (PCNT) units — perfect for encoder cou
 |----------|------|------------|-------|
 | Battery voltage | GPIO14 | ADC1 Ch3 | Voltage divider (7.4V → 3.3V) |
 | Status LED | GPIO0 | GPIO | Onboard LED or NeoPixel |
-| Power button (optional) | GPIO46 | GPIO input | Input-only pin, internal pull-down |
+| E-stop button | GPIO46 | GPIO input | Input-only pin, internal pull-down |
 
 ### 2.6 Phase 1 Complete Pin Map
 
 | GPIO | Function | Direction | Peripheral |
 |------|----------|-----------|------------|
 | 0 | Status LED / NeoPixel | Output | RMT |
-| 1 | Servo FL | Output | LEDC Ch6 |
-| 2 | Servo FR | Output | LEDC Ch7 |
-| 3 | Motor W4 (RR) PWM — *or spare* | Output | LEDC Ch3 |
+| 1 | Servo FL | Output | LEDC Ch4 |
+| 2 | Servo FR | Output | LEDC Ch5 |
+| 3 | *Spare (reserved for Phase 2 arm shoulder servo, EA-24)* | — | — |
 | 4 | Motor L-Front PWM | Output | LEDC Ch0 |
 | 5 | Motor L-Front DIR_A | Output | GPIO |
 | 6 | Motor L-Front DIR_B | Output | GPIO |
@@ -203,11 +203,11 @@ The ESP32-S3 has hardware Pulse Counter (PCNT) units — perfect for encoder cou
 | 43 | UART0 TX (USB serial) | Output | UART0 |
 | 44 | UART0 RX (USB serial) | Input | UART0 |
 | 45 | *Spare (strapping pin)* | — | — |
-| 46 | Power button | Input | GPIO (input-only) |
+| 46 | E-stop button | Input | GPIO (input-only) |
 | 47 | *Spare* | — | — |
 | 48 | Encoder W6 Ch-B | Input | PCNT |
 
-**Used: 20 pins | Spare: 5 pins (3, 17, 18, 21, 45, 47) | Reserved: 12 pins | USB: 4 pins**
+**Used: 20 pins | Spare: 6 pins (3, 17, 18, 21, 45, 47) | Reserved: 12 pins | USB: 4 pins**
 
 ---
 
@@ -413,7 +413,7 @@ With all 28 native GPIOs consumed by Phase 2, any additional peripherals require
                     │                                      │
     Battery ADC ──→ ┤ GPIO14 (voltage divider)            │
     Status LED ←────┤ GPIO0 (NeoPixel/built-in)           │
-    Power btn ─────→┤ GPIO46 (input-only)                 │
+    E-stop btn ────→┤ GPIO46 (input-only)                 │
                     │                                      │
     USB ←──────────→┤ GPIO19,20 (programming + serial)    │
                     └─────────────────────────────────────┘

@@ -55,15 +55,15 @@
   <xacro:property name="rocker_pivot_x"   value="0.125" />  <!-- body pivot X offset -->
   <xacro:property name="rocker_pivot_z"   value="0.060" />  <!-- body pivot Z (at body bottom) -->
 
-  <!-- Bogie arms: 120mm total, pivot in middle -->
-  <xacro:property name="bogie_length"     value="0.120" />
+  <!-- Bogie arms: 180mm total, pivot in middle -->
+  <xacro:property name="bogie_length"     value="0.180" />
   <xacro:property name="bogie_width"      value="0.018" />
   <xacro:property name="bogie_height"     value="0.012" />
   <xacro:property name="bogie_mass"       value="0.02"  />
-  <xacro:property name="bogie_half"       value="0.060" />
+  <xacro:property name="bogie_half"       value="0.090" />
 
   <!-- Differential bar -->
-  <xacro:property name="diff_bar_length"  value="0.200" />
+  <xacro:property name="diff_bar_length"  value="0.300" />
   <xacro:property name="diff_bar_radius"  value="0.005" />
   <xacro:property name="diff_bar_mass"    value="0.02"  />
 

@@ -54,7 +54,7 @@ ROVER_P1_040  (root assembly)
   +-- WHEEL_RL
   +-- WHEEL_RR
   +-- MOTOR_N20_x6  (reusable component, 6 instances)
-  +-- BEARING_608ZZ  (reusable component, 10 instances)
+  +-- BEARING_608ZZ  (reusable component, 11 instances)
   +-- FASTENERS  (folder of reusable bolts/nuts)
 ```
 
@@ -67,7 +67,7 @@ Examples:
   ROCKER_ARM_LEFT_v1
   STEERING_BRACKET_FL_v2
   WHEEL_GENERIC_v1  (instanced 6 times)
-  BEARING_608ZZ_v1  (instanced 10 times)
+  BEARING_608ZZ_v1  (instanced 11 times)
 ```
 
 - Use UPPER_SNAKE_CASE for component names.
@@ -102,8 +102,8 @@ All values are Phase 1 (0.4 scale) in millimetres.
 
 | Part | Dimension | Value (mm) | Tolerance | Notes |
 |------|-----------|------------|-----------|-------|
-| Body (outer) | Length (Y) | 440 | +/-1.0 | 4 quadrant prints on 150x200mm bed |
-| Body (outer) | Width (X) | 260 | +/-1.0 | 4 quadrant prints on 150x200mm bed |
+| Body (outer) | Length (Y) | 440 | +/-1.0 | 4 quadrant prints on 225x145mm bed (Y split at Y=0) |
+| Body (outer) | Width (X) | 260 | +/-1.0 | 4 quadrant prints on 225x145mm bed (X split at X=0) |
 | Body (outer) | Height (Z) | 80 | +/-0.5 | Open-top box frame |
 | Body (inner cavity) | Length | 434 | derived | 3mm walls each end |
 | Body (inner cavity) | Width | 254 | derived | 3mm walls each side |
@@ -134,8 +134,8 @@ All values are Phase 1 (0.4 scale) in millimetres.
 
 | Part | Dimension | Value (mm) | Tolerance | Notes |
 |------|-----------|------------|-----------|-------|
-| Bogie arm | Total length | 120 | +/-0.5 | W2 axle to W3 axle |
-| Bogie arm | Pivot to each wheel | 60 | +/-0.3 | Symmetric |
+| Bogie arm | Total length | 180 | +/-0.5 | W2 axle to W3 axle (full scale 450mm x 0.4) |
+| Bogie arm | Pivot to each wheel | 90 | +/-0.3 | Symmetric |
 | Bogie arm | Cross-section outer | 15 x 12 | +/-0.3 | Rectangular tube |
 | Bogie arm | Wall thickness | 2.5 | +/-0.2 | |
 | Bogie arm | Pivot bore | 8.0 | H7 | For 608ZZ |
@@ -146,7 +146,7 @@ All values are Phase 1 (0.4 scale) in millimetres.
 
 | Part | Dimension | Value (mm) | Tolerance | Notes |
 |------|-----------|------------|-----------|-------|
-| Differential bar | Total length | 200 | +/-1.0 | Centre to centre of rocker pivots |
+| Differential bar | Rod length | 300 | +/-1.0 | 250mm pivot span + 25mm overhang each side |
 | Differential bar | Rod OD | 8.0 | h9 | Steel rod, fits 608ZZ bore |
 | Differential bar | Rod ID (if tube) | N/A | N/A | Solid 8mm steel rod recommended |
 | Diff adapter (x3) | Tube OD | 12.0 | +/-0.3 | Printed end caps |
@@ -212,7 +212,7 @@ All values are Phase 1 (0.4 scale) in millimetres.
 | N20 motor | Mounting screws | 2x M2, 9mm centres | reference | |
 | N20 motor | Weight (each) | ~20g | reference | |
 
-### 2.9 608ZZ Bearing (x10)
+### 2.9 608ZZ Bearing (x11)
 
 | Part | Dimension | Value (mm) | Tolerance | Notes |
 |------|-----------|------------|-----------|-------|
@@ -355,7 +355,7 @@ The wheel rotates about the motor shaft axis (horizontal, parallel to X). This a
 
 ### 4.1 608ZZ Bearing Press-Fit Holes
 
-All 10 bearing locations use the same pocket geometry.
+All 11 bearing locations use the same pocket geometry.
 
 | Feature | Dimension (mm) | Notes |
 |---------|---------------|-------|
@@ -429,7 +429,7 @@ Using snap-fit clip design (not screws).
 
 | Part | Print Orientation | Rationale | Support Needed |
 |------|-------------------|-----------|----------------|
-| Body quadrants (x4) | Flat (XY plane, floor on bed) | Largest face down, structural floor; front quadrants ~200x130mm fit flat, rear quadrants ~240x130mm print diagonally on 150x200mm bed | Minimal (teardrop pivot holes on inner quadrants) |
+| Body quadrants (x4) | Flat (XY plane, floor on bed) | Largest face down, structural floor; all quadrants ~220x130mm fit on 225x145mm bed | Minimal (teardrop pivot holes on inner quadrants) |
 | Top deck cover | Flat (outer face on bed) | Best surface finish on visible side | None |
 | Rocker arm (x2) | On side (longest axis horizontal) | Load axis along layer lines, not across | Minimal (teardrop bearing holes) |
 | Bogie arm (x2) | On side | Same rationale as rocker | Minimal |
@@ -441,33 +441,33 @@ Using snap-fit clip design (not screws).
 
 ### 5.2 Segmentation Plan
 
-The body exceeds the CTC 150x200mm bed in both axes. All other parts fit comfortably.
+The body exceeds the CTC 225×145mm bed in both axes. All other parts fit comfortably.
 
 | Part | Full Size | Exceeds Bed? | Segments | Segment Size | Join Method |
 |------|-----------|-------------|----------|-------------|-------------|
-| Body | 440 x 260 x 80 | Yes (both axes) | 4 quadrants (front-left, front-right, rear-left, rear-right) | Front: ~200x130x80, Rear: ~240x130x80 | 12x M3x12 bolts + heat-set inserts + alignment features (see 5.3) |
+| Body | 440 x 260 x 80 | Yes (both axes) | 4 quadrants (front-left, front-right, rear-left, rear-right) | All: ~220x130x80 | 12x M3x12 bolts + heat-set inserts + alignment features (see 5.3) |
 | Rocker arm | 180mm long | No | 1 piece | Fits in 200mm axis | N/A |
-| Bogie arm | 120mm long | No | 1 piece | Fits easily | N/A |
-| Diff bar | 200mm rod + adapters | No (adapters are small) | Rod + 3 printed adapters | Adapters ~20mm each | Steel rod core |
+| Bogie arm | 180mm long | No | 1 piece | Fits in 200mm axis | N/A |
+| Diff bar | 300mm rod + adapters | No (adapters are small) | Rod + 3 printed adapters | Adapters ~20mm each | Steel rod core |
 | Wheels | 80mm dia | No | 1 piece each | Fits easily | N/A |
 | Steering brackets | 35 x 25 x 40 | No | 1 piece each | Small | N/A |
 | Fixed mounts | 25 x 25 x 30 | No | 1 piece each | Small | N/A |
 
-**Note on rocker arms**: At 180mm length, the rocker arm fits within the 200mm bed axis but with only 10mm margin per side. Orient the rocker arm along the 200mm axis of the CTC bed. If slicer skirt/brim causes overflow, reduce brim width or rotate slightly.
+**Note on rocker arms**: At 180mm length, the rocker arm fits within the 225mm bed axis with comfortable margin. Orient the rocker arm along the longest bed axis.
+
+**Note on bogie arms**: At 180mm length (full scale 450mm x 0.4), the bogie arm fits within the 225mm bed axis.
 
 ### 5.3 Body Join / Interlock Design
 
 The body is split into 4 quadrants at two planes:
-- **Y = +20mm** (front/rear split, offset 20mm forward from middle axle line to keep all segments within 200mm print length; rear quadrants print diagonally)
+- **Y = 0** (front/rear split, at middle axle line)
 - **X = 0** (left/right split at the rover centre line)
 
 Split planes:
-- **X = 0**: Left/right split (260mm / 2 = 130mm per side -- fits 150mm bed axis)
-- **Y = +20mm**: Front/rear split, offset 20mm forward from centre to keep each segment within 200mm (front segments = 200mm, rear segments = 240mm -- see note below)
+- **X = 0**: Left/right split (260mm / 2 = 130mm per side -- fits 145mm bed axis)
+- **Y = 0**: Front/rear split at centre (440mm / 2 = 220mm per half -- fits 225mm bed axis)
 
-**Important**: A pure Y=0 split gives 220mm halves which exceed the 200mm bed. Instead, offset the Y split to Y = +20mm, yielding front quadrants of 200mm and rear quadrants of 240mm in Y. The rear quadrants still exceed 200mm, so orient them diagonally on the bed (diagonal = sqrt(150^2 + 200^2) = 250mm, and 240mm x 130mm fits diagonally). Alternatively, split Y into 3 segments (at Y = +73mm and Y = -73mm, giving ~147mm each) for 6 total segments that all fit flat on the bed without diagonal orientation.
-
-Recommended approach: **4 quadrants with Y split at Y = +20mm**, printing rear quadrants diagonally.
+All 4 quadrants are 220x130mm, which fits comfortably on the CTC Bizer 225x145mm bed without needing diagonal orientation or offset splits.
 
 ```
 Top view of body quadrants:
@@ -475,18 +475,17 @@ Top view of body quadrants:
               X = 0 (left/right split)
                 |
     FRONT-LEFT  |  FRONT-RIGHT
-    ~200x130mm  |  ~200x130mm
+    220x130mm   |  220x130mm
                 |
-  Y=+20 -------+------- Y=+20 (front/rear split, offset from centre)
+  Y=0 ---------+--------- Y=0 (front/rear split, at centre)
                 |
     REAR-LEFT   |  REAR-RIGHT
-    ~240x130mm  |  ~240x130mm
-    (print diag)|  (print diag)
+    220x130mm   |  220x130mm
                 |
 ```
 
 ```
-Cross-section at Y=+20mm seam (looking from side):
+Cross-section at Y=0 seam (looking from side):
 
 Front quadrant          Rear quadrant
 +----------+  +  +----------+
@@ -500,7 +499,7 @@ Same lip/bolt pattern applies to X=0 seam.
 ```
 
 **Fasteners**:
-- Y=+20mm seam (front/rear): 6x M3x12mm bolts (3 per side wall + 3 through floor)
+- Y=0 seam (front/rear): 6x M3x12mm bolts (3 per side wall + 3 through floor)
 - X=0 seam (left/right): 6x M3x12mm bolts (3 per front/rear wall + 3 through floor)
 - Total: 12x M3x12mm bolts + 12x M3 heat-set inserts for body join
 
@@ -509,7 +508,7 @@ Same lip/bolt pattern applies to X=0 seam.
 - **Tongue-and-groove joints**: Along both seam lines, add a 2mm x 2mm tongue on one half and a matching 2.2mm x 2.2mm groove on the other. This prevents lateral sliding during assembly and adds shear strength.
 - **Alignment tabs**: 2x 5mm wide x 10mm long x 3mm tall interlocking tabs at each seam midpoint, alternating male/female between adjacent quadrants. Provides positive location during bolt-up.
 
-**Assembly order**: Start with rear-left quadrant. Add rear-right (align X=0 seam, insert dowels, bolt). Then add front-left to rear-left (align Y=+20mm seam). Finally add front-right, aligning both seams simultaneously.
+**Assembly order**: Start with rear-left quadrant. Add rear-right (align X=0 seam, insert dowels, bolt). Then add front-left to rear-left (align Y=0 seam). Finally add front-right, aligning both seams simultaneously.
 
 ### 5.4 Support Structure Requirements
 
@@ -628,7 +627,7 @@ Complete each item before exporting STL files for printing.
 - [ ] N20 motor clip dimensions: 12.2mm x 10.2mm inner, 2mm walls
 - [ ] D-shaft bore is 3.1mm with 0.5mm D-flat
 - [ ] SG90 servo pocket and mounting holes match datasheet
-- [ ] Body join seams (Y=+20mm and X=0) each have 10mm overlap lips, 6x M3 bolt positions, dowel pin holes, and tongue-and-groove joints
+- [ ] Body join seams (Y=0 and X=0) each have 10mm overlap lips, 6x M3 bolt positions, dowel pin holes, and tongue-and-groove joints
 - [ ] Cable routing channels are at least 10mm x 10mm
 
 ### 7.2 Clearance & Motion

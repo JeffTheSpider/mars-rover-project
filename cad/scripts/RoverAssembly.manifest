@@ -1,0 +1,10 @@
+{
+	"autodeskProduct":	"Fusion",
+	"type":	"script",
+	"author":	"Mars Rover Project",
+	"description":	{
+		"":	"Mars Rover Phase 1 (0.4 scale) simplified assembly - all parts positioned for fit verification"
+	},
+	"supportedOS":	"windows|mac",
+	"editEnabled":	true
+}

@@ -178,24 +178,24 @@ All transitions happen passively — no active suspension control needed.
 ```
 Side tilt:
   Track width: 700mm (wheel centre to centre)
-  CoG height (estimated): 300mm above ground
+  CoG height: ~232mm above ground (see EA-05)
 
   Maximum static tilt angle before tipover:
   θ_max = arctan(track_width/2 / CoG_height)
-  θ_max = arctan(350 / 300)
-  θ_max = arctan(1.167)
-  θ_max = 49.4°
+  θ_max = arctan(350 / 232)
+  θ_max = arctan(1.509)
+  θ_max = 56.5°
 
 Front/rear tilt:
   Wheelbase: 680mm
-  CoG height: 300mm
+  CoG height: ~232mm (see EA-05)
 
-  θ_max = arctan(340 / 300)
-  θ_max = arctan(1.133)
-  θ_max = 48.6°
+  θ_max = arctan(340 / 232)
+  θ_max = arctan(1.466)
+  θ_max = 55.7°
 ```
 
-**Result**: The rover can statically tilt to ~49° before tipping over. This provides a large safety margin — typical park slopes are 5-15°, maximum UK hillside slopes rarely exceed 30°.
+**Result**: The rover can statically tilt to ~56.5° before tipping over. This provides a large safety margin — typical park slopes are 5-15°, maximum UK hillside slopes rarely exceed 30°.
 
 ### 4.2 Dynamic Considerations
 
@@ -204,7 +204,7 @@ At speed (3-5 km/h), dynamic forces add to tilt risk:
 - **Centripetal force during turns**: At 5 km/h (1.39 m/s) with turning radius 1m:
   - a = v²/r = 1.93 m/s²
   - Effective tilt equivalent: arctan(1.93/9.81) = 11.1°
-  - Remaining margin: 49.4° - 11.1° = 38.3° — still very safe
+  - Remaining margin: 56.5° - 11.1° = 45.4° — still very safe
 
 - **Terrain-induced tilt**: Differential bar halves the body tilt angle
   - If one side encounters a 200mm obstacle: body tilts ~8° (not the full 16°)
@@ -247,12 +247,12 @@ At 0.4 scale, loads are dramatically reduced (weight ~2-3 kg):
 
 | Parameter | Requirement |
 |-----------|-------------|
-| Material | PLA or PETG |
+| Material | PLA |
 | Rocker arm cross-section | 15mm × 10mm minimum |
 | Wall thickness | 2.4mm (6 perimeters at 0.4mm) |
 | Infill | 40% gyroid or 30% cubic |
 | Bogie arm cross-section | 12mm × 8mm minimum |
-| Pivot holes | 5mm for M5 bolt + bearing |
+| Pivot holes | 8mm for 608ZZ bearing (8mm bore, 22mm OD, 7mm width) |
 | Print orientation | Flat (load along layer lines, not across) |
 
 ### 5.3 Phase 2: Full-Scale 3D Printed + Extrusion
@@ -353,11 +353,11 @@ When starting in Fusion 360, model these components first:
 | Track width | 280mm | 700mm | 700mm |
 | Wheel diameter | 80mm | 200mm | 200mm |
 | Rocker arm | 180mm | 450mm | 450mm |
-| Bogie arm | 120mm | 300mm | 300mm |
+| Bogie arm | 180mm | 300mm | 300mm |
 | Ground clearance | 60mm | 150mm | 150mm |
 | Max obstacle | 60mm | 150mm | 150mm |
-| Bearings | 3mm bore (Ph1) | 608ZZ (8mm) | 6001-2RS (12mm) |
-| Arm material | PLA/PETG solid | 2020 extrusion | 6061 aluminium tube |
+| Bearings | 608ZZ (8mm bore, 22mm OD, 7mm width) | 608ZZ (8mm) | 6001-2RS (12mm) |
+| Arm material | PLA solid | 2020 extrusion | 6061 aluminium tube |
 
 ---
 

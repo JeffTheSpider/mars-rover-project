@@ -57,7 +57,7 @@ FULL_SCALE_PARAMS = {
         "length":               1100,   # mm, outer
         "width":                 650,   # mm, outer
         "height":                200,   # mm, outer frame height (Phase 2 uses extrusion)
-        "wall_thickness":          3,   # mm, outer walls (NOT scaled -- print minimum)
+        "wall_thickness":          4,   # mm, outer walls (NOT scaled -- 4mm for PLA rigidity)
         "rib_thickness":           2,   # mm, internal ribs (NOT scaled)
         "top_deck_thickness":      2,   # mm, cosmetic cover (NOT scaled)
         "top_deck_clips":          8,   # count
@@ -84,8 +84,8 @@ FULL_SCALE_PARAMS = {
     # Bogie arms (x2)
     # ------------------------------------------------------------------
     "bogie_arm": {
-        "length":                300,   # mm, W2 axle to W3 axle
-        "pivot_to_wheel":        150,   # mm, bogie pivot to each wheel (symmetric)
+        "length":                450,   # mm, W2 axle to W3 axle (was 300, corrected for geometry)
+        "pivot_to_wheel":        225,   # mm, bogie pivot to each wheel (symmetric)
         "cross_section_w":        38,   # mm, outer
         "cross_section_h":        30,   # mm, outer
         "wall_thickness":        2.5,   # mm (NOT scaled)
@@ -158,9 +158,9 @@ FULL_SCALE_PARAMS = {
         "inner_diameter":          8,   # mm (bore)
         "outer_diameter":         22,   # mm
         "width":                   7,   # mm
-        "press_fit_oversize":    0.1,   # mm, added to OD for PETG seat
+        "press_fit_oversize":   0.15,   # mm, added to OD for PLA seat (22.15mm actual)
         "seat_depth_extra":      0.2,   # mm, added to width for seat depth
-        "quantity_phase1":        10,   # total bearings
+        "quantity_phase1":        12,   # total bearings (11 needed + 1 spare)
         "quantity_phase2":        19,   # total bearings (adds wheel hub bearings)
         "weight_each_g":          12,   # grams
     },
@@ -198,6 +198,7 @@ FULL_SCALE_PARAMS = {
         "hole_depth":            5.5,   # mm, deeper than insert
         "min_wall_around":       2.4,   # mm, minimum (3 perimeters at 0.4mm)
         "chamfer":               0.5,   # mm x 45 deg at top
+        "install_temp_pla_c":    175,   # degrees Celsius (170-180 range)
         "install_temp_petg_c":   220,   # degrees Celsius
         "install_temp_asa_c":    230,   # degrees Celsius
     },
@@ -293,22 +294,26 @@ FULL_SCALE_PARAMS = {
     # Print settings (NOT scaled -- these are printer/material constants)
     # ------------------------------------------------------------------
     "print_settings": {
-        "bed_x":                 220,   # mm, Ender 3
-        "bed_y":                 220,   # mm
-        "bed_z":                 250,   # mm
-        "usable_x":             210,   # mm, with margins
-        "usable_y":             210,   # mm
-        "usable_z":             240,   # mm
+        "bed_x":                 225,   # mm, CTC Bizer
+        "bed_y":                 145,   # mm
+        "bed_z":                 150,   # mm
+        "usable_x":             215,   # mm, with margins
+        "usable_y":             135,   # mm
+        "usable_z":             140,   # mm
+        "bed_diagonal":          268,   # mm, max diagonal part (sqrt(225^2+145^2))
         "layer_height":          0.2,   # mm
         "nozzle_diameter":       0.4,   # mm
         "perimeters_structural":   4,   # walls for load-bearing parts
         "infill_structural":      50,   # percent, gyroid
         "infill_body_panel":      20,   # percent, gyroid
         "infill_connectors":      60,   # percent, for heat-set insert parts
-        "petg_nozzle_temp":      235,   # degrees C
+        "pla_nozzle_temp":       200,   # degrees C (Phase 1, CTC Bizer)
+        "pla_bed_temp":           60,   # degrees C
+        "petg_nozzle_temp":      235,   # degrees C (Phase 2)
         "petg_bed_temp":          75,   # degrees C
-        "asa_nozzle_temp":       250,   # degrees C
+        "asa_nozzle_temp":       250,   # degrees C (Phase 2)
         "asa_bed_temp":          100,   # degrees C
+        "file_format":          "x3g",  # CTC Bizer via GPX converter
     },
 
     # ------------------------------------------------------------------
@@ -335,7 +340,7 @@ FULL_SCALE_PARAMS = {
         "bogie_swing_range_deg":   20,  # +/- degrees
         "diff_bar_range_deg":      20,  # +/- degrees
         "max_obstacle_height":    150,  # mm (0.75 x wheel diameter)
-        "cog_height":             300,  # mm above ground (estimated)
+        "cog_height":             232,  # mm above ground (EA-05 analysis)
         "static_tilt_limit_deg": 49.4,  # before tipover (side tilt)
     },
 }
@@ -483,7 +488,7 @@ def get_params(scale=0.4):
     params["body_features"]["battery_tray_w"] = 35
     params["body_features"]["battery_tray_h"] = 25
     params["steering"]["bracket_length"] = 35        # EA-08: 35mm
-    params["steering"]["bracket_width"] = 25         # EA-08: 25mm
+    params["steering"]["bracket_width"] = 30         # EA-08: increased from 25mm for bearing wall thickness
     params["steering"]["bracket_height"] = 40        # EA-08: 40mm
     params["steering"]["pivot_to_wheel_centre"] = 20 # EA-10: 20mm vertical
     params["steering"]["min_clearance_wheel_arm"] = 5  # EA-08/EA-10: 5mm min

@@ -14,7 +14,7 @@
 
 ### Design Phase Prep (this session)
 - Fusion 360 installed and MCP-Link connected via `mcp-proxy.exe`
-- Shopping list updated for Charlie's CTC printer (PLA, 150×200mm bed)
+- Shopping list updated for Charlie's CTC Bizer printer (PLA, 225×145mm bed)
 - EA-08 updated: 24 parts, 4-segment body, 69hr print time, PLA
 - EA-20 updated: 4-quadrant body split, alignment features, Fusion 360 assembly structure
 - CLAUDE.md updated with printer specs and CAD workflow
@@ -29,8 +29,8 @@
 ## Charlie's Setup
 
 ### 3D Printer
-- **Model**: CTC printer
-- **Bed size**: 150×200mm (NOT 220×220mm — body needs 4 segments, not 2)
+- **Model**: CTC 3D Bizer (MakerBot Replicator 1 Dual clone)
+- **Bed size**: 225×145mm (body needs 4 quadrants to fit)
 - **Material**: PLA only (no PETG, no TPU)
 - **Heat-set inserts**: 170-180°C for PLA (lower than PETG)
 
@@ -60,7 +60,7 @@ Design each part in Fusion 360 using dimensions from EA-08:
 |---|------|-------------------------------|-------|
 | 1 | Bearing test piece | 22.15mm bore, 608ZZ press-fit | 1 |
 | 2 | Wheels | 80mm dia, 32mm width, 3.1mm D-shaft, 12 grousers, O-ring grooves | 6 |
-| 3 | Bogie arms | 120mm long, 15×12mm tube, bearing bosses both ends | 2 |
+| 3 | Bogie arms | 180mm long, 15×12mm tube, bearing bosses both ends | 2 |
 | 4 | Rocker arms | 180mm long, 20×15mm tube, bearing bosses, differential mount | 2 |
 | 5 | Differential adapters | Connects 8mm rod to rocker arms | 3 |
 | 6 | Steering brackets | 35×25×40mm, 608ZZ pivot, servo horn mount, ±35° range | 4 |
@@ -79,7 +79,7 @@ Design each part in Fusion 360 using dimensions from EA-08:
 
 ## Critical Design Constraints
 
-- **All parts must fit 150×200mm bed** (CTC printer)
+- **All parts must fit 225×145mm bed** (CTC Bizer)
 - **PLA material** — design wall thickness ≥3mm for structural, 2mm for non-structural
 - **608ZZ bearings**: 8mm ID, 22mm OD, 7mm width — bore holes at 22.15mm for press-fit in PLA
 - **M3 heat-set inserts**: 4.8mm hole diameter, 5.5mm depth, 170-180°C insertion

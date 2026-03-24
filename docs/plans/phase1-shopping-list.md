@@ -24,7 +24,7 @@
 
 | Item | Qty | Approx Price | Where to Buy | Notes |
 |------|-----|-------------|--------------|-------|
-| N20 DC Gearmotor 6V 100RPM with Hall Encoder | 6 | £2.50 each (£15) | [AliExpress](https://www.aliexpress.com/w/wholesale-n20-gear-motor-encoder-100rpm-6v.html) / [Amazon UK](https://www.amazon.co.uk/s?k=N20+gear+motor+encoder+100rpm) | 3mm D-shaft output. Get the variant WITH built-in hall encoder (2-channel) for optional odometry. 12x10x37mm body. AliExpress is much cheaper (~£1.50 each) but 2-4 week shipping. Amazon ~£3-4 each. |
+| GA12-N20 DC Gearmotor 6V 100RPM with Hall Encoder | 6 | £2.50 each (£15) | [AliExpress](https://www.aliexpress.com/w/wholesale-n20-gear-motor-encoder-100rpm-6v.html) / [Amazon UK](https://www.amazon.co.uk/s?k=N20+gear+motor+encoder+100rpm) | **IMPORTANT: Confirm GA12-N20, 1:100 gear ratio, metal gearbox, 3mm D-shaft**. Rated torque ~2 kg·cm, stall ~10-16 kg·cm. Plastic gearbox versions strip under load — insist on metal. 12×10×37mm body. AliExpress ~£1.50 each (2-4 week shipping). Amazon ~£3-4 each. |
 
 ### 4. Servos
 
@@ -43,7 +43,7 @@
 
 | Item | Qty | Approx Price | Where to Buy | Notes |
 |------|-----|-------------|--------------|-------|
-| 2S LiPo 7.4V 2200mAh (XT30 or XT60) | 1 | £10 | [Amazon UK](https://www.amazon.co.uk/s?k=2S+LiPo+2200mAh) / [HobbyKing UK](https://hobbyking.com) | 30C+ discharge rating. Check connector matches your charger. XT60 is more common; adapt to XT30 if preferred. Gives ~45 min runtime at 3A draw. |
+| 2S LiPo 7.4V 2200mAh (XT60) | 1 | £10 | [Amazon UK](https://www.amazon.co.uk/s?k=2S+LiPo+2200mAh) / [HobbyKing UK](https://hobbyking.com) | 30C+ discharge rating. Check connector matches your charger. XT60 standard throughout. Gives ~45 min runtime at 3A draw. |
 | 2S/3S LiPo Balance Charger | 1 | £8 | [Amazon UK](https://www.amazon.co.uk/s?k=2S+LiPo+balance+charger) | IMAX B6 mini clone or similar. Essential safety item — never charge LiPo without a balance charger. If you already own one, skip this. |
 | LiPo Safe Bag | 1 | £4 | [Amazon UK](https://www.amazon.co.uk/s?k=lipo+safe+bag) | Fireproof charging/storage bag. Non-negotiable safety item for LiPo use. |
 
@@ -53,6 +53,14 @@
 |------|-----|-------------|--------------|-------|
 | Mini Toggle Switch (SPST, panel mount) | 1 | £1 | [Amazon UK](https://www.amazon.co.uk/s?k=mini+toggle+switch+panel+mount) / [CPC Farnell](https://cpc.farnell.com) | Main power switch. 15mm panel mount hole in rear body wall. Rated for 5A+ at 12V. |
 | Inline Blade Fuse Holder + 5A Fuse | 1 | £2 | [Amazon UK](https://www.amazon.co.uk/s?k=inline+blade+fuse+holder) | Between battery and L298N power rail. Protects against short circuits. |
+| E-Stop Tactile Button (momentary, NC, panel mount) | 1 | £1 | [Amazon UK](https://www.amazon.co.uk/s?k=momentary+push+button+panel+mount+normally+closed) / [CPC Farnell](https://cpc.farnell.com) | Emergency stop — normally-closed momentary button. Press to cut motor power. Wired in series with motor power rail. Panel mount in body wall. See EA-15 safety systems. |
+| Green LED (3mm or 5mm) + 330 ohm Resistor | 1 | £0.50 | [Amazon UK](https://www.amazon.co.uk/s?k=green+LED+5mm) / [CPC Farnell](https://cpc.farnell.com) | Power indicator — lights when main switch is on. Mount in body wall near switch. 330 ohm resistor (WS2812B data line series resistor). See EA-15. |
+
+### 8. Servo Power
+
+| Item | Qty | Approx Price | Where to Buy | Notes |
+|------|-----|-------------|--------------|-------|
+| 5V 3A Buck Converter (XL4015 or similar) | 1 | £3 | [Amazon UK](https://www.amazon.co.uk/s?k=5V+3A+buck+converter+XL4015) / [AliExpress](https://www.aliexpress.com/w/wholesale-5V+3A+buck+converter.html) | **CRITICAL**: Dedicated 5V servo power supply. Replaces L298N onboard 5V regulator which cannot supply 4 servos + ESP32 reliably under load. Input 7-35V from battery, output 5V 3A. Wired to servo power rail only. See EA-19 wiring diagram. |
 
 ---
 
@@ -62,13 +70,13 @@
 
 | Item | Qty | Approx Price | Where to Buy | Notes |
 |------|-----|-------------|--------------|-------|
-| 608ZZ Bearings (8x22x7mm) | 12 | £0.40 each (£5) | [Amazon UK](https://www.amazon.co.uk/s?k=608ZZ+bearings) | Phase 1 needs 10 (2 rocker pivots, 2 bogie pivots, 3 differential bar, 4 steering pivots — note: rear steering only needs 3 not 4 per EA-08). Buy 12 for spares. Same as skateboard bearings — buy a 10-pack + 2 singles, or a 20-pack for Phase 2 stock. |
+| 608ZZ Bearings (8x22x7mm) | 12 | £0.40 each (£5) | [Amazon UK](https://www.amazon.co.uk/s?k=608ZZ+bearings) | Phase 1 needs 11 (2 rocker pivots, 2 bogie pivots, 3 differential bar, 4 steering pivots). Buy 12 for spares. Same as skateboard bearings — buy a 10-pack + 2 singles, or a 20-pack for Phase 2 stock. |
 
 ### 2. Fasteners
 
 | Item | Qty | Approx Price | Where to Buy | Notes |
 |------|-----|-------------|--------------|-------|
-| M3 Heat-Set Inserts (OD 4.6mm, L 5mm, brass) | 50 pack | £4 | [Amazon UK](https://www.amazon.co.uk/s?k=M3+heat+set+inserts+brass) / [CNC Kitchen style from AliExpress](https://www.aliexpress.com/w/wholesale-m3-heat-set-insert.html) | CNC Kitchen / Ruthex style knurled brass. Need ~40 for Phase 1 body + brackets (more with 4-segment body). Get 100-pack (£6) if planning ahead for Phase 2. **PLA insert temp: ~170-180C** (lower than PETG's 200-220C) — go slow to avoid melting surrounding plastic. |
+| M3 Heat-Set Inserts (OD 5.7mm, L 4.6mm, brass) | 50 pack | £4 | [Amazon UK](https://www.amazon.co.uk/s?k=M3+heat+set+inserts+brass) / [CNC Kitchen style from AliExpress](https://www.aliexpress.com/w/wholesale-m3-heat-set-insert.html) | CNC Kitchen / Ruthex style knurled brass. Hole prints at 4.8mm; insert melts into plastic. Need ~40 for Phase 1 body + brackets (more with 4-segment body). Get 100-pack (£6) if planning ahead for Phase 2. **PLA insert temp: ~170-180C** (lower than PETG's 200-220C) — go slow to avoid melting surrounding plastic. |
 | M3 Socket Cap Screw Assortment (6/8/10/12/16/20mm) | 1 set | £5 | [Amazon UK](https://www.amazon.co.uk/s?k=M3+socket+cap+screw+assortment) | Need ~50 screws in various lengths. A 300-piece assortment box covers Phase 1 and Phase 2. |
 | M3 Nut + Washer Assortment | 1 set | £3 | [Amazon UK](https://www.amazon.co.uk/s?k=M3+nut+washer+assortment) | Often bundled with screw kits. Need ~30 nuts, ~30 washers. |
 | M8 x 40mm Hex Bolt | 4 | £2 | [Amazon UK](https://www.amazon.co.uk/s?k=M8+hex+bolt+40mm) / Local hardware store | Rocker + bogie pivot shafts. Stainless preferred. |
@@ -76,27 +84,36 @@
 | M8 Nyloc Nuts | 8 | £1.50 | [Amazon UK](https://www.amazon.co.uk/s?k=M8+nyloc+nut) | Lock nuts for all M8 pivots — prevents loosening under vibration. |
 | M8 Washers | 16 | £1.50 | [Amazon UK](https://www.amazon.co.uk/s?k=M8+washer+stainless) | 2 per pivot (both sides of each bearing). |
 | M2 x 8mm Screws | 8 | £1 | [Amazon UK](https://www.amazon.co.uk/s?k=M2+screw+assortment) | SG90 servo mounting (4 servos x 2 screws). Often included with servo packaging. |
+| M2 × 4mm Grub/Set Screws (hex socket) | 6 | £2 | [Amazon UK](https://www.amazon.co.uk/s?k=M2+grub+set+screw+4mm) / [CPC Farnell](https://cpc.farnell.com) | Wheel hub shaft retention — tighten against D-flat on N20 3mm shaft to prevent wheels slipping. 1 per wheel. Buy a few spares. See wheel CAD script. |
+| 3mm × 20mm Steel Dowel Pins | 4 | £2 | [Amazon UK](https://www.amazon.co.uk/s?k=3mm+steel+dowel+pin+20mm) / [RS Components](https://uk.rs-online.com) | Body quadrant alignment — press-fit into matching 3.0mm holes at quadrant seams. Prevents lateral shift when bolting quadrants together. See EA-08 body design. |
 
 ### 3. Shafts
 
 | Item | Qty | Approx Price | Where to Buy | Notes |
 |------|-----|-------------|--------------|-------|
-| 8mm Steel Rod, 300mm length | 1 | £2 | [Amazon UK](https://www.amazon.co.uk/s?k=8mm+steel+rod+300mm) / Local hardware store / [RS Components](https://uk.rs-online.com) | For the differential bar. Cut to 200mm. 8mm ID is a perfect fit through 608ZZ bearing inner race. Silver steel or mild steel both fine. |
+| 8mm Steel Rod, 300mm length | 1 | £2 | [Amazon UK](https://www.amazon.co.uk/s?k=8mm+steel+rod+300mm) / Local hardware store / [RS Components](https://uk.rs-online.com) | For the differential bar. Use full 300mm length (rocker pivots at X=±125mm = 250mm span + 25mm overhang each side for diff bar adapters). 8mm ID is a perfect fit through 608ZZ bearing inner race. Silver steel or mild steel both fine. |
 | 8mm Shaft Collars (bore 8mm) | 2 | £2 | [Amazon UK](https://www.amazon.co.uk/s?k=8mm+shaft+collar) | Retain differential bar rod ends. Alternatively use printed adapters with grub screws. |
 
 ---
 
 ## 3D Printing
 
-**Printer**: CTC printer (150x200mm bed) — PLA only (no PETG or TPU capability).
+**Printer**: CTC 3D Bizer (225×145mm bed) — PLA only (no PETG or TPU capability).
 
-> **Body segmentation**: The CTC's 150x200mm bed is smaller than the typical 220x220mm Ender 3 bed. The rover body needs to be split into **4 segments** instead of 2 to fit the build plate. This adds ~4 joining surfaces with extra wall overlap material, increasing total filament usage by ~50g and requiring ~8 additional heat-set inserts for segment-to-segment bolting.
+> **Body segmentation**: The CTC Bizer's 225×145mm bed requires the rover body (440×260mm at 0.4 scale) to be split into **4 quadrants** to fit the build plate. All quadrants are ~220×130mm (Y_SPLIT=0, pivot boss trimmed to bounds). This adds ~4 joining surfaces, increasing total filament usage by ~50g and requiring ~24 additional heat-set inserts for segment-to-segment bolting.
 
 | Item | Qty | Approx Price | Where to Buy | Notes |
 |------|-----|-------------|--------------|-------|
 | PLA Filament 1.75mm, 1kg spool | 2 | £14 each (£28) | [Amazon UK](https://www.amazon.co.uk/s?k=PLA+filament+1kg) | Recommended brand: eSUN PLA+ or Sunlu PLA — both print well and are widely available on Amazon UK. Total print weight ~850g + 280g waste/failures = ~1130g (extra joining surfaces from 4-segment body). Two spools gives comfortable margin. Colour: grey or black (mars rover aesthetic). |
 
-> **Wheel traction**: Since the CTC printer cannot print TPU, use **rubber O-rings** (e.g. 30-40mm OD, ~3mm cross-section, from Amazon/eBay) or **silicone bands** stretched around the wheel rims for grip on smooth surfaces. These are cheap (~£2-3 for a bag) and provide excellent traction without needing flexible filament. Alternatively, wrap wheels with bicycle inner tube strips glued into a groove.
+> **Wheel traction (preferred)**: Separate **TPU 95A tires** (rover_tire.py) press-fit onto PLA rims. Requires a friend's TPU-capable printer or online printing service. 86mm OD × 70mm bore × 32mm wide, 48 tread ribs. ~10g each.
+>
+> **Wheel traction (fallback)**: If no TPU printer available, set `USE_TPU_TIRE=False` in rover_wheel.py to enable O-ring groove mode. Use **rubber O-rings** (70mm ID × 3mm cross-section) in wheel rim grooves. Buy a bag of 20+ (~£3).
+
+| Item | Qty | Approx Price | Where to Buy | Notes |
+|------|-----|-------------|--------------|-------|
+| TPU 95A Filament 250g (optional) | 1 | £8 | [Amazon UK](https://www.amazon.co.uk/s?k=TPU+95A+filament) | For 6 tires on a friend's TPU-capable printer. 60g needed + margin. |
+| O-Rings 70mm ID × 3mm (fallback) | 20 | £3 | [Amazon UK](https://www.amazon.co.uk/s?k=70mm+ID+3mm+O-ring) | Only needed if NOT using TPU tires. 18 needed (3 per wheel × 6) + spares. |
 
 ---
 
@@ -115,6 +132,17 @@
 
 ---
 
+## Consumables & Sundries
+
+| Item | Qty | Approx Price | Where to Buy | Notes |
+|------|-----|-------------|--------------|-------|
+| 100nF Ceramic Capacitors (104) | 6+ | £1 | [Amazon UK](https://www.amazon.co.uk/s?k=100nF+ceramic+capacitor) / [CPC Farnell](https://cpc.farnell.com) | Motor terminal noise suppression — solder one across each motor's ±terminals. Buy a pack of 20-50 (cheap). Referenced in CLAUDE.md conventions and EA-19. |
+| Small Zip Ties (100mm) | 1 bag (100) | £2 | [Amazon UK](https://www.amazon.co.uk/s?k=100mm+zip+ties) | Wire bundle management at strain relief points, securing motor wires to suspension arms. Referenced in EA-17, EA-19. |
+| Velcro Cable Ties (reusable) | 1 pack (20) | £3 | [Amazon UK](https://www.amazon.co.uk/s?k=velcro+cable+ties) | Reusable wire management inside body, battery retention strap. Referenced in EA-08, EA-14. |
+| Hot Glue Sticks (7mm, clear) | 1 pack (20) | £2 | [Amazon UK](https://www.amazon.co.uk/s?k=hot+glue+sticks+7mm) | Strain relief at solder joints, securing connectors, temporary fixturing. Referenced in EA-19. Requires hot glue gun. |
+
+---
+
 ## Tools (if not already owned)
 
 | Item | Qty | Approx Price | Where to Buy | Notes |
@@ -124,6 +152,8 @@
 | Wire Stripper / Crimper | 1 | £8 | [Amazon UK](https://www.amazon.co.uk/s?k=wire+stripper+crimper) | Self-adjusting type recommended. Essential for JST/Dupont crimping. |
 | Multimeter | 1 | £10-15 | [Amazon UK](https://www.amazon.co.uk/s?k=digital+multimeter) | If you don't have one. Needed for voltage checks, continuity testing. |
 | Hex Key Set (1.5, 2, 2.5, 4, 5mm) | 1 set | £3 | [Amazon UK](https://www.amazon.co.uk/s?k=hex+key+set+metric) | 2mm for M3 socket caps, 5mm for M8 hex bolts. |
+| SD Card 8GB (or larger) | 1 | £4 | [Amazon UK](https://www.amazon.co.uk/s?k=sd+card+8gb) | For CTC Bizer printer — load x3g files via SD card. Not a rover component but essential for print workflow. Any speed class works. |
+| USB-C Cable (data + power, 1m+) | 1 | £3 | [Amazon UK](https://www.amazon.co.uk/s?k=USB-C+data+cable) | ESP32-S3 programming and serial debug. Must be a data cable (not charge-only). 1-2m length for comfortable bench work. |
 
 ---
 
@@ -138,13 +168,24 @@
 | Motors (6x N20 w/ encoder) | £15 |
 | Servos (4x SG90) | £6 |
 | Power (2S LiPo + charger + safe bag) | £22 |
-| Safety (switch + fuse) | £3 |
+| Servo power (5V 3A buck converter) | £3 |
+| Safety (switch + fuse + E-stop + LED) | £4.50 |
 | Bearings (12x 608ZZ) | £5 |
-| Fasteners (M3 set + M8 bolts/nuts/washers + heat-set inserts) | £20 |
+| Fasteners (M3 set + M8 + M2 grub screws + dowel pins + heat-set inserts) | £24 |
 | Shafts (8mm rod + collars) | £4 |
 | Filament (2x 1kg PLA) | £28 |
 | Wiring & connectors | £30 |
-| **Core Total** | **~£145** |
+| **Core Total** | **~£153** |
+
+### Consumables & Sundries
+
+| Category | Estimated Cost |
+|----------|---------------|
+| 100nF ceramic capacitors | £1 |
+| Zip ties (100mm bag) | £2 |
+| Velcro cable ties | £3 |
+| Hot glue sticks | £2 |
+| **Consumables Total** | **~£8** |
 
 ### Optional Phase 1 Items
 
@@ -152,7 +193,7 @@
 |----------|---------------|
 | BNO055 IMU | £12 |
 | HC-SR04 ultrasonic (x2) | £3 |
-| Rubber O-rings / silicone bands (traction) | £3 |
+| Rubber O-rings 70mm ID × 3mm (wheel traction) | £3 |
 | **Optional Total** | **~£18** |
 
 ### Tools (if needed)
@@ -164,17 +205,20 @@
 | Wire stripper/crimper | £8 |
 | Multimeter | £12 |
 | Hex key set | £3 |
-| **Tools Total** | **~£58** |
+| SD card 8GB (CTC Bizer) | £4 |
+| USB-C cable (ESP32 programming) | £3 |
+| **Tools Total** | **~£65** |
 
 ### Budget Summary
 
 | | Cost |
 |---|------|
-| Core components | ~£145 |
+| Core components | ~£153 |
+| Consumables & sundries | ~£8 |
 | Optional sensors/traction | ~£18 |
-| Tools (if needed) | ~£58 |
-| **Grand Total (everything)** | **~£221** |
-| **Grand Total (core only, have tools)** | **~£145** |
+| Tools (if needed) | ~£65 |
+| **Grand Total (everything)** | **~£244** |
+| **Grand Total (core + consumables, have tools)** | **~£161** |
 
 > **Note**: The EA-06 estimate of $102/~£80 assumes AliExpress pricing for most components with 2-4 week shipping and only 1x 500g filament spool. The figures above use Amazon UK pricing (typically 1.5-2x AliExpress) and 2x 1kg PLA spools for realistic print margin. To hit the EA-06 budget, order motors, ESP32, servos, drivers, heat-set inserts, and connectors from AliExpress (~£50 saving) and accept the longer delivery time.
 
@@ -186,7 +230,7 @@
 
 | Item | Cost | Why First |
 |------|------|-----------|
-| 2x PLA filament (1kg) | £28 | ~65 hours of printing ahead. Start with bearing test piece, then wheels, then structural parts. Body needs 4 segments (not 2) due to CTC's 150x200mm bed — start printing early. Printing can happen in parallel with electronics shipping. |
+| 2x PLA filament (1kg) | £28 | ~65 hours of printing ahead. Start with bearing test piece, then wheels, then structural parts. Body needs 4 quadrants to fit CTC Bizer's 225×145mm bed — start printing early. Printing can happen in parallel with electronics shipping. |
 
 ### Order 2: Electronics (buy next — AliExpress for budget, Amazon for speed)
 
@@ -209,6 +253,7 @@
 | 12x 608ZZ bearings | Amazon | £5 |
 | M3 fastener set + heat-set inserts | Amazon | £12 |
 | M8 bolts, nyloc nuts, washers | Amazon / hardware store | £7 |
+| M2 × 4mm grub screws (×6) + 3mm dowel pins (×4) | Amazon | £4 |
 | 8mm steel rod + shaft collars | Amazon / hardware store | £4 |
 
 **Why third**: You need actual printed parts in hand to verify bearing press-fit dimensions and bolt lengths before committing to quantities.
@@ -220,7 +265,9 @@
 | 2S LiPo 2200mAh | Amazon | £10 |
 | LiPo balance charger | Amazon | £8 |
 | LiPo safe bag | Amazon | £4 |
-| Power switch + fuse holder | Amazon | £3 |
+| Power switch + fuse holder + E-stop button | Amazon | £4 |
+| Green LED + 330 ohm resistor | Amazon | £0.50 |
+| 5V 3A buck converter (servo BEC) | Amazon / AliExpress | £3 |
 | XT60 connectors | Amazon | £2 |
 | JST-XH connector kit | Amazon | £6 |
 | Heat shrink tubing | Amazon | £3 |
@@ -238,9 +285,11 @@ Once Order 2 arrives, test these on the breadboard before building into the chas
 - [ ] L298N drives a single N20 motor forward/reverse via ESP32 PWM
 - [ ] SG90 servo sweeps 0-180 degrees via ESP32 LEDC
 - [ ] Encoder pulses read correctly on ESP32 GPIO interrupt
-- [ ] L298N 5V regulator output powers ESP32 VIN pin
+- [ ] 5V buck converter outputs stable 5V under servo load (check with multimeter)
 - [ ] All 6 motors spin (test each individually)
+- [ ] E-stop button cuts motor power when pressed, restores when released
 - [ ] Battery voltage divider reads correctly on GPIO14 ADC
+- [ ] Green power LED illuminates when main switch is on
 
 ---
 

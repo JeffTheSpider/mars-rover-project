@@ -21,7 +21,7 @@ namespace rover_hardware
 
 /// NMEA-style UART bridge between Jetson and ESP32 motor controller.
 /// Protocol: $CMD,data*XOR\n
-/// Sends: MOT (motor), STR (steering), STP (stop), PNG (ping)
+/// Sends: MOT (motor), STR (steering), STP (stop), ARM/DSA (arm/disarm), PNG (ping)
 /// Receives: ENC (encoders), IMU (orientation/gyro/accel), USS (ultrasonics),
 ///           BAT (battery), STS (status), ACK, ERR
 class UartBridgeNode : public rclcpp::Node
@@ -46,6 +46,7 @@ private:
   void wheel_speeds_callback(const rover_msgs::msg::WheelSpeeds::SharedPtr msg);
   void steering_angles_callback(const rover_msgs::msg::SteeringAngles::SharedPtr msg);
   void estop_callback(const std_msgs::msg::Bool::SharedPtr msg);
+  void arm_callback(const std_msgs::msg::Bool::SharedPtr msg);
 
   // Timer callbacks
   void serial_read_callback();
@@ -74,6 +75,7 @@ private:
   rclcpp::Subscription<rover_msgs::msg::WheelSpeeds>::SharedPtr wheel_speeds_sub_;
   rclcpp::Subscription<rover_msgs::msg::SteeringAngles>::SharedPtr steering_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr estop_sub_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr arm_sub_;
 
   // Timers
   rclcpp::TimerBase::SharedPtr serial_read_timer_;

@@ -11,7 +11,7 @@
 
 void setupOTA() {
   ArduinoOTA.setHostname(WIFI_HOSTNAME);  // "rover"
-  ArduinoOTA.setPort(3232);  // Default ESP32 OTA port
+  ArduinoOTA.setPort(OTA_PORT);  // From config.h
 
   ArduinoOTA.onStart([]() {
     String type = (ArduinoOTA.getCommand() == U_FLASH)

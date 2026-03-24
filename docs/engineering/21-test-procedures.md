@@ -82,6 +82,7 @@ A test **passes** only if ALL pass criteria are met. A partial pass is recorded 
 | UT-M06 | PWM resolution | Same as UT-M01, multimeter on motor leads | 1. Set PWM to 25%, measure average voltage. 2. Set to 50%, measure. 3. Set to 75%, measure. 4. Set to 100%, measure. | Voltage scales proportionally with PWM duty cycle. | Measured voltage within 15% of theoretical (duty% x supply voltage, accounting for L298N drop). |
 | UT-M07 | Parallel motor pair | W2+W3 wired in parallel to L298N OUT3/OUT4 | 1. Command left mid+rear forward at 50%. 2. Observe both wheels. | Both W2 and W3 spin in the same direction at similar speed. | Both wheels spin forward, neither stalls. |
 | UT-M08 | Motor free-spin current | Ammeter in series with one motor output | 1. Command motor at 100% PWM, no load. 2. Read current. | Low current draw (motor spinning freely). | Current draw < 0.2A per motor at no load. |
+| UT-M09 | Motor stall current | Ammeter in series with motor, wheel locked | 1. Lock wheel so it cannot turn. 2. Command motor at 100% PWM. 3. Read stall current immediately. 4. Cut power within 3 seconds to prevent overheating. | High current draw (motor stalled). | Stall current measured and recorded. Expected 0.8-1.5A for GA12-N20. Verify L298N can handle this (2A rated). |
 
 #### Steering Module
 
@@ -91,7 +92,8 @@ A test **passes** only if ALL pass criteria are met. A partial pass is recorded 
 | UT-S02 | Servo sweep range | Same as UT-S01 | 1. Sweep from 500us to 2400us in 100us steps. 2. Observe range of motion. 3. Listen for grinding at extremes. | Servo sweeps approximately 180 degrees without mechanical binding. | Full range of motion achieved. No grinding or stalling at endpoints. |
 | UT-S03 | Ackermann angle calculation | Serial monitor open, no hardware needed | 1. Command a turn with radius = 500mm (Phase 1 scale). 2. Read calculated FL, FR, RL, RR angles from serial. | Inner wheel angle is larger than outer wheel angle. Rear wheels are opposite sign to front. | Angles match EA-10 Section 5 worked examples within 1.0 degree. |
 | UT-S04 | Servo trim adjustment | Servo mounted on steering bracket | 1. Set centre (1500us). 2. Observe if wheel is straight. 3. Apply trim offset. 4. Re-centre. | Trim offset corrects any mechanical misalignment. | After trim, wheel straight-ahead when centred. Deviation < 2 degrees. |
-| UT-S05 | Steering mode switch | All 4 servos connected | 1. Switch from Ackermann to Point Turn mode. 2. Switch to Crab Walk mode. 3. Switch back to Ackermann. | Servos reconfigure to correct angles for each mode. | All 4 wheels reach correct positions within 500ms of mode change. No servo jitter on switch. |
+| UT-S05 | Servo trim calibration SOP | All 4 servos mounted on steering brackets, wheels attached, protractor | 1. Power on, command all servos to centre (1500μs). 2. For each servo: measure angle between wheel and chassis using protractor. 3. If deviation > 2°, calculate trim: trim_μs = deviation_deg × 10.31 μs/deg. 4. Apply trim to config.h SERVO_TRIM_FL/FR/RL/RR. 5. Re-upload firmware. 6. Re-measure. 7. Repeat until all 4 within 2°. | All wheels point straight ahead when centred. | All 4 servos within 2° of straight-ahead after trim. Record final trim values in test log. |
+| UT-S06 | Steering mode switch | All 4 servos connected | 1. Switch from Ackermann to Point Turn mode. 2. Switch to Crab Walk mode. 3. Switch back to Ackermann. | Servos reconfigure to correct angles for each mode. | All 4 wheels reach correct positions within 500ms of mode change. No servo jitter on switch. |
 
 #### Sensor Module
 
@@ -110,6 +112,26 @@ A test **passes** only if ALL pass criteria are met. A partial pass is recorded 
 | UT-E02 | E-stop motor cutoff | Motors running at 50%, E-stop button ready | 1. Start all motors at 50% PWM. 2. Press E-stop button. 3. Observe motors. 4. Measure time from press to stop. | All motors immediately stop. | All motor PWM set to 0 within 20ms of button press. No motor movement after stop. |
 | UT-E03 | E-stop persistence | Motors stopped by E-stop | 1. While in E-stop state, command motors via WebSocket. 2. Observe motors. | Motor commands are rejected while E-stop is active. | No motor movement occurs. WebSocket reports E-stop state. |
 | UT-E04 | E-stop recovery | Rover in E-stop state | 1. Press E-stop button again to release. 2. Send resume command from phone app. 3. Command motors forward. | Rover returns to normal operation after explicit recovery. | Motors respond to commands only after BOTH button release AND resume command received. |
+
+#### Electronics Module
+
+| Test ID | Description | Setup | Procedure | Expected Result | Pass Criteria |
+|---------|-------------|-------|-----------|-----------------|---------------|
+| UT-E01 | L298N 3.3V logic verification | L298N connected to ESP32-S3, motor connected to output, oscilloscope on EN/IN pins | 1. Set IN1=HIGH, IN2=LOW. Measure IN1 voltage (expect 3.3V). 2. Verify motor runs in one direction. 3. Swap IN1/IN2. Verify motor reverses. 4. Set ENA PWM 50%. Verify motor speed reduces. 5. Repeat at EN=10% PWM — verify motor still responds. | Motor responds to all commands at 3.3V logic levels. No commands ignored. | Motor responds to all commands. No commands ignored. L298N logic threshold confirmed <3.3V. |
+
+**Note**: UT-E01 (Electronics) tests L298N logic levels. The E-Stop module below also uses UT-E01–E04 for E-stop button tests — these are in separate subsections.
+
+#### Latency Module
+
+| Test ID | Description | Setup | Procedure | Expected Result | Pass Criteria |
+|---------|-------------|-------|-----------|-----------------|---------------|
+| UT-L01 | Command latency measurement | Phone with PWA, rover powered on WiFi, high-speed camera or oscilloscope on motor output | 1. Record phone screen and motor simultaneously. 2. Press forward button. 3. Review recording frame-by-frame. 4. Measure time from button touch event to motor voltage appearing. 5. Repeat 10 times, record average and max. | Motor voltage appears shortly after button press. | Average latency <200ms. Max latency <500ms. |
+
+#### Motor Control Module (continued)
+
+| Test ID | Description | Setup | Procedure | Expected Result | Pass Criteria |
+|---------|-------------|-------|-----------|-----------------|---------------|
+| UT-M10 | Acceleration ramp test | Single motor connected, encoder (or visual tachometer), ESP32 logging | 1. Command full speed from standstill. 2. Log PWM value vs time (firmware ramp). 3. Verify ramp time matches config.h RAMP_MS. 4. Verify no current spike exceeds fuse rating. | Motor accelerates smoothly from 0 to max within target ramp time. | 0→max in ≤2s. Current spike <5A. |
 
 #### UART Module (Phase 2 preparation, testable with loopback)
 
@@ -221,7 +243,10 @@ These tests verify the protocol defined in EA-12 independently of rover hardware
 | ST-D04 | Point turn accuracy | Marker placed at rover centre on floor | 1. Command point turn at 30% speed. 2. Rotate 360 degrees. 3. Measure displacement of rover centre from starting marker. | Rover rotates roughly in place. | Centre displacement < 100mm after one full 360-degree rotation. |
 | ST-D05 | Speed measurement | 2m measured course, stopwatch | 1. Command forward at 100% speed. 2. Time how long to travel 2 metres. 3. Calculate speed. | Speed matches expected maximum (approximately 2 km/h for Phase 1). | Measured speed within 30% of calculated maximum from EA-02 (gear ratio x motor RPM x wheel circumference). |
 | ST-D06 | Low-speed control | Flat floor | 1. Command forward at 10% speed. 2. Observe movement. | Rover moves at very low speed without stalling. | Rover moves continuously for 5 seconds at 10% speed. No stalling or jerky motion. |
-| ST-D07 | Steering mode transitions | Open floor, phone connected | 1. Drive forward in Ackermann mode. 2. Switch to Crab Walk while moving. 3. Switch to Point Turn. 4. Switch back to Ackermann. | Smooth transitions between steering modes. | No servo jitter, no sudden direction change, no motor interruption during mode switch. |
+| ST-D07 | Straight-line drift (5m) | 5m straight course marked with tape | 1. Command forward at 30% speed. 2. Drive 5m. 3. Measure perpendicular distance from tape line at endpoint. 4. Record drift direction (left/right). 5. Repeat 3 times, calculate average. | Rover tracks straight with minimal drift. | Average drift < 150mm over 5m. If consistent direction, adjust MOTOR_TRIM values in config.h. |
+| ST-D08 | Steering mode transitions | Open floor, phone connected | 1. Drive forward in Ackermann mode. 2. Switch to Crab Walk while moving. 3. Switch to Point Turn. 4. Switch back to Ackermann. | Smooth transitions between steering modes. | No servo jitter, no sudden direction change, no motor interruption during mode switch. |
+| ST-SP01 | Maximum speed test | Flat floor, 5m measured distance, stopwatch, rover at full charge | 1. Mark start and end 5m apart. 2. Command full forward speed. 3. Time from start line to end line (3 runs). 4. Calculate average speed. | Rover achieves target speed on flat surface. | Speed ≥0.2 m/s (target 0.3 m/s per PR-01). |
+| ST-A01 | Steering accuracy test | Protractor or angle measurement jig, rover powered but stationary | 1. Command 0° (straight). Measure actual angle. 2. Command +15°. Measure. 3. Command +35° (max). Measure. 4. Command -15°. Measure. 5. Command -35° (max). Measure. 6. Record error for each. 7. Repeat 3 times for repeatability. | Commanded angle matches actual wheel angle at all positions. | Angle error <3° at all commanded positions. Repeatability <1°. |
 
 ### 4.2 Suspension Tests
 
@@ -233,6 +258,10 @@ These tests verify the protocol defined in EA-12 independently of rover hardware
 | ST-SU04 | Maximum obstacle height | Progressively taller blocks (20mm, 30mm, 40mm, 50mm, 60mm) | 1. Drive one wheel onto each block height. 2. Note at which height the rover fails (high-centres, tips, or loses too many wheels). | Rover handles obstacles up to 40mm (50% wheel diameter). | Rover successfully traverses 40mm obstacle without tipping or losing drive traction on more than 1 wheel. |
 | ST-SU05 | Continuous rough terrain | Scatter 5-6 objects (pens, small books, cables) on the floor | 1. Drive over the scattered objects at 30% speed for 1 minute. 2. Observe stability. | Rover navigates over small irregular obstacles without tipping or stalling. | Rover completes the course without stopping, tipping, or losing more than 1 wheel contact at any time. Wire routing undamaged. |
 | ST-SU06 | Differential bar operation | Rover on flat surface | 1. Push down on left rocker arm. 2. Observe right rocker arm. | Right rocker lifts as left is pushed down (seesaw action). | Motion is smooth, no binding. Approximately 1:1 ratio (push 10mm down on one side, other side lifts approximately 10mm). |
+| ST-SU07 | Static weight distribution | Kitchen scale, flat surface | 1. Place rover on scale, note total weight. 2. Lift front 2 wheels off surface, measure weight on 4 rear wheels. 3. Lift rear 2 wheels, measure front 4 weight. 4. Lift left 3 wheels, measure right 3. 5. Lift right 3, measure left 3. | Weight distributed roughly evenly across all 6 wheels. | No single wheel bears more than 25% of total weight (ideally ~16.7% each). Left-right asymmetry < 10%. Front-rear asymmetry < 15%. Record all values for CoG verification. |
+| ST-SU08 | Payload capacity test | Rover assembled, 500g calibration weight (or equivalent), ruler | 1. Measure top deck height at centre. 2. Place 500g on top deck centre. 3. Wait 60 seconds. 4. Measure deflection. 5. Remove weight, check for permanent deformation. 6. Drive rover with 500g load — verify steering and suspension still work. | Top deck supports load without cracking or excessive deflection. | Deflection <2mm. No cracking. Drives normally. |
+| ST-SU09 | Obstacle course test | (1) 20mm wooden block (step obstacle). (2) 15° ramp (cardboard/wood). (3) Uneven terrain (gravel/textured mat). | 1. Drive over 20mm step at slow speed. 2. All 6 wheels must maintain contact during traverse. 3. Drive up 15° ramp — verify no wheel spin. 4. Drive on uneven surface — verify suspension articulates. 5. Record video of each test. | Rover traverses all obstacles using rocker-bogie suspension. | 20mm step traversed. 15° ramp climbed. All wheels maintain ground contact on uneven surface. |
+| ST-SU10 | Grade ability test | Adjustable ramp (plywood + blocks), protractor/angle measurer | 1. Set ramp to 10°. Drive up. 2. Increase to 15°. Drive up. 3. Continue in 5° increments until wheels slip or rover stalls. 4. Record maximum angle achieved. | Rover climbs target grade without slipping. | ≥15° grade (PR-06 target). |
 
 ### 4.3 Battery & Power Tests
 
@@ -245,6 +274,7 @@ These tests verify the protocol defined in EA-12 independently of rover hardware
 | ST-P05 | Low-battery shutdown | Battery near cutoff (or bench supply at 6.4V) | 1. Set battery voltage to critical threshold (3.2V/cell = 6.4V). 2. Observe motor cutoff. | Motors stop. LED red. Alarm sounds. | Motors stop within 2 seconds of reaching critical voltage. Rover refuses to drive until charged above 3.5V/cell. |
 | ST-P06 | Power-on sequence | Battery connected, switch off | 1. Turn switch on. 2. Measure voltages at ESP32 VIN, L298N 5V output. 3. Observe ESP32 boot (serial monitor). | Clean power-up with correct voltages. | ESP32 VIN reads 4.8-5.2V. No brownout resets. Serial shows clean boot message within 5 seconds. |
 | ST-P07 | No-load current draw | Ammeter in series with battery, rover idle (WiFi connected, no motor commands) | 1. Measure current with rover powered on, idle. | Idle current is low. | Total idle current < 200mA (ESP32 WiFi + L298N quiescent). |
+| ST-P08 | Full system current at speeds | Ammeter in series with battery, flat surface | 1. Measure idle current (0% speed). 2. Measure at 25% speed, flat. 3. Measure at 50% speed. 4. Measure at 75% speed. 5. Measure at 100% speed. 6. Record all 5 values. | Current increases with speed. Stays within fuse rating. | All readings below 5A fuse rating. Record current vs speed curve for battery runtime estimation. Expected: idle 0.15A, 50% ~1.0A, 100% ~2.5A. |
 
 ### 4.4 Safety Tests
 
@@ -266,6 +296,20 @@ These tests verify the protocol defined in EA-12 independently of rover hardware
 | ST-W02 | WebSocket latency | Phone connected to rover web UI | 1. Tap forward button. 2. Measure time until motor responds (video sync or serial timestamp). | Low latency control. | Command-to-motor latency < 100ms (WebSocket + ESP32 processing). |
 | ST-W03 | WiFi range | Open outdoor area, phone connected | 1. Drive rover away from phone (or walk away). 2. Note distance at which control becomes unreliable. 3. Note distance at which connection drops. | Usable control range established. | Reliable control at 10m minimum. Connection maintained at 15m minimum. |
 | ST-W04 | WiFi reconnection | Phone connected, WiFi operational | 1. Briefly power-cycle the router (or move rover out of range and back). 2. Observe rover behaviour during disconnect. 3. Check if WebSocket reconnects automatically. | Rover stops during disconnect, reconnects when WiFi returns. | Motors stop within 2 seconds of WiFi loss. WebSocket reconnects within 30 seconds of WiFi restoration. No manual intervention required. |
+| ST-W05 | WiFi range test (detailed) | Open outdoor area, phone with PWA, rover on flat ground | 1. Start at 1m, verify control. 2. Walk away in 5m increments. 3. At each distance: send 10 commands, count successful responses. 4. Record distance where reliability drops below 90%. 5. Record distance where connection lost. | Rover maintains reliable control at target range. | ≥15m at >90% reliability (PR-09). |
+
+### 4.6 Noise & Thermal Tests
+
+| Test ID | Description | Setup | Procedure | Expected Result | Pass Criteria |
+|---------|-------------|-------|-----------|-----------------|---------------|
+| ST-N01 | Noise level test | Quiet room, phone with dB meter app, ruler | 1. Place phone 1m from rover. 2. Record ambient noise (baseline). 3. Command rover to drive at 50% speed. Record dB level. 4. Command 100% speed. Record dB level. 5. Command steering while driving. Record dB level. | Rover operates within acceptable noise level. | <60dB at 1m at max speed (PR-11). |
+| ST-T01 | Thermal endurance test | IR thermometer or thermocouple, rover fully assembled, stopwatch | 1. Drive continuously at 75% speed for 30 minutes (mix of straight and turns). 2. Every 5 minutes: measure motor case temp, L298N heatsink temp, BEC temp, ESP32 temp. 3. Stop if any component exceeds 60°C. 4. Record temperature curves. | All components remain within safe temperature range. | All components <50°C after 30 min. No thermal shutdown. |
+
+### 4.7 Battery Endurance Tests
+
+| Test ID | Description | Setup | Procedure | Expected Result | Pass Criteria |
+|---------|-------------|-------|-----------|-----------------|---------------|
+| ST-B01 | Battery endurance test | Fully charged 2S 2200mAh LiPo, rover on flat surface, stopwatch | 1. Record start voltage. 2. Drive at 50% speed continuously (figure-8 pattern). 3. Log voltage every 5 minutes. 4. Continue until firmware low-battery cutoff triggers. 5. Record total time and voltage curve. | Rover runs for target duration on a full charge. | ≥30 minutes runtime (PR-02). |
 
 ---
 
@@ -294,8 +338,20 @@ All tests in this table must pass before Phase 1 is considered complete and Phas
 | ST-W01 | WiFi connection time | < 5 seconds | < 10 seconds | 1 |
 | ST-W02 | WebSocket command latency | < 50ms | < 100ms | 1 |
 | ST-W03 | WiFi range | > 15m | > 10m minimum | 1 |
-| UT-M01-M08 | All motor unit tests | Pass | All pass | 1 |
-| UT-S01-S05 | All servo unit tests | Pass | All pass | 1 |
+| ST-SP01 | Maximum speed | ≥0.2 m/s | Target 0.3 m/s | 1 |
+| ST-SU08 | Payload capacity (500g) | <2mm deflection | No cracking | 1 |
+| ST-SU09 | Obstacle course (step/ramp/rough) | All traversed | All wheels grounded | 1 |
+| ST-SU10 | Grade ability | ≥15° | Minimum 15° | 1 |
+| ST-W05 | WiFi range (detailed) | ≥15m at >90% | >10m minimum | 1 |
+| ST-N01 | Noise level (1m) | <60dB | <65dB | 1 |
+| ST-T01 | Thermal endurance (30min) | All <50°C | None >60°C | 1 |
+| ST-B01 | Battery endurance (50% figure-8) | ≥30 min | ≥20 min | 1 |
+| ST-A01 | Steering accuracy | <3° error | Repeatability <1° | 1 |
+| UT-E01 | L298N 3.3V logic verification | Motor responds | All commands work | 1 |
+| UT-L01 | Command latency | <200ms avg | <500ms max | 1 |
+| UT-M10 | Acceleration ramp | ≤2s 0→max | Spike <5A | 1 |
+| UT-M01-M09 | All motor unit tests | Pass | All pass | 1 |
+| UT-S01-S06 | All servo unit tests | Pass | All pass | 1 |
 | UT-SN01-SN02 | Battery ADC and staging | Pass | All pass | 1 |
 | UT-E01-E04 | All E-stop unit tests | Pass | All pass | 1 |
 
@@ -366,4 +422,29 @@ A phase is complete when ALL tests for that phase show **Pass**.
 
 ---
 
-*Document EA-21 v1.0 — 2026-03-15*
+*Document EA-21 v1.2 — 2026-03-23*
+*v1.1: Added UT-M09, UT-S05, ST-SU07, ST-D07, ST-P08, baseline data recording template*
+*v1.2: Added 12 new tests — UT-E01 (L298N 3.3V logic), UT-L01 (command latency), UT-M10 (acceleration ramp), ST-SP01 (max speed), ST-SU08 (payload), ST-SU09 (obstacle course), ST-SU10 (grade ability), ST-W05 (WiFi range detailed), ST-N01 (noise), ST-T01 (thermal endurance), ST-B01 (battery endurance), ST-A01 (steering accuracy). New sections 4.6 (Noise & Thermal) and 4.7 (Battery Endurance).*
+
+### 6.3 Baseline Data Recording Template
+
+Record these values during initial testing to establish baselines for future comparison:
+
+| Measurement | Value | Date | Notes |
+|-------------|-------|------|-------|
+| Total rover weight (g) | | | With battery, no payload |
+| Idle current (mA) | | | WiFi connected, no commands |
+| 50% speed current (A) | | | Flat surface, straight line |
+| 100% speed current (A) | | | Flat surface, straight line |
+| Motor stall current (A) | | | Per motor, locked wheel |
+| Servo centre trim FL (μs) | | | Final calibrated value |
+| Servo centre trim FR (μs) | | | |
+| Servo centre trim RL (μs) | | | |
+| Servo centre trim RR (μs) | | | |
+| 5m straight-line drift (mm) | | | Average of 3 runs |
+| Drift direction | | | L/R/none |
+| Min turn radius measured (mm) | | | Max steering angle |
+| Battery runtime at 50% (min) | | | Until warning |
+| WiFi range (m) | | | Until unreliable |
+| Max obstacle height (mm) | | | Single wheel |
+| Weight per wheel (g) | | | Scale measurement |

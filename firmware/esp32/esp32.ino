@@ -27,6 +27,7 @@
 #include "motors.h"
 #include "steering.h"
 #include "sensors.h"
+#include "leds.h"
 #include "rover_webserver.h"
 #include "ota.h"
 #include "uart_nmea.h"
@@ -41,6 +42,7 @@ unsigned long lastCommandTime = 0;
 // --- State ---
 bool estopActive = false;
 bool wifiConnected = false;
+bool roverArmed = false;        // Must be armed before motors accept commands
 
 // ---- Setup ----
 
@@ -152,10 +154,15 @@ void loop() {
     }
   }
 
-  // Motor speed ramping (50 Hz)
+  // Motor speed ramping + steering update (50 Hz)
   if (now - lastMotorUpdate >= MOTOR_UPDATE_MS) {
-    if (!estopActive && !batteryCritical) {
+    if (!estopActive && !batteryCritical && roverArmed) {
       updateMotors();
+      updateSteering();
+      checkStall(motorSpeed);
+    } else if (!roverArmed) {
+      // Silently keep motors stopped when not armed
+      stopAllMotors();
     }
     lastMotorUpdate = now;
   }
@@ -172,9 +179,9 @@ void loop() {
     lastBattUpdate = now;
   }
 
-  // Command timeout: stop motors if no command for 2 seconds
+  // Command timeout: stop motors if no command received
   // (WebSocket disconnect already stops, but this catches other cases)
-  if (now - lastCommandTime > 2000 && (motorTarget[0] != 0 || motorTarget[1] != 0 || motorTarget[2] != 0 || motorTarget[3] != 0)) {
+  if (now - lastCommandTime > CMD_TIMEOUT_MS && (motorTarget[0] != 0 || motorTarget[1] != 0 || motorTarget[2] != 0 || motorTarget[3] != 0)) {
     stopAllMotors();
     Serial.println("[MAIN] Command timeout — motors stopped");
   }
@@ -215,22 +222,48 @@ void connectWiFi() {
 
 // ---- Status LED ----
 
+// LED Patterns (5 distinct states, EA-22 DFT-07):
+//   Idle (not armed):  Slow pulse (1s on, 1s off)
+//   Armed (ready):     Double blink (2 quick flashes, pause)
+//   Driving (active):  Solid on
+//   Warning (battery): Fast blink (250ms)
+//   Error (E-stop/critical): SOS pattern (3 short, 3 long, 3 short)
 void updateStatusLED(unsigned long now) {
   if (estopActive) {
-    // Fast blink red (using built-in LED, on/off)
-    digitalWrite(STATUS_LED_PIN, (now / 200) % 2);
+    // SOS pattern: 3 short (100ms), 3 long (300ms), 3 short (100ms)
+    int cycle = (now % 3000);
+    bool on = false;
+    if (cycle < 300) on = (cycle / 100) % 2 == 0;           // 3 short
+    else if (cycle < 600) on = false;                         // gap
+    else if (cycle < 1500) on = ((cycle - 600) / 300) % 2 == 0;  // 3 long
+    else if (cycle < 1800) on = false;                        // gap
+    else if (cycle < 2100) on = ((cycle - 1800) / 100) % 2 == 0; // 3 short
+    else on = false;                                          // pause
+    digitalWrite(STATUS_LED_PIN, on ? HIGH : LOW);
   } else if (batteryCritical) {
-    // Very fast blink
+    // Very fast blink — error state
     digitalWrite(STATUS_LED_PIN, (now / 100) % 2);
   } else if (batteryWarning) {
-    // Slow blink
+    // Fast blink — warning
+    digitalWrite(STATUS_LED_PIN, (now / 250) % 2);
+  } else if (stallDetected) {
+    // Triple quick blink — stall warning
+    int phase = (now / 120) % 8;
+    digitalWrite(STATUS_LED_PIN, (phase < 6 && phase % 2 == 0) ? HIGH : LOW);
+  } else if (!wifiConnected) {
+    // Double blink — WiFi connecting
+    int phase = (now / 150) % 6;
+    digitalWrite(STATUS_LED_PIN, (phase == 0 || phase == 2) ? HIGH : LOW);
+  } else if (!roverArmed) {
+    // Slow pulse — idle, waiting for arm command
     digitalWrite(STATUS_LED_PIN, (now / 1000) % 2);
-  } else if (wifiConnected) {
-    // Solid on
+  } else if (motorTarget[0] != 0 || motorTarget[1] != 0 ||
+             motorTarget[2] != 0 || motorTarget[3] != 0) {
+    // Solid on — actively driving
     digitalWrite(STATUS_LED_PIN, HIGH);
   } else {
-    // Double blink (WiFi connecting)
-    int phase = (now / 150) % 6;
+    // Armed, connected, idle — double blink (ready)
+    int phase = (now / 200) % 6;
     digitalWrite(STATUS_LED_PIN, (phase == 0 || phase == 2) ? HIGH : LOW);
   }
 }

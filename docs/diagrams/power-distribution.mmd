@@ -1,0 +1,79 @@
+%% Mars Rover Phase 1 — Power Distribution Diagram
+%% Updated: 2026-03-23 — 5V BEC for servos, motor capacitors
+%% Render with: mmdc -i power-distribution.mmd -o power-distribution.svg -t dark
+
+graph TD
+    subgraph Battery["2S LiPo 7.4V 2200mAh"]
+        BAT[Battery XT60]
+    end
+
+    subgraph Safety["Safety"]
+        FUSE["5A Blade Fuse"]
+        SW["Toggle Switch<br/>15mm panel mount"]
+        ESTOP["E-Stop Button<br/>GPIO46"]
+    end
+
+    subgraph Power_Rail["Main Power Bus 7.4V"]
+        RAIL[Power Rail]
+    end
+
+    subgraph L298N_1["L298N #1 — Left Motors"]
+        VIN1["VIN: 7.4V"]
+        REG1["5V Reg Out<br/>(0.5A max — ESP only)"]
+        M1["Ch A: W1 LF<br/>+ 100nF cap"]
+        M2["Ch B: W2+W3 LM+LR<br/>+ 100nF caps"]
+    end
+
+    subgraph L298N_2["L298N #2 — Right Motors"]
+        VIN2["VIN: 7.4V"]
+        M3["Ch A: W6 RF<br/>+ 100nF cap"]
+        M4["Ch B: W5+W4 RM+RR<br/>+ 100nF caps"]
+    end
+
+    subgraph BEC["5V 3A BEC (XL4015)"]
+        BECIN["VIN: 7.4V"]
+        BECOUT["VOUT: 5V 3A"]
+    end
+
+    subgraph ESP_Power["ESP32-S3 Power"]
+        ESP["ESP32-S3 VIN<br/>(from L298N 5V reg)"]
+    end
+
+    subgraph Servo_Power["Servo Power (5V BEC)"]
+        S1["SG90 FL"]
+        S2["SG90 FR"]
+        S3["SG90 RL"]
+        S4["SG90 RR"]
+    end
+
+    subgraph Monitoring["Battery Monitoring"]
+        ADC["Voltage Divider<br/>10k + 4.7k -> GPIO14<br/>+ 100nF filter cap"]
+    end
+
+    BAT -->|"14AWG Red"| FUSE
+    FUSE -->|"14AWG"| SW
+    SW -->|"14AWG"| RAIL
+    RAIL -->|"16AWG"| VIN1
+    RAIL -->|"16AWG"| VIN2
+    RAIL -->|"16AWG"| BECIN
+    RAIL -.->|"22AWG"| ADC
+    REG1 -->|"22AWG"| ESP
+    BECOUT -->|"20AWG Red"| S1
+    BECOUT -->|"20AWG Red"| S2
+    BECOUT -->|"20AWG Red"| S3
+    BECOUT -->|"20AWG Red"| S4
+    BAT -->|"14AWG Black"| GND["GND Bus"]
+    GND --- VIN1
+    GND --- VIN2
+    GND --- BECIN
+    GND --- ESP
+    ESTOP -.->|"Signal"| ESP
+
+    style BAT fill:#f38ba8,color:#1e1e2e
+    style RAIL fill:#fab387,color:#1e1e2e
+    style BECOUT fill:#a6e3a1,color:#1e1e2e
+    style REG1 fill:#89b4fa,color:#1e1e2e
+    style GND fill:#585b70,color:#cdd6f4
+    style FUSE fill:#f9e2af,color:#1e1e2e
+    style SW fill:#f9e2af,color:#1e1e2e
+    style ESTOP fill:#f38ba8,color:#1e1e2e

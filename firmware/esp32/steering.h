@@ -13,6 +13,12 @@ int16_t servoTrim[4] = {0, 0, 0, 0};  // FL, FR, RL, RR
 // Current steering angles (degrees, 0 = straight)
 float steerAngle[4] = {0, 0, 0, 0};
 
+// Target steering angles for rate limiting
+float steerTarget[4] = {0, 0, 0, 0};
+
+// Last steering update timestamp
+unsigned long lastSteerUpdate = 0;
+
 // Servo pin and channel arrays
 const uint8_t servoPin[] = {SERVO_FL_PIN, SERVO_FR_PIN, SERVO_RL_PIN, SERVO_RR_PIN};
 const uint8_t servoLEDC[] = {SERVO_LEDC_CH_FL, SERVO_LEDC_CH_FR, SERVO_LEDC_CH_RL, SERVO_LEDC_CH_RR};
@@ -151,8 +157,44 @@ void applyCrabWalk(float angleDeg) {
 
 void applyStraight() {
   for (int i = 0; i < 4; i++) {
+    steerTarget[i] = 0;
     setServoAngle(i, 0);
   }
+}
+
+// --- Rate-Limited Steering Update (EA-22 safety) ---
+// Call from main loop at MOTOR_UPDATE_MS interval.
+// Smoothly interpolates current angles toward targets at STEER_MAX_RATE deg/s.
+void updateSteering() {
+  unsigned long now = millis();
+  if (lastSteerUpdate == 0) {
+    lastSteerUpdate = now;
+    return;
+  }
+
+  float dt = (now - lastSteerUpdate) / 1000.0f;  // seconds
+  lastSteerUpdate = now;
+
+  if (dt <= 0 || dt > 0.5f) return;  // Skip if bogus delta
+
+  float maxStep = STEER_MAX_RATE * dt;  // Max degrees this tick
+
+  for (int i = 0; i < 4; i++) {
+    float diff = steerTarget[i] - steerAngle[i];
+    if (fabsf(diff) > maxStep) {
+      // Rate limit: move toward target by maxStep
+      diff = (diff > 0) ? maxStep : -maxStep;
+    }
+    setServoAngle(i, steerAngle[i] + diff);
+  }
+}
+
+// Set steering target (rate-limited version of setServoAngle)
+void setSteerTarget(uint8_t idx, float angleDeg) {
+  if (idx >= 4) return;
+  angleDeg = constrain(angleDeg, -STEER_MAX_ANGLE, STEER_MAX_ANGLE);
+  if (fabsf(angleDeg) < STEER_DEADBAND) angleDeg = 0;
+  steerTarget[idx] = angleDeg;
 }
 
 #endif // STEERING_H

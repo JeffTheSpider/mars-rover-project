@@ -46,6 +46,35 @@ jobs:
         run: |
           arduino-cli compile --fqbn esp32:esp32:esp32s3 firmware/esp32/
 
+  # ── ESP32 Firmware Unit Tests (host-based) ─────────────────────────────
+  esp32-tests:
+    name: Firmware Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pytest
+        run: pip install pytest
+
+      - name: Run firmware logic tests
+        run: |
+          python -m pytest firmware/tests/ -v --tb=short --junitxml=firmware-test-results.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-test-results
+          path: firmware-test-results.xml
+          retention-days: 14
+
   # ── ROS2 Humble Build & Test ─────────────────────────────────────────
   ros2-build:
     name: ROS2 Build & Test
@@ -130,7 +159,7 @@ jobs:
           DOCS_DIR="docs/engineering"
           MISSING=0
 
-          for i in $(seq -w 0 21); do
+          for i in $(seq -w 0 25); do
             PATTERN="${DOCS_DIR}/${i}-*.md"
             COUNT=$(ls -1 $PATTERN 2>/dev/null | wc -l)
             if [ "$COUNT" -eq 0 ]; then

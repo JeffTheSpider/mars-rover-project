@@ -1,0 +1,82 @@
+%% Mars Rover Phase 1 — Cable Routing Map (Top-Down View)
+%% Shows wire paths from electronics bay through body to wheels
+%% Render with: mmdc -i cable-routing-map.mmd -o cable-routing-map.svg -t dark
+%% Color key: Red=power, Blue=signal, Green=servo, Orange=encoder
+
+graph TD
+    subgraph BODY["Body Frame 440×260mm"]
+        subgraph FL_Q["FL Quadrant"]
+            FL_CH["Cable Channel FL"]
+        end
+        subgraph FR_Q["FR Quadrant"]
+            FR_CH["Cable Channel FR"]
+        end
+        subgraph RL_Q["RL Quadrant"]
+            RL_CH["Cable Channel RL"]
+            ETRAY["Electronics Tray"]
+        end
+        subgraph RR_Q["RR Quadrant"]
+            RR_CH["Cable Channel RR"]
+            KILLSW["Kill Switch"]
+        end
+    end
+
+    subgraph LEFT_SUS["Left Suspension"]
+        L_ROCKER["Left Rocker Arm<br/>(pivot at body)"]
+        L_BOGIE["Left Bogie Arm"]
+    end
+
+    subgraph RIGHT_SUS["Right Suspension"]
+        R_ROCKER["Right Rocker Arm<br/>(pivot at body)"]
+        R_BOGIE["Right Bogie Arm"]
+    end
+
+    subgraph WHEELS["Wheel Assemblies"]
+        W1["W1 FL<br/>Motor+Servo+Encoder"]
+        W2["W2 ML<br/>Motor only"]
+        W3["W3 RL<br/>Motor+Servo"]
+        W4["W4 RR<br/>Motor+Servo"]
+        W5["W5 MR<br/>Motor only"]
+        W6["W6 FR<br/>Motor+Servo+Encoder"]
+    end
+
+    %% Power cables (red/thick)
+    ETRAY ==>|"18AWG Power<br/>L298N #1 motor out"| RL_CH
+    ETRAY ==>|"18AWG Power<br/>L298N #2 motor out"| RR_CH
+
+    %% Left side routing
+    RL_CH -->|"22AWG × 6<br/>W3 motor+servo"| W3
+    RL_CH -->|"Through channel"| L_ROCKER
+    L_ROCKER -->|"22AWG × 2<br/>W2 motor"| L_BOGIE
+    L_BOGIE -->|"22AWG × 2"| W2
+    FL_CH -->|"22AWG × 9<br/>W1 motor+servo+encoder"| W1
+    RL_CH -->|"Cross channel"| FL_CH
+
+    %% Right side routing
+    RR_CH -->|"22AWG × 6<br/>W4 motor+servo"| W4
+    RR_CH -->|"Through channel"| R_ROCKER
+    R_ROCKER -->|"22AWG × 2<br/>W5 motor"| R_BOGIE
+    R_BOGIE -->|"22AWG × 2"| W5
+    FR_CH -->|"22AWG × 9<br/>W6 motor+servo+encoder"| W6
+    RR_CH -->|"Cross channel"| FR_CH
+
+    %% Per-wheel wire count (motor=2, servo=3 signal+shared VCC/GND, encoder=2 signal+shared VCC/GND)
+    %% W1: 2 motor + 3 servo + 2 encoder + 2 shared power = 9 wires
+    %% W2: 2 motor = 2 wires
+    %% W3: 2 motor + 3 servo = 5 wires
+    %% W4: 2 motor + 3 servo = 5 wires
+    %% W5: 2 motor = 2 wires
+    %% W6: 2 motor + 3 servo + 2 encoder + 2 shared power = 9 wires
+
+    style ETRAY fill:#89b4fa,color:#1e1e2e
+    style KILLSW fill:#f38ba8,color:#1e1e2e
+    style W1 fill:#a6e3a1,color:#1e1e2e
+    style W2 fill:#a6e3a1,color:#1e1e2e
+    style W3 fill:#a6e3a1,color:#1e1e2e
+    style W4 fill:#a6e3a1,color:#1e1e2e
+    style W5 fill:#a6e3a1,color:#1e1e2e
+    style W6 fill:#a6e3a1,color:#1e1e2e
+    style L_ROCKER fill:#fab387,color:#1e1e2e
+    style R_ROCKER fill:#fab387,color:#1e1e2e
+    style L_BOGIE fill:#fab387,color:#1e1e2e
+    style R_BOGIE fill:#fab387,color:#1e1e2e

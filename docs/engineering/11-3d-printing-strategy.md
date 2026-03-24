@@ -4,7 +4,7 @@
 **Date**: 2026-03-15
 **Purpose**: Define material selection, print settings, part segmentation, print orientation, heat-set insert specifications, and post-processing for all 3D printed rover components across all build phases.
 **Depends on**: EA-01 (Suspension), EA-05 (Weight), EA-08 (Phase 1 Spec)
-**See also**: `docs/references/3d-printing-strategy.md` and `docs/references/3d-printing-materials-research.md` — supplementary research with community project data, CNC Kitchen strength test numbers, and additional Ender 3 tips
+**See also**: `docs/references/3d-printing-strategy.md` and `docs/references/3d-printing-materials-research.md` — supplementary research with community project data, CNC Kitchen strength test numbers, and additional printing tips
 
 ---
 
@@ -32,31 +32,61 @@
 
 | Phase | Primary Material | Rationale |
 |-------|-----------------|-----------|
-| **Phase 1 (prototype)** | **PETG** | Best balance: strong layer adhesion, good impact resistance, easy to print, survives outdoor testing in UK weather. PLA is acceptable for initial indoor testing but will warp in sun. |
-| **Phase 2 (outdoor use)** | **ASA** for structural, **PETG** for body panels | ASA is the best outdoor material: excellent UV resistance, ABS-like properties without the brittleness. PETG for non-structural panels (food-safe for fridge area, easier to print). |
+| **Phase 1 (prototype)** | **PLA** | Low cost, easy to print on CTC Bizer (which only supports PLA), adequate strength for a 1.1 kg indoor prototype. Heat-set inserts work at 170-180°C. Phase 2 will upgrade to PETG/ASA for outdoor durability. |
+| **Phase 2 (outdoor use)** | **ASA** for structural, **PETG** for body panels | ASA is the best outdoor material: excellent UV resistance, ABS-like properties without the brittleness. PETG for non-structural panels (food-safe for fridge area, easier to print). Will require a PETG/ASA-capable printer (not the CTC Bizer). |
 | **Phase 3 (metal)** | **PETG/ASA** for retained plastic parts | Only camera housings, cable clips, and decorative elements remain plastic in Phase 3. |
 
-### 1.3 Why Not PLA?
+### 1.3 Why PLA for Phase 1
 
-PLA is unsuitable for the rover because:
-1. **Heat deflection at 52°C**: A black rover in UK summer sun can reach 50-60°C internally. PLA will soften and deform.
-2. **UV degradation**: PLA becomes brittle after 6-12 months of outdoor UV exposure.
-3. **Brittleness**: PLA shatters on impact — a rover tipping over or hitting an obstacle could crack structural parts.
-4. **PLA is acceptable only for**: Initial test prints, bearing test pieces, and throwaway prototypes that won't leave the desk.
+PLA is the right choice for the Phase 1 indoor prototype:
 
-### 1.4 Ender 3 Compatibility
+1. **CTC Bizer compatibility**: The CTC Bizer only supports PLA reliably. No heated chamber, no all-metal hotend — PLA prints perfectly on this machine.
+2. **Low cost**: PLA is the cheapest filament (~$18-22/kg). Phase 1 uses ~1 kg total, so <$25 in material.
+3. **Easy to print**: PLA is the most forgiving material — minimal warping, no enclosure needed, prints at 200-210°C with 60°C bed and 100% fan.
+4. **Adequate for indoor use**: At 1.1 kg total rover weight, PLA's 60 MPa tensile strength provides a 60x safety margin over the N20 motor loads. The prototype will operate indoors, so UV degradation and heat deflection (52°C) are not concerns.
+5. **Heat-set inserts work well**: Brass inserts install cleanly in PLA at 170-180°C (lower than the 220°C used for PETG).
+6. **Phase 2 upgrade path**: When the rover moves to full-scale outdoor operation, all structural parts will be reprinted in PETG/ASA on a more capable printer. PLA Phase 1 parts serve as proven templates.
 
-Charlie's printer is an Ender 3 (220×220×250mm bed). Material compatibility:
+**PLA limitations to be aware of**:
+- Will soften above 52°C — do not leave in direct sun or a hot car
+- Brittle under impact — handle with care, avoid drops
+- Not UV-stable — prototype is for indoor/sheltered use only
 
-| Material | Ender 3 Compatible? | Modifications Needed |
-|----------|---------------------|---------------------|
-| PLA | Yes, native | None |
-| PETG | Yes, native | Blue painter's tape or PEI sheet recommended |
-| ABS | Possible but poor | Needs enclosure (cardboard box works) |
-| ASA | Possible but poor | Needs enclosure + good ventilation (fumes) |
-| Nylon | Difficult | Needs all-metal hotend + enclosure + dry box |
+### 1.4 Printer: CTC Bizer (MakerBot Replicator 1 Dual Clone)
 
-**For Phase 2 ASA**: Build a simple cardboard/foam board enclosure around the Ender 3 to maintain chamber temperature ~40°C. Print near a window or with a fan exhausting fumes — ASA produces styrene vapour (mild, less than ABS but still requires ventilation).
+| Specification | Value |
+|---------------|-------|
+| **Model** | CTC 3D Bizer (MakerBot Replicator 1 Dual clone) |
+| **Build volume** | 225 × 145 × 150mm |
+| **Extruders** | Dual (use left nozzle only; park/remove right nozzle) |
+| **Firmware** | MakerBot/Sailfish (not Marlin) |
+| **File format** | **x3g** (NOT standard gcode) — requires GPX converter |
+| **Heated bed** | Yes |
+| **Material support** | PLA only (no all-metal hotend for PETG/ABS/ASA) |
+| **Bed adhesion** | Heated bed 60°C + glue stick or painter's tape; brim for large parts |
+| **Status** | Older machine, needs setup and calibration before first print |
+
+**Material compatibility**:
+
+| Material | CTC Bizer Compatible? | Notes |
+|----------|----------------------|-------|
+| PLA | **Yes** — primary material | 200-210°C nozzle, 60°C bed |
+| PETG | No | Requires all-metal hotend (PTFE tube degrades above 240°C) |
+| ABS/ASA | No | Requires enclosed chamber + all-metal hotend |
+| TPU | No | Requires direct drive extruder (CTC Bizer is Bowden-fed) |
+
+**x3g file format workflow**:
+
+The CTC Bizer uses x3g format (not standard gcode). The full workflow is:
+
+```
+Fusion 360 → STL → Cura (slice) → .gcode → GPX (convert) → .x3g → SD card → Print
+```
+
+GPX command: `gpx -m cr1d input.gcode output.x3g`
+GPX v2.6.8 installed at `C:\Users\charl\bin\gpx.exe`, machine type `cr1d` (CTC Replicator 1 Dual).
+
+**For Phase 2**: A PETG/ASA-capable printer will be needed (e.g., Bambu Lab A1, Prusa MK4, or similar). Budget ~$200-400 for a Phase 2 printer upgrade.
 
 ---
 
@@ -68,41 +98,45 @@ These parts bear mechanical loads and must resist bending/shear forces.
 
 | Setting | Value | Rationale |
 |---------|-------|-----------|
-| Material | PETG (Phase 1) / ASA (Phase 2) | Strength + outdoor durability |
+| Material | PLA (Phase 1) / ASA (Phase 2) | PLA adequate for 1.1 kg indoor prototype; ASA for outdoor durability |
 | Layer height | 0.2mm | Good strength, reasonable speed |
 | Nozzle | 0.4mm standard | Default, widely available |
 | Walls/perimeters | 4 (1.6mm wall thickness) | Primary load path is through walls |
 | Top/bottom layers | 5 (1.0mm) | Prevents puncture and adds rigidity |
 | Infill | 50% gyroid | High strength-to-weight ratio |
 | Print speed | 40-50 mm/s | Slower for better layer adhesion |
-| Temperature (PETG) | 235°C nozzle, 75°C bed | Standard PETG |
-| Temperature (ASA) | 250°C nozzle, 100°C bed | Requires enclosure |
-| Cooling fan | 30-50% (PETG), 0% first layers (ASA) | PETG needs some cooling; ASA needs minimal |
-| Retraction | 5mm at 40mm/s (Bowden) | Prevents stringing on PETG |
+| Temperature (PLA) | **200-210°C nozzle, 60°C bed** | Standard PLA on CTC Bizer |
+| Temperature (ASA) | 250°C nozzle, 100°C bed | Requires enclosure (Phase 2 printer) |
+| Cooling fan | **100% (PLA)**, 0% first layers (ASA) | PLA benefits from maximum cooling |
+| Retraction | 5mm at 40mm/s (Bowden) | Prevents stringing |
 
 ### 2.2 Body Panels (Cosmetic + Light Structural)
 
-Flat or curved panels that form the rover body shell.
+Flat or curved panels that form the rover body shell. Phase 1 body is split into 4 quadrants (FL/FR/RL/RR), each 220x130mm.
 
 | Setting | Value | Rationale |
 |---------|-------|-----------|
-| Material | PETG / ASA | Weather resistance |
+| Material | PLA (Phase 1) / ASA (Phase 2) | PLA for indoor prototype; ASA for weather resistance |
 | Layer height | 0.2mm | Good surface finish |
-| Walls | 3 (1.2mm) | Adequate for panels |
+| Walls | 4 (1.6mm / 4mm wall for Phase 1 body quadrants) | Thicker walls for rigidity and panel line grooves |
 | Top/bottom layers | 4 | Smooth surface |
 | Infill | 15-20% gyroid | Panels don't bear heavy loads |
 | Print speed | 50-60 mm/s | Faster for large flat parts |
+| Temperature (PLA) | **200-210°C nozzle, 60°C bed** | Standard PLA |
+| Cooling fan | **100%** | PLA benefits from maximum cooling |
 | Notes | Print face-down for best top surface | Bed side = exterior surface |
 
 ### 2.3 Wheels
 
 | Setting | Value | Rationale |
 |---------|-------|-----------|
-| Material | PETG (hub) | Impact-resistant |
+| Material | PLA (Phase 1 hub) | Adequate for indoor prototype; rigid PLA wheels with rubber O-ring traction bands |
 | Layer height | 0.2mm | Smooth tread surface |
 | Walls | 3 | Hub is reinforced by spokes |
 | Infill | 25% gyroid | Lightweight but rigid |
 | Print orientation | Flat (tread face on bed) | Strongest axis is radial |
+| Temperature (PLA) | **200-210°C nozzle, 60°C bed** | Standard PLA |
+| Cooling fan | **100%** | PLA benefits from maximum cooling |
 | Notes | D-shaft bore may need reaming | Print slightly undersized, ream to fit |
 
 ### 2.4 Connectors & Brackets (Heat-Set Insert Parts)
@@ -111,11 +145,13 @@ Small parts that join extrusions or hold bearings.
 
 | Setting | Value | Rationale |
 |---------|-------|-----------|
-| Material | PETG / ASA | Must hold heat-set inserts |
+| Material | PLA (Phase 1) / ASA (Phase 2) | PLA holds heat-set inserts well at 170-180°C |
 | Layer height | 0.16mm | Better resolution for insert holes |
 | Walls | 4-5 | Maximum wall around inserts |
 | Infill | 60-80% | Dense for insert retention |
 | Print speed | 35-40 mm/s | Precision over speed |
+| Temperature (PLA) | **200-210°C nozzle, 60°C bed** | Standard PLA |
+| Cooling fan | **100%** | PLA benefits from maximum cooling |
 | Top/bottom layers | 5 | Strength |
 
 ---
@@ -131,7 +167,7 @@ Small parts that join extrusions or hold bearings.
 | Thread | M3 (0.5mm pitch) |
 | Supplier | CNC Kitchen style / AliExpress bulk |
 | Cost | ~$0.06 each |
-| Pull-out strength (PETG) | 800-1,200N (per CNC Kitchen testing with proper hole sizing) |
+| Pull-out strength (PLA) | 600-1,000N (per CNC Kitchen testing with proper hole sizing) |
 | Torque resistance | ~2.5 N·m |
 
 ### 3.2 Hole Design for Inserts
@@ -151,7 +187,7 @@ Small parts that join extrusions or hold bearings.
 | Step | Detail |
 |------|--------|
 | Tool | Soldering iron with M3 insert tip (or standard conical tip) |
-| Temperature | **220°C for PETG**, 230°C for ASA |
+| Temperature | **170-180°C for PLA** (lower than PETG's 220°C to avoid melting too much surrounding material), 230°C for ASA |
 | Technique | Place insert on hole, press straight down with iron tip inside insert thread. Let the heat melt the surrounding plastic — do NOT force. Takes 2-3 seconds. |
 | Depth | Flush with surface or 0.2mm below |
 | Alignment | Press straight — crooked inserts compromise thread engagement |
@@ -176,28 +212,31 @@ In Cura or PrusaSlicer, use **modifier meshes** to set 100% infill in a cylinder
 
 ## 4. Part Segmentation Strategy
 
-### 4.1 Ender 3 Build Volume
+### 4.1 CTC Bizer Build Volume
 
 | Dimension | Value | Usable (with margins) |
 |-----------|-------|----------------------|
-| X | 220mm | 210mm |
-| Y | 220mm | 210mm |
-| Z | 250mm | 240mm |
+| X | 225mm | 215mm |
+| Y | 145mm | 135mm |
+| Z | 150mm | 140mm |
+
+**Note**: The CTC Bizer bed (225x145mm) is narrower than common printers like the Ender 3 (220x220mm). The 145mm Y dimension is the primary constraint — all parts must fit within this. The 150mm Z height is also relatively limited.
 
 ### 4.2 Phase 1 Segmentation (0.4 Scale)
 
-Body is 440mm × 260mm × 80mm — exceeds the 220mm bed in X direction.
+Body is 440mm × 260mm × 80mm — exceeds the 225×145mm CTC Bizer bed in both X and Y directions.
 
 | Part | Full Dimension | Segments | Segment Size | Join Method |
 |------|---------------|----------|-------------|-------------|
-| Body | 440×260×80 | 2 halves | 220×260×80 each | M3 bolts + heat-set inserts |
-| Rocker arm | 180mm long | 1 piece | Fits in 210mm | No segmentation |
-| Bogie arm | 120mm long | 1 piece | Fits easily | No segmentation |
-| Diff bar | 200mm long | 1 piece + rod | Adapters fit easily | Steel rod core |
+| Body | 440×260×80 | **4 quadrants (FL/FR/RL/RR)** | **220×130×80 each** | M3 bolts + heat-set inserts at seams |
+| Top deck | 440×260mm | **4 tiles (FL/FR/RL/RR)** | **220×130mm each** | Clips + alignment features |
+| Rocker arm | 180mm long | 2 halves (front + rear) | ~90mm each | M3 bolts through overlap |
+| Bogie arm | **180mm** long | 1 piece | Fits in 215mm | No segmentation |
+| Diff bar | 300mm rod | 1 piece + rod | Adapters fit easily | Steel rod core |
 | Wheels | 80mm dia | 1 piece each | Fits easily | No segmentation |
 | Steering brackets | 35×25×40 | 1 piece each | Small | No segmentation |
 
-**Total segments**: 2 (body halves) + 2 rockers + 2 bogies + 3 diff adapters + 6 wheels + 4 steering + 2 fixed mounts + 1 cover = **22 parts**
+**Total segments**: 4 (body quadrants) + 4 (top deck tiles) + 4 (rocker halves) + 2 bogies + 3 diff adapters + 6 wheels + 4 steering + 2 fixed mounts + 2 servo mounts + 1 electronics tray + 1 strain relief clip + 1 fuse holder + 1 switch mount = **~26 core parts** (see EA-08 and Phase 1 BOM for complete list with 46 total including hardware)
 
 ### 4.3 Phase 2 Segmentation (Full Scale)
 
@@ -335,7 +374,7 @@ Round holes printed horizontally (axis parallel to bed) tend to sag at the top d
 
 ### 6.1 Phase 1 Wheels (80mm diameter)
 
-**Design**: One-piece PETG wheel with integrated grousers (tread pattern).
+**Design**: One-piece PLA wheel with spoke lightening holes, rim retention lips, and rubber O-ring traction bands (PLA is too rigid for integrated grousers to provide traction; O-rings provide grip on hard surfaces). Optional TPU tire if a compatible printer becomes available.
 
 ```
 Cross-section:
@@ -385,8 +424,9 @@ Grouser pattern: **Chevron** (V-shaped, point facing forward)
 
 **TPU printing notes**:
 - TPU requires direct drive extruder (Bowden tube has too much flex)
-- If Ender 3 has Bowden: print grousers in PETG instead (less grip but printable)
-- Alternative: use rubber O-rings or strips glued to PETG wheel rim
+- CTC Bizer cannot print TPU (Bowden-fed). Phase 1 uses rigid PLA wheels with rubber O-ring traction bands instead.
+- Phase 2 TPU tire option: 86mm OD, 70mm bore, 32mm width, 48 radial tread ribs (see `cad/scripts/rover_tire.py`)
+- Alternative for any phase: use rubber O-rings (70mm ID x 3mm cross-section) in rim grooves for traction
 
 ### 6.3 Motor Shaft Interface
 
@@ -413,7 +453,7 @@ Grouser pattern: **Chevron** (V-shaped, point facing forward)
 | 2 | Trim stringing | Hot air gun or lighter (quick pass) |
 | 3 | Ream bearing holes | 22mm drill bit by hand | Ensure 608ZZ fits |
 | 4 | Ream shaft bores | Appropriate drill bit | Ensure motor shaft fits |
-| 5 | Install heat-set inserts | Soldering iron at 220°C | Before assembly |
+| 5 | Install heat-set inserts | Soldering iron at 170-180°C (PLA) / 220°C (PETG) | Before assembly |
 | 6 | Test-fit all joints | Dry assembly | Catch issues before final assembly |
 
 ### 7.2 UV Protection (Phase 2 Outdoor Parts)
@@ -450,7 +490,7 @@ For high-stress parts at full scale (16.7 kg rover weight):
 | Fiberglass tape (25mm woven) | Wrapped around pivot joints with epoxy | Moderate — wet layup | Phase 2 pivot bosses (shear loads) |
 | M3 threaded rod tensile core | Through-bolt running arm length | Easy — drill and insert | Alternative to aluminium tube core |
 
-**Not needed for Phase 1** — at 1.1 kg total weight, PETG alone is more than adequate.
+**Not needed for Phase 1** — at 1.1 kg total weight, PLA alone is more than adequate.
 
 **Reinforcement details (Phase 2)**:
 
@@ -478,9 +518,9 @@ The rover will encounter rain. Electronic bays need weatherproofing:
 ### 8.1 Phase 1 Total
 
 From EA-08 print summary:
-- 22 parts
-- ~65 hours total print time
-- ~1 kg filament needed
+- ~26 core parts (46 total including hardware)
+- ~69 hours total print time
+- ~1 kg PLA filament needed
 
 At an average of 6-8 hours of printing per day (overnight prints), Phase 1 printing takes **~8-10 days**.
 
@@ -530,7 +570,7 @@ The EA-06 budget allocated $60 for 4× PETG 1kg spools. The revised estimate is 
 
 | Failure Mode | Cause | Prevention |
 |-------------|-------|------------|
-| Warping (corners lift from bed) | Uneven cooling, poor adhesion | PEI sheet, 75°C bed, brim on large parts |
+| Warping (corners lift from bed) | Uneven cooling, poor adhesion | Glue stick or painter's tape, 60°C bed (PLA), brim on large parts |
 | Layer delamination | Under-extrusion, too fast, too cold | Calibrate e-steps, slow down, raise temp 5°C |
 | Bearing seat too tight | Print shrinkage | Test-print bearing block first, adjust ±0.1mm |
 | Bearing seat too loose | Over-extrusion | Reduce flow by 2-5%, reprint |
@@ -543,10 +583,11 @@ The EA-06 budget allocated $60 for 4× PETG 1kg spools. The revised estimate is 
 
 ### 9.1 Filament Drying
 
-Both PETG and ASA absorb moisture from air, degrading print quality:
+All filaments absorb moisture from air, degrading print quality (though PLA is less sensitive than PETG/ASA):
 
 | Material | Max moisture | Dry temp | Dry time | Storage |
 |----------|-------------|----------|----------|---------|
+| PLA | 0.10% | 45°C | 4-6 hours | Vacuum bag + desiccant (less critical than PETG) |
 | PETG | 0.08% | 65°C | 4-6 hours | Vacuum bag + desiccant |
 | ASA | 0.04% | 80°C | 4-6 hours | Vacuum bag + desiccant |
 | TPU | 0.15% | 50°C | 4-8 hours | Vacuum bag + desiccant |
@@ -579,4 +620,4 @@ The build sequence should match the assembly order from EA-08, starting with the
 
 ---
 
-*Document EA-11 v1.0 — 2026-03-15*
+*Document EA-11 v2.0 — 2026-03-23 (major rewrite: PLA for Phase 1, CTC Bizer printer, 4-quadrant body, x3g workflow)*

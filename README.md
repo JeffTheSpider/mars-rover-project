@@ -2,7 +2,7 @@
 
 A Mars rover-inspired outdoor robot designed for garden and park use. Features NASA-style rocker-bogie suspension, Ackermann steering, AI-powered navigation, robotic arms, solar charging, and a coffee table mode for stationary use.
 
-**Status:** Design phase complete (22 engineering analyses, EA-00 through EA-21). All software scaffolded, awaiting hardware for validation.
+**Status:** Design phase complete (25 engineering analyses, EA-00 through EA-24). All software scaffolded, awaiting hardware for validation.
 
 ## Key Specifications
 
@@ -23,7 +23,7 @@ A Mars rover-inspired outdoor robot designed for garden and park use. Features N
 ## Build Phases
 
 ### Phase 1 -- 0.4 Scale 3D Printed Prototype
-PETG 3D printed chassis at 40% scale. ESP32-S3 with 2x L298N motor drivers. Basic driving, steering, and WebSocket control via phone. 22 printed parts, approximately 65 hours of print time on an Ender 3.
+PLA 3D printed chassis at 40% scale. ESP32-S3 with 2x L298N motor drivers. Basic driving, steering, and WebSocket control via phone. 26 printed parts, approximately 69 hours of print time on a CTC Bizer.
 
 ### Phase 2 -- Full-Scale 3D Printed
 Full-size PETG/ASA chassis reinforced with aluminium extrusion. Adds Jetson Orin Nano Super for AI and autonomous navigation, LIDAR, stereo cameras, GPS, robotic arms, mini fridge, solar panels, and coffee table mode.
@@ -96,10 +96,10 @@ Mars Rover Project/
 | EA-05 | Weight Budget (per-component breakdown, centre of gravity analysis) |
 | EA-06 | Cost Breakdown (phase-by-phase BOM, $2,032 total) |
 | EA-07 | Open Source Review (Sawppy + JPL hybrid design approach) |
-| EA-08 | Phase 1 Prototype Spec (22 parts, all CAD dimensions, 65 hr print) |
+| EA-08 | Phase 1 Prototype Spec (26 parts, all CAD dimensions, 69 hr print) |
 | EA-09 | ESP32-S3 GPIO Pin Map (N16R8, Phase 1: 20 pins, Phase 2: 28 pins) |
-| EA-10 | Ackermann Steering (3 modes, min radius 993 mm, servo mapping) |
-| EA-11 | 3D Printing Strategy (PETG/ASA, settings, heat-set inserts, segmentation) |
+| EA-10 | Ackermann Steering (3 modes, min radius 397 mm at 0.4 scale, servo mapping) |
+| EA-11 | 3D Printing Strategy (PLA Phase 1, CTC Bizer, heat-set inserts, 4-quadrant body) |
 | EA-12 | UART Protocol (NMEA-style text, 115200 baud, 18 message types) |
 | EA-13 | ROS2 Architecture (node graph, Nav2, SLAM, EKF, YOLO, behaviour trees) |
 | EA-14 | Weatherproofing (IP44/IP54, zones, cable glands, thermal management) |
@@ -110,6 +110,9 @@ Mars Rover Project/
 | EA-19 | Phase 1 Wiring (complete wiring reference, connector strategy) |
 | EA-20 | CAD Preparation Guide (parametric dimensions, Fusion 360 assembly) |
 | EA-21 | Test Procedures (acceptance criteria, firmware/electronics/integration) |
+| EA-22 | Requirements Specification (formal FR/PR/DIM/ELEC/LEARN/DFT/MOD) |
+| EA-23 | Wire Harness (58-wire schedule, connectors, cable routing, colour codes) |
+| EA-24 | Robotic Arm Study (Phase 2 feasibility, 3-DOF concept, Phase 1 mount prep) |
 
 ## Key Features
 
@@ -148,7 +151,7 @@ Mars Rover Project/
 | Communication | UART (ESP32 <-> Jetson), WebSocket (Jetson <-> PWA) |
 | Phone App | Progressive Web App (Catppuccin Mocha, vanilla JS) |
 | CAD | Fusion 360 |
-| 3D Printing | PETG (Phase 1-2), ASA (outdoor parts), Ender 3 |
+| 3D Printing | PLA (Phase 1), PETG/ASA (Phase 2+), CTC Bizer |
 
 ## Getting Started
 
@@ -156,7 +159,7 @@ Phase 1 build instructions are documented in [EA-17: Phase 1 Build Guide](docs/e
 
 Prerequisites:
 - Arduino CLI v1.4.1+ with `esp32:esp32:esp32s3` board package
-- Ender 3 (or similar) 3D printer with PETG filament
+- CTC Bizer (or similar) 3D printer with PLA filament
 - ESP32-S3 DevKitC-1 N16R8 development board
 
 To compile the Phase 1 firmware:

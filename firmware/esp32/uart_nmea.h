@@ -14,12 +14,16 @@
 // Forward declarations from other modules
 extern bool estopActive;
 extern bool batteryCritical;
+extern bool roverArmed;
+extern uint8_t batterySpeedLimit;
 extern int8_t motorTarget[];
 extern float batteryVoltage;
 extern uint8_t batteryPercent;
 extern unsigned long lastCommandTime;
 void stopAllMotors();
 void setDrive(int8_t leftSpeed, int8_t rightSpeed);
+void armRover();
+void disarmRover();
 void setServoAngle(uint8_t idx, float angleDeg);
 void applyAckermann(float turnRadiusMM);
 void applyPointTurn(float rotSpeed);
@@ -31,7 +35,7 @@ void getAndResetEncoders(int32_t* w1, int32_t* w6);
 #define UART_BAUD        115200
 #define UART_RX_BUF_SIZE 256
 #define UART_TX_BUF_SIZE 256
-#define UART_WATCHDOG_MS 2000   // Stop motors if no command for 2s
+// Use CMD_TIMEOUT_MS from config.h (single source of truth)
 
 // Use Serial1 for Jetson UART (GPIO43 TX, GPIO44 RX per EA-09)
 // Use Serial for USB debug
@@ -153,13 +157,26 @@ void parseNMEACommand(const char* msg) {
   // Find first comma (start of data)
   const char* data = strchr(msg + 1, ',');
 
-  if (strcmp(cmd, "MOT") == 0 && data) {
+  if (strcmp(cmd, "ARM") == 0) {
+    // $ARM*XX — Arm the rover
+    armRover();
+    sendAck("ARM");
+
+  } else if (strcmp(cmd, "DSA") == 0) {
+    // $DSA*XX — Disarm the rover
+    disarmRover();
+    sendAck("DSA");
+
+  } else if (strcmp(cmd, "MOT") == 0 && data) {
     // $MOT,w1,w2,w3,w4,w5,w6*XX
     // Phase 1: 4 motor groups (LF, LR, RF, RR)
     lastCommandTime = millis();
     int w1, w2, w3, w4, w5, w6;
     if (sscanf(data, ",%d,%d,%d,%d,%d,%d", &w1, &w2, &w3, &w4, &w5, &w6) >= 4) {
-      if (!estopActive && !batteryCritical) {
+      if (!estopActive && !batteryCritical && roverArmed) {
+        // Apply battery speed limiting
+        w1 = w1 * batterySpeedLimit / 100;
+        w4 = w4 * batterySpeedLimit / 100;
         // Map 6 wheels to 4 motor groups
         setDrive((int8_t)constrain(w1, -100, 100),
                  (int8_t)constrain(w4, -100, 100));
@@ -276,7 +293,7 @@ void uartReceive() {
   }
 
   // Watchdog: stop motors if no UART command received recently
-  if (lastUartRxTime > 0 && millis() - lastUartRxTime > UART_WATCHDOG_MS) {
+  if (lastUartRxTime > 0 && millis() - lastUartRxTime > CMD_TIMEOUT_MS) {
     if (motorTarget[0] != 0 || motorTarget[2] != 0) {
       stopAllMotors();
       sendError(8, "watchdog_timeout");

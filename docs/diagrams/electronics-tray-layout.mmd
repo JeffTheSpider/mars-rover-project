@@ -1,0 +1,57 @@
+%% Mars Rover Phase 1 — Electronics Tray Layout (Top-Down View)
+%% 180×120mm tray with component positions and wire channels
+%% Render with: mmdc -i electronics-tray-layout.mmd -o electronics-tray-layout.svg -t dark
+
+graph TD
+    subgraph TRAY["Electronics Tray 180×120mm"]
+        direction TB
+
+        subgraph FRONT["Front (Y+)"]
+            BB["Mini Breadboard<br/>49×37mm<br/>X=+40, Y=+70"]
+        end
+
+        subgraph CENTRE["Centre"]
+            ESP["ESP32-S3 DevKitC-1<br/>71×27mm<br/>X=0, Y=+40"]
+        end
+
+        subgraph REAR_L["Rear Left"]
+            L1["L298N #1<br/>45×45mm<br/>X=-35, Y=-30"]
+        end
+
+        subgraph REAR_R["Rear Right"]
+            L2["L298N #2<br/>45×45mm<br/>X=+35, Y=-30"]
+        end
+
+        subgraph REAR_C["Rear Centre"]
+            LIPO["2S LiPo Cradle<br/>72×37mm<br/>X=0, Y=-70"]
+        end
+    end
+
+    subgraph CHANNELS["Wire Channels 10mm wide, 3mm deep"]
+        CH1["Ch1: ESP32 → L298N #1<br/>Signal wires left"]
+        CH2["Ch2: ESP32 → L298N #2<br/>Signal wires right"]
+        CH3["Ch3: ESP32 → Breadboard<br/>Sensor/debug wires"]
+        CH4["Ch4: LiPo → Rear Edge<br/>Power cables exit"]
+    end
+
+    subgraph EXITS["Cable Exit Slots 10×5mm"]
+        EL["Left wall exit<br/>Motor cables L"]
+        ER["Right wall exit<br/>Motor cables R"]
+        ERR["Rear wall exit<br/>Power cables"]
+    end
+
+    ESP -->|"Ch1"| L1
+    ESP -->|"Ch2"| L2
+    ESP -->|"Ch3"| BB
+    LIPO -->|"Ch4"| ERR
+    L1 --- EL
+    L2 --- ER
+
+    style ESP fill:#89b4fa,color:#1e1e2e
+    style L1 fill:#fab387,color:#1e1e2e
+    style L2 fill:#fab387,color:#1e1e2e
+    style LIPO fill:#f38ba8,color:#1e1e2e
+    style BB fill:#a6e3a1,color:#1e1e2e
+    style EL fill:#f9e2af,color:#1e1e2e
+    style ER fill:#f9e2af,color:#1e1e2e
+    style ERR fill:#f9e2af,color:#1e1e2e

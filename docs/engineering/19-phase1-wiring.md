@@ -16,7 +16,7 @@
                            ==========================
 
   +-----------+     +--------+     +--------+     +------------------+
-  | 2S LiPo   |     | 20A    |     | Kill   |     | Power            |
+  | 2S LiPo   |     | 5A     |     | Kill   |     | Power            |
   | 7.4V      +---->+ Blade  +---->+ Switch +---->+ Distribution     |
   | 2200mAh   |     | Fuse   |     | (rear) |     | (solder/terminal)|
   | XT60 plug |     +--------+     +--------+     +----+------+------+
@@ -54,7 +54,7 @@
 ```
 Battery 7.4V (2S LiPo, XT60)
     |
-    +-- 20A blade fuse (inline, ATC/ATO holder)
+    +-- 5A blade fuse (inline, ATC/ATO holder)
     |
     +-- Kill switch (panel-mount toggle, rear wall, 15mm hole)
     |
@@ -79,11 +79,11 @@ Battery 7.4V (2S LiPo, XT60)
 
 | Protection | Rating | Type | Location |
 |------------|--------|------|----------|
-| Main fuse | 20A | ATC blade fuse in holder | Inline between battery and kill switch |
+| Main fuse | 5A | ATC blade fuse in holder | Inline between battery and kill switch |
 | L298N internal | Built-in | Thermal shutdown | On each L298N board |
 | ESP32 | USB fuse on DevKit | Onboard | DevKit PCB |
 
-**Phase 1 simplification**: A single 20A main fuse is sufficient. The L298N boards have built-in thermal protection. Per-rail fuses (EA-15 section 3.2) are added in Phase 2 when the power system is more complex.
+**Phase 1 simplification**: A single 5A main fuse is sufficient. Phase 1 max stall draw is ~4.2A (all 6 N20 motors stalled), so 5A provides protection while allowing normal operation. The L298N boards have built-in thermal protection. Per-rail fuses (EA-15 section 3.2) are added in Phase 2 when the power system is more complex.
 
 ### 1.4 L298N Jumper Configuration
 
@@ -153,8 +153,8 @@ We need PWM speed control, so ENA/ENB connect to ESP32 GPIO.
 | 46 | E-stop button | Input | Tactile button to 3.3V | 22 AWG | Dupont | Input-only, internal pull-down |
 | 47 | *Spare* | -- | -- | -- | -- | |
 | 48 | Encoder W6 Ch-B | Input | FR motor encoder B | 22 AWG | Dupont | PCNT, optional |
-| 5V | Power input | -- | L298N #1 5V output | 18 AWG | Dupont/screw | Powers ESP32 via VIN/5V pin |
-| GND | Ground | -- | Common ground bus | 18 AWG | Dupont/screw | Connect to GND bus |
+| 5V | Power input | -- | L298N #1 5V output | 22 AWG | Dupont/screw | Powers ESP32 via VIN/5V pin |
+| GND | Ground | -- | Common ground bus | 22 AWG | Dupont/screw | Connect to GND bus |
 
 ### 2.2 Pin Usage Summary
 
@@ -165,7 +165,7 @@ We need PWM speed control, so ENA/ENB connect to ESP32 GPIO.
 - **E-stop**: 1 pin (GPIO 46)
 - **Status LED**: 1 pin (GPIO 0)
 - **USB**: 2 pins (GPIO 19-20)
-- **Spare**: 5 pins (GPIO 3, 17, 18, 21, 45, 47)
+- **Spare**: 6 pins (GPIO 3, 17, 18, 21, 45, 47)
 - **Reserved (PSRAM)**: 12 pins (GPIO 26-37)
 
 ---
@@ -229,7 +229,26 @@ We need PWM speed control, so ENA/ENB connect to ESP32 GPIO.
          motor leads           motors in parallel
 ```
 
-### 3.3 Motor Direction Control Truth Table
+### 3.3 Motor Noise Suppression Capacitors
+
+Install 100nF (0.1uF) ceramic capacitor across each motor's terminal pair (6x motors = 6 caps minimum). Solder directly to motor pins or as close as possible. Suppresses PWM noise that can affect ADC readings and WiFi.
+
+```
+EACH N20 MOTOR (x6):
+
+    Motor terminal A ----+----[100nF]----+---- Motor terminal B
+                         |               |
+                    to L298N OUT      to L298N OUT
+
+    Capacitor type: 100nF (104) ceramic disc or MLCC
+    Voltage rating: 25V minimum (50V preferred)
+    Placement: Solder directly across motor solder tabs
+    If motor has 3 terminals: also add 100nF from each power terminal to case/ground tab
+```
+
+**Why this matters**: N20 DC motors generate significant electrical noise from brush commutation. Without suppression caps, this noise couples into the ESP32's ADC (causing erratic battery readings), disrupts WiFi (causing WebSocket disconnects), and can cause servo jitter.
+
+### 3.4 Motor Direction Control Truth Table
 
 | IN1 | IN2 | Motor Action |
 |-----|-----|-------------|
@@ -240,7 +259,7 @@ We need PWM speed control, so ENA/ENB connect to ESP32 GPIO.
 
 ENA/ENB control speed via PWM duty cycle (0-255 for 8-bit resolution).
 
-### 3.4 Motor Wire Routing
+### 3.5 Motor Wire Routing
 
 ```
 ROUTING FROM BODY TO WHEELS:
@@ -309,10 +328,38 @@ Each SG90 servo has 3 wires:
 
 The 4 SG90 servos can draw up to 2.6A peak (4 x 0.65A if all stalling simultaneously). The L298N 78M05 regulator is rated for 0.5A continuous, 1A peak — this is NOT enough for all servos.
 
-**Solution**: Use a dedicated 5V BEC or power the servos from a separate 5V regulator. For Phase 1 initial testing:
+**CRITICAL: The L298N's onboard 78M05 regulator is rated 0.5A continuous, but 4x SG90 servos can draw up to 2.6A peak. Add a dedicated 5V 3A buck converter module (XL4015 or similar, ~GBP 3) powered directly from the battery. Connect all servo VCC lines to BEC output, NOT to L298N 5V pin.**
+
+```
+RECOMMENDED 5V BEC WIRING:
+
+    Battery 7.4V ----[5A Fuse]----[Kill Switch]----+
+                                                    |
+                                              +-----+-----+
+                                              |           |
+                                           L298N #1    L298N #2
+                                           (motors)    (motors)
+                                              |
+                                              +----[XL4015 5V 3A BEC]----+
+                                                       |                  |
+                                                    5V OUT              GND
+                                                       |                  |
+                                              +--------+--------+        |
+                                              |        |        |        |
+                                           SG90 FL  SG90 FR  SG90 RL    |
+                                              |        |     SG90 RR    |
+                                              |        |        |        |
+                                              +--------+--------+--------+
+                                                     Common GND
+
+    XL4015 module: Vin 7.4V, Vout 5.0V (adjust trim pot), Imax 3A
+    Approximate cost: GBP 2-3 (eBay/AliExpress)
+```
+
+**For Phase 1 initial bench testing only** (rover on blocks, brief runs):
 - Only 1-2 servos move at a time in normal use (~1A total)
 - The L298N 5V output can handle this for basic testing
-- If you see servos jittering or ESP32 brownout, add a dedicated 5V 3A buck converter (XL4015 module, ~$3) fed directly from the battery 7.4V
+- If you see servos jittering or ESP32 brownout, the BEC is mandatory before further testing
 
 ---
 
@@ -344,7 +391,16 @@ BATTERY VOLTAGE MONITORING CIRCUIT:
     PLACEMENT: Build this on the mini breadboard.
     Solder R1 and R2 directly if desired, or use breadboard.
     Keep leads short to reduce noise.
-    Add 100nF ceramic capacitor from GPIO14 to GND for ADC filtering.
+
+    ADC FILTERING CAPACITOR (REQUIRED):
+    Add 100nF ceramic cap between GPIO14 (battery sense ADC) and GND for ADC filtering.
+    This smooths out PWM noise from motors and provides a stable ADC reading.
+    Solder directly between the voltage divider midpoint and GND, as close
+    to the ESP32 GPIO14 pin as possible.
+
+    +---- GPIO14 ----+
+    |                 |
+    [4.7kR to GND]  [100nF to GND]
 ```
 
 ### 5.2 Encoder Wiring (Optional for Phase 1)
@@ -476,16 +532,21 @@ UART CONNECTION (Phase 2):
 | Application | Connector | Rating | Notes |
 |-------------|-----------|--------|-------|
 | Battery to rover | XT60 (male on battery, female on rover) | 60A continuous | Gold-plated, solder connection |
-| Battery to fuse | Inline blade fuse holder | 20A | ATC/ATO standard automotive fuse |
-| Fuse to kill switch | Ring terminals or spade connectors | 20A | 14 AWG crimp terminals |
-| Kill switch to L298N | Screw terminals on L298N | 20A | 14 AWG stripped wire |
+| Battery to fuse | Inline blade fuse holder | 5A | ATC/ATO standard automotive fuse |
+| Fuse to kill switch | Ring terminals or spade connectors | 5A+ | 14 AWG crimp terminals |
+| Kill switch to L298N | Screw terminals on L298N | 5A+ | 14 AWG stripped wire |
 | L298N motor outputs | Screw terminals on L298N | 2A per channel | 16 AWG stripped wire |
 | Motor leads | Direct solder | -- | Solder wires directly to N20 motor tabs |
 | ESP32 to L298N logic | Dupont female-female | Signal level | Removable for debugging |
 | ESP32 to servo signal | Dupont female-female | Signal level | Servo header is male |
-| Servo power/ground | Dupont or breadboard | 1A per servo | From 5V bus |
+| Servo power/ground | Dupont or breadboard | 1A per servo | From 5V BEC (see 4.4) |
 | Encoder signals | Dupont female-female | Signal level | If encoders installed |
 | Voltage divider | Breadboard or solder | -- | Resistors on mini breadboard |
+| Motor-to-arm wiring | JST-XH 2-pin | 2A | Disconnect at body for arm removal |
+| Servo extension | JST-XH 3-pin | 1A | Disconnect at arm pivot for servicing |
+| BEC output to servo bus | JST-VH 2-pin | 3A | Positive-locking for main 5V distribution |
+
+**JST Connector Notes**: Use JST-XH (2.5mm pitch) connectors at every point where wires cross a removable boundary (body-to-arm pivot, electronics tray). This allows arms to be detached for repair without desoldering. Pre-crimp 22 AWG wires into JST-XH housings. Use different pin counts or keying to prevent misconnection: 2-pin for motor pairs, 3-pin for servo extensions, 4-pin for encoder cables. Label both halves of each connector pair with matching numbers (M1, M2, ... S1, S2, ... E1, E2).
 
 ### 8.2 Development Phase Philosophy
 
@@ -633,7 +694,7 @@ Perform ALL of these checks with a multimeter BEFORE connecting the battery for 
 - [ ] L298N ENA/ENB jumpers REMOVED
 - [ ] L298N 12V jumper ON
 - [ ] XT60 connector on battery lead is female (battery side is male)
-- [ ] Fuse installed in holder (20A blade fuse)
+- [ ] Fuse installed in holder (5A blade fuse)
 - [ ] Kill switch in OFF position
 
 **Step 2: Continuity Checks (multimeter in continuity/beep mode)**
@@ -722,7 +783,7 @@ Use this checklist during assembly. Check off each connection as you make it.
 
 ### Power Connections
 - [ ] Battery XT60 female soldered to 14 AWG leads (red=+, black=-)
-- [ ] 20A blade fuse holder inline on positive lead
+- [ ] 5A blade fuse holder inline on positive lead
 - [ ] Kill switch wired inline on positive lead (after fuse)
 - [ ] Positive lead splits to L298N #1 VCC and L298N #2 VCC
 - [ ] Negative lead connects to common GND bus

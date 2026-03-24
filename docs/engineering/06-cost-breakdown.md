@@ -17,12 +17,12 @@
 | 2 | N20 DC gearmotors (6V, 100RPM) | With encoder | 6 | $3 | $18 | AliExpress |
 | 3 | SG90 micro servos | 1.8 kg·cm | 4 | $2 | $8 | AliExpress |
 | 4 | L298N motor drivers | Dual H-bridge | 2 | $3 | $6 | AliExpress |
-| 5 | 2S LiPo 2200mAh | 7.4V, XT30 | 1 | $12 | $12 | HobbyKing/Amazon |
+| 5 | 2S LiPo 2200mAh | 7.4V, XT60 | 1 | $12 | $12 | HobbyKing/Amazon |
 | 6 | LiPo charger | 2S balance charger | 1 | $8 | $8 | Amazon |
-| 7 | PETG filament | 1kg spool | 1 | $20 | $20 | Amazon | <!-- Aligned with EA-08 (1kg PETG rec.) and EA-17 ($20 estimate) -->
-| 8 | 608ZZ bearings (Phase 1 pivot) | 8mm bore, or 3mm mini | 10 | $0.50 | $5 | Amazon |
+| 7 | PLA filament | 1kg spool | 1 | $20 | $20 | Amazon | <!-- Aligned with EA-08 (1kg PLA rec.) and EA-17 ($20 estimate) -->
+| 8 | 608ZZ bearings (Phase 1 pivot) | 8mm bore, 22mm OD | 11 (buy 12) | $0.50 | $6 | Amazon |
 | 9 | M3 fastener set | Bolts, nuts, washers | 1 set | $6 | $6 | Amazon |
-| 10 | M3 heat-set inserts | Brass, for PETG | 50 | $0.06 | $3 | AliExpress |
+| 10 | M3 heat-set inserts | Brass, for PLA | 50 | $0.06 | $3 | AliExpress |
 | 11 | Breadboard + jumper wires | For prototyping | 1 | $5 | $5 | Amazon |
 | 12 | Switch + wiring | Power switch, wire | 1 | $3 | $3 | Amazon |
 | | | | | **Phase 1 Total** | **$102** | |

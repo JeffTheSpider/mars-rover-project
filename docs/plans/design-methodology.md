@@ -305,7 +305,7 @@ Before exporting STL for printing:
 - [ ] Wall thickness meets minimum (3mm structural, 2mm cosmetic)
 - [ ] No unsupported overhangs > 45 degrees (or supports added in slicer)
 - [ ] Bolt holes have clearance (3.4mm for M3 through-holes, 8.4mm for M8)
-- [ ] Parts fit on print bed (220mm x 220mm for Ender 3)
+- [ ] Parts fit on print bed (225mm x 145mm for CTC Bizer)
 - [ ] Mating surfaces aligned (front/rear body halves, arm joints)
 - [ ] Cable routing channels present where needed
 - [ ] Part labelled (L/R, top/bottom) in the model or with a flat for marking

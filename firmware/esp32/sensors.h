@@ -21,6 +21,14 @@ float battSamples[BATT_SAMPLES];
 uint8_t battSampleIdx = 0;
 bool battSamplesFull = false;
 
+// --- Battery-based speed limiting ---
+uint8_t batterySpeedLimit = 100;  // Max speed percent based on battery state
+
+// --- Stall detection ---
+bool stallDetected = false;
+int32_t lastEncoderSnapshot[2] = {0, 0};
+unsigned long stallCheckStart = 0;
+
 // --- Encoders ---
 volatile int32_t encoderCount[2] = {0, 0};  // W1, W6
 
@@ -95,11 +103,60 @@ void updateBattery() {
   batteryWarning = (batteryVoltage <= BATT_WARN_V);
   batteryCritical = (batteryVoltage <= BATT_CUTOFF_V);
 
+  // Battery-based speed limiting (EA-22 FR-06)
   if (batteryCritical) {
+    batterySpeedLimit = BATT_CRIT_SPEED_PCT;
     stopAllMotors();
     Serial.println("[BATT] CRITICAL — motors stopped!");
   } else if (batteryWarning) {
-    Serial.println("[BATT] Warning — low voltage");
+    batterySpeedLimit = BATT_WARN_SPEED_PCT;
+    Serial.println("[BATT] Warning — speed limited to 50%");
+  } else {
+    batterySpeedLimit = 100;
+  }
+}
+
+// --- Stall Detection (EA-22 FR-06) ---
+// If encoders show no motion while PWM is above threshold, motor is stalled
+void checkStall(int8_t* motorCurrent) {
+  // Only check if motors are actually being driven
+  bool motorsRunning = false;
+  for (int i = 0; i < 4; i++) {
+    if (abs(motorCurrent[i]) > (STALL_PWM_THRESH * 100 / 255)) {
+      motorsRunning = true;
+      break;
+    }
+  }
+
+  if (!motorsRunning) {
+    stallDetected = false;
+    stallCheckStart = millis();
+    lastEncoderSnapshot[0] = encoderCount[0];
+    lastEncoderSnapshot[1] = encoderCount[1];
+    return;
+  }
+
+  // Check if encoders have changed
+  noInterrupts();
+  int32_t c0 = encoderCount[0];
+  int32_t c1 = encoderCount[1];
+  interrupts();
+
+  if (c0 != lastEncoderSnapshot[0] || c1 != lastEncoderSnapshot[1]) {
+    // Movement detected — reset stall timer
+    stallCheckStart = millis();
+    lastEncoderSnapshot[0] = c0;
+    lastEncoderSnapshot[1] = c1;
+    stallDetected = false;
+    return;
+  }
+
+  // No movement — check timeout
+  if (millis() - stallCheckStart >= STALL_DETECT_MS) {
+    if (!stallDetected) {
+      stallDetected = true;
+      Serial.println("[STALL] Motor stall detected — reducing power");
+    }
   }
 }
 

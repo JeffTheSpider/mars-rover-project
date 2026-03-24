@@ -24,13 +24,13 @@ The rover operates outdoors near people, pets, and property. Safety design follo
 ```
 Layer 1: HARDWARE (always active, no software dependency)
   ├── Physical E-stop button (mushroom, red, panel-mount)
-  ├── Main fuse (20A, inline with battery)
+  ├── Main fuse (5A Phase 1 / 20A Phase 2, inline with battery)
   ├── Per-rail fuses (motor, servo, compute)
   └── Reverse polarity protection (diode or P-FET)
 
 Layer 2: ESP32 FIRMWARE (runs independently of Jetson)
   ├── Task watchdog timer (5s timeout)
-  ├── UART command timeout (200ms → stop motors)
+  ├── Command timeout (Phase 1: 2000ms WebSocket / Phase 2: 200ms UART → stop motors)
   ├── Battery undervoltage cutoff (3.2V/cell)
   ├── Motor current limiting (software PWM cap)
   ├── Speed ramping (no instant full-speed)
@@ -74,7 +74,7 @@ Layer 4: OPERATIONAL
 
 | Fuse | Rating | Location | Protects |
 |------|--------|----------|----------|
-| Main | 20A blade fuse | Battery output | Entire rover from short circuit |
+| Main | 5A blade fuse (Phase 1) / 20A (Phase 2) | Battery output | Entire rover from short circuit |
 | Motor rail | 10A | After buck converter (12V) | Motor drivers from overcurrent |
 | Servo rail | 5A | After BEC (6V) | PCA9685 + servos |
 | Compute rail | 3A | After buck (5V) | Jetson + ESP32 + sensors |
@@ -102,7 +102,13 @@ If polarity is correct, the P-FET's body diode conducts initially, pulling the g
 
 ```c
 // Task watchdog — resets if main loop doesn't feed within 5 seconds
-esp_task_wdt_init(5, true);  // 5s timeout, panic=true (resets ESP32)
+// ESP32 Arduino Core v3.x struct-based API (v2.x esp_task_wdt_init(5, true) is deprecated)
+esp_task_wdt_config_t wdt_config = {
+    .timeout_ms = 5000,
+    .idle_core_mask = 0,
+    .trigger_panic = true
+};
+esp_task_wdt_init(&wdt_config);
 esp_task_wdt_add(NULL);      // Add current (loopTask)
 
 void loop() {
@@ -113,15 +119,23 @@ void loop() {
 
 If the main loop hangs (infinite loop, crash, deadlock), the watchdog triggers after 5 seconds and resets the ESP32. On reboot, all GPIO pins default to INPUT/LOW — motors stop naturally (no PWM = no power).
 
-### 4.2 UART Command Timeout
+### 4.2 Command Timeout
 
-From EA-12: if no MOT or PNG command is received within 200ms, ESP32 stops all motors.
+The command timeout value differs by phase and communication channel:
+
+| Phase | Channel | Timeout | Constant | Rationale |
+|-------|---------|---------|----------|-----------|
+| Phase 1 | WebSocket (WiFi) | 2000ms | `CMD_TIMEOUT_MS` in config.h | WiFi latency + phone app heartbeat interval; 200ms would cause nuisance stops |
+| Phase 2 | UART binary (Jetson) | 200ms | `COMMAND_TIMEOUT_MS` in EA-12 | Wired link, 50Hz command rate, fast failure detection |
+
+If no MOT or PNG command is received within the timeout period, ESP32 stops all motors.
 
 ```c
-#define COMMAND_TIMEOUT_MS 200
+// Phase 1: CMD_TIMEOUT_MS = 2000 (WebSocket, defined in config.h)
+// Phase 2: COMMAND_TIMEOUT_MS = 200 (UART binary, defined in config.h)
 
 void checkCommandTimeout() {
-    if (millis() - lastCommandTime > COMMAND_TIMEOUT_MS) {
+    if (millis() - lastCommandTime > CMD_TIMEOUT_MS) {
         if (motorTarget[0] != 0 || motorTarget[2] != 0) {
             stopAllMotors();
             sendError(8, "command_timeout");
@@ -130,7 +144,7 @@ void checkCommandTimeout() {
 }
 ```
 
-This handles: Jetson crash, UART cable disconnect, software freeze on Jetson side.
+This handles: Jetson crash (Phase 2), UART cable disconnect (Phase 2), WiFi dropout (Phase 1), phone app crash (Phase 1).
 
 ### 4.3 Battery Undervoltage
 
@@ -380,7 +394,7 @@ Phase 1 is a small, lightweight (1.1 kg) prototype with limited speed. Safety is
 | Watchdog timer | Yes (5s) |
 | Battery undervoltage | Yes (3-stage) |
 | Speed ramping | Yes |
-| Command timeout | Yes (2s for WebSocket disconnect) |
+| Command timeout | Yes (2000ms CMD_TIMEOUT_MS for WebSocket disconnect) |
 | Obstacle avoidance | No (no sensors — manual driving only) |
 | Tilt protection | No (no IMU) |
 | Geofence | No (no GPS) |

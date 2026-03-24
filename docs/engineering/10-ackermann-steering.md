@@ -387,6 +387,8 @@ Standard servo PWM:
 Microseconds per degree = (2500 - 500) / 180 = 11.11 μs/°
 ```
 
+**SG90 Note**: Safe pulse range is 544-2400us (narrower than the generic 500-2500us). Using pulses below 544us risks mechanical damage. See `config.h` SERVO_MIN_US. With the SG90 safe range, the effective microseconds per degree is (2400 - 544) / 180 = 10.31 us/deg.
+
 ### 7.2 Steering Angle to Servo PWM
 
 Define steering angle convention:

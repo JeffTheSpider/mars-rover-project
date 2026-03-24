@@ -11,16 +11,16 @@
 
 | Parameter | Full Scale | 0.4 Scale | Notes |
 |-----------|-----------|-----------|-------|
-| Body length | 1100mm | 440mm | Fits 4 segments on 150×200mm bed |
+| Body length | 1100mm | 440mm | Fits 4 quadrants on 225×145mm bed |
 | Body width | 650mm | 260mm | Fits 2 segments across width |
 | Body height (driving) | 1050mm | 420mm | Without mast (no mast in Phase 1) |
 | Wheelbase (front-rear) | 900mm | 360mm | Per-side, front wheel to rear wheel |
 | Track width (centre-centre) | 700mm | 280mm | Wheel centre to wheel centre |
 | Wheel diameter | 200mm | 80mm | Printable in one piece |
 | Wheel width | 80mm | 32mm | Tread included |
-| Rocker arm length | 450mm | 180mm | Pivot to front wheel axle |
-| Bogie arm length (total) | 300mm | 120mm | Bogie pivot to each wheel = 60mm |
-| Differential bar length | 500mm | 200mm | Centre to rocker pivot |
+| Rocker arm length | 675mm | 270mm | Full span: bogie pivot through body pivot to front wheel (180mm front + 90mm rear) |
+| Bogie arm length (total) | 450mm | 180mm | Bogie pivot to each wheel = 90mm |
+| Differential bar length | 500mm | 200mm nominal (300mm rod) | Centre to rocker pivot. Buy 300mm rod for 25mm overhang each side. |
 | Ground clearance | 150mm | 60mm | Under body frame |
 | Target weight | — | ~1.1 kg | EA-05 estimate |
 | Target speed | 5 km/h | 2 km/h | Reduced for safety at scale |
@@ -70,7 +70,7 @@ The body is a rectangular box frame at 0.4 scale: 440mm × 260mm × 80mm tall. A
 | Body rear-left | 220×130×80mm | Flat (XY plane) | Includes left rear electronics bay |
 | Body rear-right | 220×130×80mm | Flat (XY plane) | Includes right rear electronics bay |
 
-Each segment fits within the CTC printer's 150×200mm bed with margin. The body is split along both the X (left/right) and Y (front/rear) centre lines.
+Each segment fits within the CTC Bizer's 225×145mm bed. All four quadrants are 220×130mm (Y_SPLIT = 0mm, equal split) and fit flat on the bed. The body is split along both the X (left/right) and Y (front/rear) centre lines.
 
 **Join method**: M3 bolts through heat-set inserts at all seams. 6× M3×12mm bolts along the Y-axis (front/rear) join line, 6× M3×12mm bolts along the X-axis (left/right) join line, plus 4× at the centre cross junction (22 bolts total for body joins).
 
@@ -129,7 +129,7 @@ Side View (left rocker):
 
 | Parameter | Value |
 |-----------|-------|
-| Total length | 180mm (body pivot to front wheel axle) |
+| Total length | 270mm full span (body pivot to front wheel = 180mm, body pivot to bogie pivot = 90mm). Must be printed in 2 halves — see Section 4.3. |
 | Cross-section | Rectangular tube: 20mm × 15mm outer, 3mm walls |
 | Body pivot end | 8mm bore for 608ZZ bearing, 22mm OD boss |
 | Bogie pivot mount | 8mm bore for 608ZZ bearing, 22mm OD boss |
@@ -152,7 +152,47 @@ Bearing: 608ZZ (8mm ID × 22mm OD × 7mm W)
 Shaft: M8 bolt through body frame, nyloc nut
 ```
 
-### 4.3 Rocker Print Settings
+### 4.3 Two-Piece Split (Bed Fit)
+
+The full 270mm rocker arm exceeds the CTC Bizer bed (225×145mm) in all orientations, including diagonal (268mm max). The arm is split into two pieces joined by a half-lap joint at the body pivot (Y=0):
+
+```
+Split Design:
+
+    FRONT HALF (180mm)          REAR HALF (105mm)
+    ┌─────────────────┐         ┌──────────┐
+    │ Front wheel     │ Joint   │  Bogie   │
+    │ Y=+180mm        │◄──────►│  Y=-90mm  │
+    │                 │ at Y=0  │          │
+    └─────────────────┘         └──────────┘
+
+Half-lap joint detail (side view):
+
+    Front half         Rear half
+    ┌────────┬────┐   ┌────┬──────────┐
+    │        │    │   │    │          │
+    │ full   │half│   │half│  full    │
+    │ height │ht  │   │ht  │  height  │
+    │        │    │   │    │          │
+    └────────┴────┘   └────┴──────────┘
+             ← 15mm overlap →
+         2× M3 bolts through joint
+```
+
+| Piece | Length | Fits Bed? |
+|-------|--------|-----------|
+| Front half (Y=0 to Y=+180mm + 15mm overlap) | ~195mm | YES (225mm bed) |
+| Rear half (Y=-90mm to Y=0 + 15mm overlap) | ~105mm | YES |
+
+The half-lap joint provides:
+- Shear resistance (interlocking step prevents vertical movement)
+- 2× M3 bolts through the overlap zone for tension
+- Self-alignment during assembly
+- The shared M8 body pivot bolt adds additional constraint
+
+**Qty**: 4 pieces total (2 front halves + 2 rear halves) instead of 2 whole arms.
+
+### 4.4 Rocker Print Settings
 
 | Setting | Value |
 |---------|-------|
@@ -163,7 +203,7 @@ Shaft: M8 bolt through body frame, nyloc nut
 | Estimated print time | ~4 hrs each |
 | Estimated weight | ~35g each (70g total) |
 
-### 4.4 Reinforcement
+### 4.5 Reinforcement
 
 At 0.4 scale with ~1 kg total weight, the rocker arms experience very low loads (~0.17 kg per wheel). No metal reinforcement needed — PLA at 50% infill is more than sufficient.
 
@@ -190,7 +230,7 @@ Side View (left bogie):
 
          [Bogie Pivot] (connects to rocker)
          /            \
-    [60mm]           [60mm]
+    [90mm]           [90mm]
        |                |
       W2              W3
    (middle)          (rear)
@@ -198,8 +238,8 @@ Side View (left bogie):
 
 | Parameter | Value |
 |-----------|-------|
-| Total length | 120mm (W2 axle to W3 axle) |
-| Pivot to each wheel | 60mm |
+| Total length | 180mm (W2 axle to W3 axle) |
+| Pivot to each wheel | 90mm |
 | Cross-section | 15mm × 12mm outer, 2.5mm walls |
 | Pivot bore | 8mm for 608ZZ bearing |
 | Wheel axle mounts | Motor mounting face with 4× M3 holes |
@@ -464,9 +504,10 @@ All pivot points use 608ZZ bearings (the same as skateboard bearings — cheap a
 | Steering pivot FL | 1 | M8 bolt | Wheel turns for steering |
 | Steering pivot FR | 1 | M8 bolt | Wheel turns for steering |
 | Steering pivot RL | 1 | M8 bolt | Wheel turns for steering |
-| **Total** | **10** | | $5 total cost |
+| Steering pivot RR | 1 | M8 bolt | Wheel turns for steering |
+| **Total** | **11** | | ~$5.50 total cost |
 
-Note: Phase 1 uses 10 bearings (not 19 like Phase 2). Phase 2 adds bearings for wheel hubs, arm joints, and mast — not needed at 0.4 scale.
+Note: Phase 1 uses 11 bearings (not 19 like Phase 2). Buy 12 to have a spare in case of fit issues. Phase 2 adds bearings for wheel hubs, arm joints, and mast — not needed at 0.4 scale.
 
 ### 10.3 Bearing Press-Fit Dimensions
 
@@ -548,7 +589,7 @@ Top View — Electronics Layout:
 | M8 × 30mm hex bolt | M8 | 4 | Steering pivot shafts |
 | M8 nyloc nut | M8 | 8 | Lock nuts for all M8 pivots |
 | M8 washer | M8 | 16 | 2 per pivot (both sides of bearing) |
-| M3 × 12mm socket cap | M3 | 30 | Body join, standoffs, brackets |
+| M3 × 12mm socket cap | M3 | 34 | Body join, standoffs, brackets, rocker arm lap joints (4) |
 | M3 × 8mm socket cap | M3 | 20 | Electronics mounting, motor clips |
 | M3 nut | M3 | 30 | General assembly |
 | M3 washer | M3 | 30 | General assembly |
@@ -580,8 +621,8 @@ Top View — Electronics Layout:
 | 3 | Body rear-left segment | 1 | PLA | 7 hrs | 110g |
 | 4 | Body rear-right segment | 1 | PLA | 7 hrs | 110g |
 | 5 | Top deck cover | 1 | PLA | 4 hrs | 60g |
-| 6 | Left rocker arm | 1 | PLA | 4 hrs | 35g |
-| 7 | Right rocker arm | 1 | PLA | 4 hrs | 35g |
+| 6 | Rocker arm front half (×2) | 2 | PLA | 1.5 hrs ea | 18g ea |
+| 7 | Rocker arm rear half (×2) | 2 | PLA | 1 hr ea | 10g ea |
 | 8 | Left bogie arm | 1 | PLA | 2.5 hrs | 20g |
 | 9 | Right bogie arm | 1 | PLA | 2.5 hrs | 20g |
 | 10 | Differential bar end adapters | 3 | PLA | 3 hrs | 15g |
@@ -589,7 +630,9 @@ Top View — Electronics Layout:
 | 12 | Steering brackets | 4 | PLA | 6 hrs | 48g |
 | 13 | Fixed wheel mounts | 2 | PLA | 2 hrs | 16g |
 | 14 | Bearing test piece | 1 | PLA | 0.5 hrs | 5g |
-| | **TOTAL** | **24 parts** | | **~69 hrs** | **~844g** |
+| | **TOTAL** | **26 core parts** | | **~70 hrs** | **~850g** |
+
+**Note**: This table lists core structural/mechanical parts only. The complete BOM (`docs/plans/phase1-complete-bom.md`) lists 46 parts total, including servo mounts (×4), strain relief clips (×10), fuse holder bracket (×1), switch mount plate (×1), and top deck tiles (×4). The BOM is the authoritative parts list for ordering and printing.
 
 ### 13.2 Filament Usage
 
@@ -693,8 +736,8 @@ All dimensions in millimetres at 0.4 scale:
 | Body (outer) | 260 | 440 | 80 | Box frame |
 | Body (inner cavity) | 254 | 434 | 74 | 3mm walls |
 | Rocker arm | 20 | 180 | 15 | Rectangular tube |
-| Bogie arm | 15 | 120 | 12 | Rectangular tube |
-| Differential bar | — | 200 | — | 8mm round rod + adapters |
+| Bogie arm | 15 | 180 | 12 | Rectangular tube |
+| Differential bar | — | 300 (rod) | — | 8mm round rod + 3 printed adapters |
 | Wheel | 32 (width) | — | 80 (dia) | Includes tread |
 | Steering bracket | 35 | 25 | 40 | Rotates on 608ZZ |
 | Fixed motor mount | 25 | 25 | 30 | Bolted to arm end |
@@ -723,4 +766,4 @@ The Phase 1 prototype becomes a display piece / desk toy once Phase 2 is built.
 
 ---
 
-*Document EA-08 v1.1 — 2026-03-22 — Updated for CTC printer (150×200mm bed), PLA material, 4-segment body*
+*Document EA-08 v1.2 — 2026-03-23 — Corrected bed size to 225×145mm (CTC Bizer), PLA material, 4-segment body*

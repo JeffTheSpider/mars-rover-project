@@ -16,6 +16,7 @@ const uint8_t motorPWM[] = {MOTOR_LF_PWM, MOTOR_LR_PWM, MOTOR_RF_PWM, MOTOR_RR_P
 const uint8_t motorIN1[] = {MOTOR_LF_IN1, MOTOR_LR_IN1, MOTOR_RF_IN1, MOTOR_RR_IN1};
 const uint8_t motorIN2[] = {MOTOR_LF_IN2, MOTOR_LR_IN2, MOTOR_RF_IN2, MOTOR_RR_IN2};
 const uint8_t motorLEDC[] = {MOTOR_LEDC_CH_LF, MOTOR_LEDC_CH_LR, MOTOR_LEDC_CH_RF, MOTOR_LEDC_CH_RR};
+const int8_t motorTrim[] = {MOTOR_TRIM_LF, MOTOR_TRIM_LR, MOTOR_TRIM_RF, MOTOR_TRIM_RR};
 
 void setupMotors() {
   // Configure LEDC timer for motors
@@ -38,8 +39,9 @@ void setupMotors() {
 void setMotor(uint8_t idx, int8_t speed) {
   if (idx >= 4) return;
 
-  // Clamp to ±SPEED_LIMIT_PCT
-  speed = constrain(speed, -SPEED_LIMIT_PCT, SPEED_LIMIT_PCT);
+  // Apply per-motor trim for straight-line calibration
+  int trimmed = (int)speed + motorTrim[idx];
+  speed = (int8_t)constrain(trimmed, -SPEED_LIMIT_PCT, SPEED_LIMIT_PCT);
 
   // Set direction
   if (speed > 0) {

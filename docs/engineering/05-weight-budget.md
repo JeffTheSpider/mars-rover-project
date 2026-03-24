@@ -204,7 +204,7 @@ At 0.4 scale with simplified electronics:
 | Wheels (6x, 80mm dia) | 180g |
 | **TOTAL Phase 1** | **~1,066g** |
 
-Phase 1 target: ~1 kg. N20 motors are rated for 0.5 kg·cm which is sufficient for this weight.
+Phase 1 target: ~1 kg. N20 motors are rated for ~2 kg·cm (~10-16 kg·cm stall) which is sufficient for this weight.
 
 ---
 
