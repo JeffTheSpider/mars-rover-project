@@ -1,54 +1,47 @@
 """
-Mars Rover Suspension Assembly — Tube + Connector (EA-25)
+Mars Rover Suspension Assembly — Full EA-26 Architecture
 ==========================================================
 
-Imports connector STLs and generates steel rod cylinders to visualise
-the complete rocker-bogie suspension.  Uses the EA-25 tube + connector
-design that replaced the earlier monolithic arm approach.
+Pure-geometry visualisation of the complete rocker-bogie suspension
+including the DIFFERENTIAL LINKAGE (bar + ball-joint links) that
+was missing from earlier versions.
 
-Builds: Differential bar + Left side + Right side (mirrored)
+Generates all parts as primitive solids (cylinders, spheres, boxes)
+so it runs immediately with NO STL dependencies. This serves as the
+master spatial reference for the suspension system.
 
-Parts per side (connector STLs + steel rod cylinders):
-  Connectors:
-    1x Rocker hub connector   (clamped to diff bar)
-    1x Bogie pivot connector  (608ZZ bearing, 3 tube sockets)
-    2x Front wheel connector  (front + rear, tube socket + steering mount)
-    1x Middle wheel connector (tube socket + fixed mount)
-  Steering & Mounts:
-    2x Steering bracket       (front + rear corners)
-    2x Servo mount            (front + rear corners)
-    1x Fixed wheel mount      (middle wheel)
-  Wheels:
-    3x Wheel V3               (front, middle, rear)
-  Steel Rods (generated as cylinders):
-    1x Rocker front tube (150mm, hub -> front wheel)
-    1x Rocker rear tube  (60mm, hub -> bogie pivot)
-    1x Bogie front tube  (60mm, pivot -> middle wheel)
-    1x Bogie rear tube   (60mm, pivot -> rear wheel)
-  Clips:
-    3x Cable clip             (on rod midpoints)
+Component count per side:
+  Rocker arm (tube):           1  (hub → front wheel)
+  Rocker arm (tube):           1  (hub → bogie pivot)
+  Bogie arm (tube):            1  (bogie → middle wheel)
+  Bogie arm (tube):            1  (bogie → rear wheel)
+  Rocker hub connector:        1  (simplified box at diff bar)
+  Bogie pivot connector:       1  (simplified box with bearing)
+  Front wheel connector:       1
+  Rear wheel connector:        1
+  Middle wheel connector:      1
+  Wheel + tyre (cylinder):     3
+  Motor envelope (box):        3
+  Steering knuckle (box):      2  (front + rear, steered)
+  Servo envelope (box):        2  (front + rear)
+  Diff link:                   1  (rod with ball joints)
+  Ball joints (spheres):       2  (one per link end)
 
 Shared:
-  1x Differential bar (300mm x 8mm rod)
+  Differential bar:            1  (tube, pivots about X-axis)
+  Differential pivot:          1  (sphere at centre)
 
-Total: 20 parts x 2 sides + 1 diff bar = 41 components
+Total: ~25 parts x 2 sides + 3 shared = ~53 components
 
-Coordinate System (rover standard):
-  Origin = centre of differential bar, mid-length, mid-width, ground Z=0
-  X = left(-) / right(+)     (track width direction)
-  Y = rear(-) / front(+)     (wheelbase direction)
-  Z = up(+)                  (vertical)
+Coordinate System:
+  Origin = differential pivot centre
+  X = left(-) / right(+)     (track width)
+  Y = rear(-) / front(+)     (wheelbase)
+  Z = up(+)                  (vertical, ground = 0)
 
 ALL Fusion 360 API values in CENTIMETERS (mm / 10).
 
-Instructions:
-  1. Open Fusion 360 -> File -> New Design
-  2. Ensure STLs exist (run BatchExportAll first)
-  3. Shift+S -> search "SuspensionAssembly" -> Run
-  4. Wait ~60s for STL imports + tube generation
-  5. Use orbit/pan to inspect assembly
-
-Reference: EA-01, EA-08, EA-20, EA-25
+Reference: EA-26 Suspension & Wheel System Design Package
 """
 
 import adsk.core
@@ -71,279 +64,324 @@ def run(context):
             return
 
         # ==============================================================
-        # STL FILE PATHS (EA-25 tube + connector parts)
+        # GEOMETRY CONSTANTS (all mm, from EA-26 + EA-08)
         # ==============================================================
-        BASE = r'D:\Mars Rover Project\3d-print'
-        STL = {
-            'rocker_hub':   os.path.join(BASE, 'suspension', 'rocker_hub_connector.stl'),
-            'bogie_pivot':  os.path.join(BASE, 'suspension', 'bogie_pivot_connector.stl'),
-            'front_conn':   os.path.join(BASE, 'suspension', 'front_wheel_connector.stl'),
-            'middle_conn':  os.path.join(BASE, 'suspension', 'middle_wheel_connector.stl'),
-            'cable_clip':   os.path.join(BASE, 'suspension', 'cable_clip.stl'),
-            'steering':     os.path.join(BASE, 'steering', 'steering_bracket.stl'),
-            'servo_mount':  os.path.join(BASE, 'steering', 'servo_mount.stl'),
-            'fixed_mount':  os.path.join(BASE, 'steering', 'fixed_wheel_mount.stl'),
-            'wheel':        os.path.join(BASE, 'wheels', 'rover_wheel_v3.stl'),
-        }
 
-        # Track which STLs are available (don't abort on missing — just skip)
-        available = {k for k, v in STL.items() if os.path.exists(v)}
-        missing = [k for k in STL if k not in available]
-        skipped = []  # filled during build
+        # --- Wheel & terrain ---
+        WHEEL_DIA    = 80.0     # 0.4x scale wheel diameter
+        WHEEL_R      = WHEEL_DIA / 2.0
+        WHEEL_WIDTH  = 35.0     # tyre width
+        TYRE_THICK   = 3.0      # tyre over rim
 
-        # ==============================================================
-        # ASSEMBLY GEOMETRY (all mm, converted to cm for API)
-        # ==============================================================
-        TRACK_HALF   = 140.0    # half track width (wheel centre X)
-        WB_HALF      = 180.0    # half wheelbase (front wheel Y)
-        GND_CLR      = 60.0     # body bottom / diff bar Z
-        WHEEL_Z      = 40.0     # wheel centre Z (= wheel radius)
-        ROCKER_PIV_X = 125.0    # rocker pivot X (diff bar clamp point)
+        # --- Layout (rover coordinate frame) ---
+        TRACK_HALF   = 140.0    # wheel centre X from centreline
+        WB_HALF      = 180.0    # front/rear wheel Y from centre
+        GND_CLR      = 60.0     # belly clearance (body bottom Z)
+        WHEEL_Z      = WHEEL_R  # wheel centre Z (sitting on ground)
+
+        # --- Rocker geometry ---
+        ROCKER_PIV_X = 125.0    # rocker pivot X (on body sides)
         ROCKER_PIV_Z = 60.0     # rocker pivot Z (at body bottom)
-        BOGIE_PIV_Y  = -90.0    # bogie pivot Y (on rocker rear)
+
+        # --- Bogie geometry ---
+        BOGIE_PIV_Y  = -90.0    # bogie pivot Y (behind body centre)
         BOGIE_PIV_Z  = 45.0     # bogie pivot Z
-        ROD_RADIUS   = 4.0      # 8mm diameter steel rod
 
-        # ----------------------------------------------------------
-        # Node positions (x, y, z) in mm
-        # Left side: X negative.  Right side: X positive.
-        # ----------------------------------------------------------
-        HUB_L   = (-ROCKER_PIV_X,  0,          ROCKER_PIV_Z)
-        FRONT_L = (-TRACK_HALF,     WB_HALF,    WHEEL_Z)
-        BOGIE_L = (-TRACK_HALF,     BOGIE_PIV_Y, BOGIE_PIV_Z)
-        MID_L   = (-TRACK_HALF,     0,           WHEEL_Z)
-        REAR_L  = (-TRACK_HALF,    -WB_HALF,    WHEEL_Z)
+        # --- Differential geometry (NEW in EA-26) ---
+        DIFF_PIV_Z   = 80.0     # diff pivot Z (above body, on top deck)
+        DIFF_BAR_LEN = 200.0    # diff bar half-length (extends ±100mm from pivot)
+        DIFF_LINK_BAR_R = 30.0  # link attachment offset on bar (from pivot, along Z)
+        DIFF_LINK_RKR_R = 30.0  # link attachment offset on rocker (from pivot, along Z)
 
-        HUB_R   = ( ROCKER_PIV_X,  0,          ROCKER_PIV_Z)
-        FRONT_R = ( TRACK_HALF,     WB_HALF,    WHEEL_Z)
-        BOGIE_R = ( TRACK_HALF,     BOGIE_PIV_Y, BOGIE_PIV_Z)
-        MID_R   = ( TRACK_HALF,     0,           WHEEL_Z)
-        REAR_R  = ( TRACK_HALF,    -WB_HALF,    WHEEL_Z)
+        # --- Steel rod ---
+        ROD_R        = 4.0      # 8mm diameter rod
+        BALL_R       = 5.0      # ball joint sphere radius (visual)
+        CONN_SIZE    = 20.0     # connector block half-size (visual)
+
+        # --- Motor envelope ---
+        MOTOR_L      = 25.0     # N20 gearbox length
+        MOTOR_W      = 12.0     # N20 width
+        MOTOR_H      = 10.0     # N20 height
+
+        # ==============================================================
+        # KEY POSITIONS (mm)
+        # ==============================================================
+        # Left side
+        HUB_L    = (-ROCKER_PIV_X,  0,           ROCKER_PIV_Z)
+        FRONT_L  = (-TRACK_HALF,    WB_HALF,     WHEEL_Z)
+        BOGIE_L  = (-TRACK_HALF,    BOGIE_PIV_Y, BOGIE_PIV_Z)
+        MID_L    = (-TRACK_HALF,    0,            WHEEL_Z)
+        REAR_L   = (-TRACK_HALF,   -WB_HALF,     WHEEL_Z)
+
+        # Right side (mirror X)
+        HUB_R    = ( ROCKER_PIV_X,  0,           ROCKER_PIV_Z)
+        FRONT_R  = ( TRACK_HALF,    WB_HALF,     WHEEL_Z)
+        BOGIE_R  = ( TRACK_HALF,    BOGIE_PIV_Y, BOGIE_PIV_Z)
+        MID_R    = ( TRACK_HALF,    0,            WHEEL_Z)
+        REAR_R   = ( TRACK_HALF,   -WB_HALF,     WHEEL_Z)
+
+        # Differential (shared)
+        DIFF_PIV = (0, 0, DIFF_PIV_Z)
+        DIFF_BAR_L = (-DIFF_BAR_LEN, 0, DIFF_PIV_Z)  # bar left end
+        DIFF_BAR_R = ( DIFF_BAR_LEN, 0, DIFF_PIV_Z)  # bar right end
+
+        # Differential link endpoints
+        # Bar end: offset below bar end by DIFF_LINK_BAR_R
+        LINK_BAR_L = (-DIFF_BAR_LEN, 0, DIFF_PIV_Z - DIFF_LINK_BAR_R)
+        LINK_BAR_R = ( DIFF_BAR_LEN, 0, DIFF_PIV_Z - DIFF_LINK_BAR_R)
+        # Rocker end: offset above rocker pivot by DIFF_LINK_RKR_R
+        LINK_RKR_L = (-ROCKER_PIV_X, 0, ROCKER_PIV_Z + DIFF_LINK_RKR_R)
+        LINK_RKR_R = ( ROCKER_PIV_X, 0, ROCKER_PIV_Z + DIFF_LINK_RKR_R)
 
         # ==============================================================
         # HELPER FUNCTIONS
         # ==============================================================
         root = design.rootComponent
-        import_mgr = app.importManager
 
         def mm(val):
             """Convert mm to cm for Fusion API."""
             return val / 10.0
 
-        def import_stl(parent_comp, stl_key, comp_name):
-            """Import STL into a new sub-component. Returns occurrence,
-            or None if the STL file is missing (skips gracefully)."""
-            if stl_key not in available:
-                skipped.append(comp_name)
-                return None
-            stl_path = STL[stl_key]
-            occ = parent_comp.occurrences.addNewComponent(
-                adsk.core.Matrix3D.create())
-            occ.component.name = comp_name
-
-            # Try STL-specific import, then mesh import (API varies by version)
-            opts = None
-            for method in ['createSTLImportOptions', 'createMeshImportOptions']:
-                if hasattr(import_mgr, method):
-                    opts = getattr(import_mgr, method)(stl_path)
-                    break
-            if opts is None:
-                skipped.append(f'{comp_name} (no import method)')
-                return occ  # empty component as placeholder
-
-            # Set units to mm if the property exists
-            try:
-                opts.units = adsk.fusion.MeshUnits.MillimeterMeshUnit
-            except (AttributeError, RuntimeError):
-                pass  # STLImportOptions may not have units property
-
-            import_mgr.importToTarget(opts, occ.component)
-            return occ
-
-        def transform_occurrence(occ, tx=0, ty=0, tz=0,
-                                 rx=0, ry=0, rz=0, mirror_x=False):
-            """Apply translation + rotation to an occurrence.
-            tx/ty/tz in mm.  rx/ry/rz in degrees."""
-            xform = adsk.core.Matrix3D.create()
-            for angle, axis in [(rx, (1, 0, 0)),
-                                (ry, (0, 1, 0)),
-                                (rz, (0, 0, 1))]:
-                if angle != 0:
-                    rot = adsk.core.Matrix3D.create()
-                    rot.setToRotation(
-                        math.radians(angle),
-                        adsk.core.Vector3D.create(*axis),
-                        adsk.core.Point3D.create(0, 0, 0))
-                    xform.transformBy(rot)
-            if mirror_x:
-                m = adsk.core.Matrix3D.create()
-                m.setWithArray([
-                    -1, 0, 0, 0,
-                     0, 1, 0, 0,
-                     0, 0, 1, 0,
-                     0, 0, 0, 1])
-                xform.transformBy(m)
-            trans = xform.translation
-            trans.x += mm(tx)
-            trans.y += mm(ty)
-            trans.z += mm(tz)
-            xform.translation = trans
-            occ.transform = xform
-
-        def create_tube(parent_comp, name, start, end, radius=ROD_RADIUS):
-            """Create an 8mm steel-rod cylinder between two 3D points.
-            start/end: (x, y, z) tuples in mm.  Returns the occurrence."""
-            occ = parent_comp.occurrences.addNewComponent(
-                adsk.core.Matrix3D.create())
-            tube_comp = occ.component
-            tube_comp.name = name
-
+        def create_tube(comp, name, start, end, radius=ROD_R):
+            """Create a steel rod cylinder between two 3D points.
+            All coordinates in mm."""
             tmp = adsk.fusion.TemporaryBRepManager.get()
-            p1 = adsk.core.Point3D.create(
-                mm(start[0]), mm(start[1]), mm(start[2]))
-            p2 = adsk.core.Point3D.create(
-                mm(end[0]), mm(end[1]), mm(end[2]))
+            p1 = adsk.core.Point3D.create(mm(start[0]), mm(start[1]), mm(start[2]))
+            p2 = adsk.core.Point3D.create(mm(end[0]), mm(end[1]), mm(end[2]))
             cyl = tmp.createCylinderOrCone(p1, mm(radius), p2, mm(radius))
-
-            # Handle both parametric and direct design modes
             if design.designType == adsk.fusion.DesignTypes.ParametricDesignType:
-                bf = tube_comp.features.baseFeatures.add()
+                bf = comp.features.baseFeatures.add()
                 bf.startEdit()
-                body = tube_comp.bRepBodies.add(cyl, bf)
+                body = comp.bRepBodies.add(cyl, bf)
                 bf.finishEdit()
             else:
-                body = tube_comp.bRepBodies.add(cyl)
-            body.name = f'{name}_Rod'
-            return occ
+                body = comp.bRepBodies.add(cyl)
+            body.name = name
+            return body
+
+        def create_sphere(comp, name, centre, radius=BALL_R):
+            """Create a sphere (for ball joints). Centre in mm."""
+            tmp = adsk.fusion.TemporaryBRepManager.get()
+            c = adsk.core.Point3D.create(mm(centre[0]), mm(centre[1]), mm(centre[2]))
+            sph = tmp.createSphere(c, mm(radius))
+            if design.designType == adsk.fusion.DesignTypes.ParametricDesignType:
+                bf = comp.features.baseFeatures.add()
+                bf.startEdit()
+                body = comp.bRepBodies.add(sph, bf)
+                bf.finishEdit()
+            else:
+                body = comp.bRepBodies.add(sph)
+            body.name = name
+            return body
+
+        def create_box(comp, name, centre, sx, sy, sz):
+            """Create a box centred at given point. Dimensions in mm."""
+            tmp = adsk.fusion.TemporaryBRepManager.get()
+            orient = adsk.core.OrientedBoundingBox3D.create(
+                adsk.core.Point3D.create(mm(centre[0]), mm(centre[1]), mm(centre[2])),
+                adsk.core.Vector3D.create(1, 0, 0),
+                adsk.core.Vector3D.create(0, 1, 0),
+                mm(sx), mm(sy), mm(sz))
+            box = tmp.createBox(orient)
+            if design.designType == adsk.fusion.DesignTypes.ParametricDesignType:
+                bf = comp.features.baseFeatures.add()
+                bf.startEdit()
+                body = comp.bRepBodies.add(box, bf)
+                bf.finishEdit()
+            else:
+                body = comp.bRepBodies.add(box)
+            body.name = name
+            return body
+
+        def create_wheel(comp, name, centre, side='L'):
+            """Create wheel (thick disc) + tyre ring at given centre."""
+            # Wheel disc along X-axis (lateral)
+            dx = -WHEEL_WIDTH/2 if side == 'L' else WHEEL_WIDTH/2
+            p1 = (centre[0] - dx, centre[1], centre[2])
+            p2 = (centre[0] + dx, centre[1], centre[2])
+            # Rim
+            create_tube(comp, f'{name}_Rim', p1, p2, WHEEL_R - TYRE_THICK)
+            # Tyre
+            create_tube(comp, f'{name}_Tyre', p1, p2, WHEEL_R)
+
+        def add_comp(parent, name):
+            """Add a new sub-component. Returns (occurrence, component)."""
+            occ = parent.occurrences.addNewComponent(adsk.core.Matrix3D.create())
+            occ.component.name = name
+            return occ, occ.component
 
         def midpt(a, b):
-            """Midpoint of two (x,y,z) tuples."""
             return ((a[0]+b[0])/2, (a[1]+b[1])/2, (a[2]+b[2])/2)
 
+        # ==============================================================
+        # BUILD ASSEMBLY
+        # ==============================================================
+
         # ----------------------------------------------------------
-        def place(parent_comp, stl_key, comp_name, **kwargs):
-            """Import STL + transform in one call. Skips if STL missing."""
-            occ = import_stl(parent_comp, stl_key, comp_name)
-            if occ:
-                transform_occurrence(occ, **kwargs)
+        # DIFFERENTIAL MECHANISM (EA-26 Section 9)
+        # ----------------------------------------------------------
+        diff_occ, diff_comp = add_comp(root, 'Differential')
 
-        def build_side(parent_comp, s, hub, front, bogie, mid, rear):
-            """Build one side of the suspension.
-            s: 'L' or 'R'.  Positions are (x,y,z) in mm."""
+        # Diff bar (rotates about X through DIFF_PIV)
+        create_tube(diff_comp, 'DiffBar', DIFF_BAR_L, DIFF_BAR_R, ROD_R)
 
-            # --- Rocker Hub Connector (clamped to diff bar) ---
-            place(parent_comp, 'rocker_hub', f'RockerHub_{s}',
-                  tx=hub[0], ty=hub[1], tz=hub[2])
+        # Central pivot (sphere to show pivot point)
+        create_sphere(diff_comp, 'DiffPivot', DIFF_PIV, 8.0)
 
-            # --- Steel rod tubes (4 per side, always generated) ---
-            create_tube(parent_comp, f'RockerFrontTube_{s}', hub, front)
-            create_tube(parent_comp, f'RockerRearTube_{s}',  hub, bogie)
-            create_tube(parent_comp, f'BogieFrontTube_{s}',  bogie, mid)
-            create_tube(parent_comp, f'BogieRearTube_{s}',   bogie, rear)
+        # Pivot bearing housing (box around pivot)
+        create_box(diff_comp, 'DiffPivotMount', DIFF_PIV, 30, 30, 20)
 
-            # --- Bogie Pivot Connector (608ZZ bearing, 3 tube sockets) ---
-            place(parent_comp, 'bogie_pivot', f'BogiePivot_{s}',
-                  tx=bogie[0], ty=bogie[1], tz=bogie[2])
+        # Left differential link (bar end → left rocker)
+        create_tube(diff_comp, 'DiffLink_L', LINK_BAR_L, LINK_RKR_L, 3.0)
+        create_sphere(diff_comp, 'BallJoint_L_Top', LINK_BAR_L, BALL_R)
+        create_sphere(diff_comp, 'BallJoint_L_Bot', LINK_RKR_L, BALL_R)
 
-            # --- Front Wheel Connector (also used at rear — both steer) ---
-            place(parent_comp, 'front_conn', f'WheelConn_F{s}',
-                  tx=front[0], ty=front[1], tz=front[2])
-            place(parent_comp, 'front_conn', f'WheelConn_R{s}',
-                  tx=rear[0], ty=rear[1], tz=rear[2], rz=180)
+        # Right differential link (bar end → right rocker)
+        create_tube(diff_comp, 'DiffLink_R', LINK_BAR_R, LINK_RKR_R, 3.0)
+        create_sphere(diff_comp, 'BallJoint_R_Top', LINK_BAR_R, BALL_R)
+        create_sphere(diff_comp, 'BallJoint_R_Bot', LINK_RKR_R, BALL_R)
 
-            # --- Middle Wheel Connector (fixed, no steering) ---
-            place(parent_comp, 'middle_conn', f'WheelConn_M{s}',
-                  tx=mid[0], ty=mid[1], tz=mid[2])
+        # ----------------------------------------------------------
+        # BODY OUTLINE (simplified box for reference)
+        # ----------------------------------------------------------
+        body_occ, body_comp = add_comp(root, 'Body_Reference')
+        body_w = ROCKER_PIV_X * 2  # body width = distance between pivots
+        body_l = 200.0             # body length (Y)
+        body_h = 30.0              # body height
+        body_cz = GND_CLR + body_h / 2
+        create_box(body_comp, 'BodyShell', (0, 0, body_cz), body_w, body_l, body_h)
 
-            # --- Steering Brackets (front + rear steered wheels) ---
-            place(parent_comp, 'steering', f'SteerBracket_F{s}',
-                  tx=front[0], ty=front[1], tz=front[2] - 5)
-            place(parent_comp, 'steering', f'SteerBracket_R{s}',
-                  tx=rear[0], ty=rear[1], tz=rear[2] - 5)
+        # Rocker pivot mounts on body (visible bosses)
+        create_tube(body_comp, 'RockerPivotMount_L',
+                    (-ROCKER_PIV_X - 10, 0, ROCKER_PIV_Z),
+                    (-ROCKER_PIV_X + 10, 0, ROCKER_PIV_Z), 12)
+        create_tube(body_comp, 'RockerPivotMount_R',
+                    ( ROCKER_PIV_X - 10, 0, ROCKER_PIV_Z),
+                    ( ROCKER_PIV_X + 10, 0, ROCKER_PIV_Z), 12)
 
-            # --- Servo Mounts (front + rear, offset 30mm inboard on Y) ---
-            place(parent_comp, 'servo_mount', f'ServoMount_F{s}',
-                  tx=front[0], ty=front[1] - 30, tz=front[2])
-            place(parent_comp, 'servo_mount', f'ServoMount_R{s}',
-                  tx=rear[0], ty=rear[1] + 30, tz=rear[2])
+        # ----------------------------------------------------------
+        # SUSPENSION SIDES
+        # ----------------------------------------------------------
+        def build_side(parent, s, hub, front, bogie, mid, rear,
+                       link_rkr):
+            """Build one complete side of the suspension.
+            s = 'L' or 'R'. All positions in mm."""
 
-            # --- Fixed Wheel Mount (middle wheel, no servo) ---
-            place(parent_comp, 'fixed_mount', f'FixedMount_M{s}',
-                  tx=mid[0], ty=mid[1], tz=mid[2])
+            side_occ, side_comp = add_comp(parent, f'Suspension_{s}')
 
-            # --- Wheels V3 (3x per side) ---
-            w_rot = 90 if s == 'L' else -90
+            # === ROCKER ARM ===
+            # Hub connector (box at diff bar clamp point)
+            create_box(side_comp, f'RockerHub_{s}', hub, 40, 35, 30)
+            # Rocker pivot bearing (visible ring)
+            create_sphere(side_comp, f'RockerPivot_{s}', hub, 11)
+
+            # Rocker tubes
+            create_tube(side_comp, f'RockerFrontTube_{s}', hub, front, ROD_R)
+            create_tube(side_comp, f'RockerRearTube_{s}', hub, bogie, ROD_R)
+
+            # Diff link attachment point on rocker
+            create_sphere(side_comp, f'DiffLinkAttach_{s}', link_rkr, BALL_R)
+
+            # === BOGIE ARM ===
+            # Bogie pivot connector (box with bearing)
+            create_box(side_comp, f'BogiePivot_{s}', bogie, 35, 30, 25)
+            create_sphere(side_comp, f'BogieBearing_{s}', bogie, 11)
+
+            # Bogie tubes
+            create_tube(side_comp, f'BogieFrontTube_{s}', bogie, mid, ROD_R)
+            create_tube(side_comp, f'BogieRearTube_{s}', bogie, rear, ROD_R)
+
+            # === WHEEL CONNECTORS ===
+            create_box(side_comp, f'FrontWheelConn_{s}', front,
+                       30, 25, 25)
+            create_box(side_comp, f'MiddleWheelConn_{s}', mid,
+                       25, 20, 20)
+            create_box(side_comp, f'RearWheelConn_{s}', rear,
+                       30, 25, 25)
+
+            # === STEERING KNUCKLES (front + rear only) ===
+            for tag, pos in [('F', front), ('R', rear)]:
+                # Steering pivot shaft (vertical)
+                shaft_top = (pos[0], pos[1], pos[2] + 20)
+                shaft_bot = (pos[0], pos[1], pos[2] - 15)
+                create_tube(side_comp, f'SteerShaft_{tag}{s}',
+                            shaft_top, shaft_bot, 3.0)
+                # Knuckle (box hanging below)
+                create_box(side_comp, f'Knuckle_{tag}{s}',
+                           (pos[0], pos[1], pos[2] - 10),
+                           20, 15, 20)
+                # Servo envelope
+                servo_y = pos[1] - 25 if tag == 'F' else pos[1] + 25
+                create_box(side_comp, f'Servo_{tag}{s}',
+                           (pos[0], servo_y, pos[2] + 5),
+                           23, 12, 23)
+
+            # === WHEELS (3x) ===
             for tag, pos in [('F', front), ('M', mid), ('R', rear)]:
-                place(parent_comp, 'wheel', f'Wheel_{tag}{s}',
-                      tx=pos[0], ty=pos[1], tz=pos[2], ry=w_rot)
+                create_wheel(side_comp, f'Wheel_{tag}{s}', pos, s)
 
-            # --- Cable Clips (3x on longest tube midpoints) ---
-            for clip_name, cpos in [
-                (f'CableClip_{s}_RkrFront', midpt(hub, front)),
-                (f'CableClip_{s}_RkrRear',  midpt(hub, bogie)),
-                (f'CableClip_{s}_BogRear',  midpt(bogie, rear)),
+            # === MOTOR ENVELOPES (3x, inboard of wheels) ===
+            for tag, pos in [('F', front), ('M', mid), ('R', rear)]:
+                inboard = 20 if s == 'L' else -20
+                motor_c = (pos[0] + inboard, pos[1], pos[2])
+                create_box(side_comp, f'Motor_{tag}{s}', motor_c,
+                           MOTOR_W, MOTOR_L, MOTOR_H)
+
+            # === CABLE CLIPS (on tube midpoints) ===
+            for tag, a, b in [
+                ('RkrF', hub, front),
+                ('RkrR', hub, bogie),
+                ('BogR', bogie, rear),
             ]:
-                place(parent_comp, 'cable_clip', clip_name,
-                      tx=cpos[0], ty=cpos[1], tz=cpos[2])
+                mp = midpt(a, b)
+                create_box(side_comp, f'CableClip_{s}_{tag}',
+                           mp, 12, 8, 10)
 
-        # ==============================================================
-        # BUILD THE ASSEMBLY
-        # ==============================================================
+        # Build left side
+        build_side(root, 'L', HUB_L, FRONT_L, BOGIE_L, MID_L, REAR_L,
+                   LINK_RKR_L)
 
-        # --- Differential Bar (shared, spans X = -150 to +150) ---
-        diff_occ = root.occurrences.addNewComponent(
-            adsk.core.Matrix3D.create())
-        diff_occ.component.name = 'DifferentialBar'
-        create_tube(diff_occ.component, 'DiffBarRod',
-                    (-150, 0, GND_CLR), (150, 0, GND_CLR))
-
-        # --- Left Suspension ---
-        left_occ = root.occurrences.addNewComponent(
-            adsk.core.Matrix3D.create())
-        left_occ.component.name = 'Suspension_Left'
-        build_side(left_occ.component, 'L',
-                   HUB_L, FRONT_L, BOGIE_L, MID_L, REAR_L)
-
-        # --- Right Suspension (mirror of left) ---
-        right_occ = root.occurrences.addNewComponent(
-            adsk.core.Matrix3D.create())
-        right_occ.component.name = 'Suspension_Right'
-        build_side(right_occ.component, 'R',
-                   HUB_R, FRONT_R, BOGIE_R, MID_R, REAR_R)
+        # Build right side
+        build_side(root, 'R', HUB_R, FRONT_R, BOGIE_R, MID_R, REAR_R,
+                   LINK_RKR_R)
 
         # ==============================================================
         # ZOOM TO FIT AND REPORT
         # ==============================================================
         app.activeViewport.fit()
 
-        part_count = 0
+        count = 0
         for _ in root.allOccurrences:
-            part_count += 1
+            count += 1
 
-        skip_msg = ''
-        if skipped:
-            skip_msg = (f'\nSkipped ({len(skipped)} missing STLs):\n  ' +
-                        '\n  '.join(skipped[:12]))
-            if len(skipped) > 12:
-                skip_msg += f'\n  ... and {len(skipped)-12} more'
-            skip_msg += ('\n\nRun BatchExportAll in Fusion 360 to '
-                         'generate the STL files, then re-run this script.')
-
-        stl_count = len(available)
         ui.messageBox(
-            'Suspension Assembly created!\n\n'
-            f'Components placed: {part_count}\n'
-            f'STL types found: {stl_count}/{len(STL)}\n\n'
-            'Structure (EA-25 tube + connector):\n'
-            '  DifferentialBar/ (300mm x 8mm rod)\n'
-            '  Suspension_Left/\n'
-            '    Hub + 4 tubes + bogie pivot\n'
-            '    3 wheel connectors + steering + servos\n'
-            '    3 wheels + 3 cable clips\n'
-            '  Suspension_Right/ (mirror)\n'
-            f'{skip_msg}\n\n'
-            'Reference: EA-25 Suspension Audit',
-            'Mars Rover Suspension Assembly (EA-25)')
+            'EA-26 Suspension Assembly created!\n\n'
+            f'Components: {count}\n\n'
+            'NEW vs old design:\n'
+            '  + Differential bar with PIVOT (not just a rod)\n'
+            '  + 2x Differential links with BALL JOINTS\n'
+            '  + Body reference outline\n'
+            '  + Rocker pivot mounts (bearing bosses)\n'
+            '  + Steering knuckles + pivot shafts\n'
+            '  + Servo envelopes\n'
+            '  + Motor envelopes at each wheel\n'
+            '  + Bogie pivot connectors with bearings\n\n'
+            'Hierarchy:\n'
+            '  Differential/\n'
+            '    Bar + Pivot + 2x Links + 4x Ball Joints\n'
+            '  Body_Reference/\n'
+            '    Shell + Pivot Mounts\n'
+            '  Suspension_L/ + Suspension_R/\n'
+            '    Rocker (hub + 2 tubes)\n'
+            '    Bogie (pivot + 2 tubes)\n'
+            '    3x Wheel connectors\n'
+            '    2x Steering knuckles + servos\n'
+            '    3x Wheels + Motors\n'
+            '    3x Cable clips\n\n'
+            'All geometry is parametric primitives.\n'
+            'Replace with detailed STLs as they are exported.\n\n'
+            'Reference: EA-26 Suspension Design Package',
+            'Mars Rover Suspension (EA-26)')
 
     except:
         if ui:
