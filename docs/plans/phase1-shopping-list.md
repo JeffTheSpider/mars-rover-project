@@ -85,6 +85,9 @@
 | M8 Washers | 16 | £1.50 | [Amazon UK](https://www.amazon.co.uk/s?k=M8+washer+stainless) | 2 per pivot (both sides of each bearing). |
 | M2 x 8mm Screws | 8 | £1 | [Amazon UK](https://www.amazon.co.uk/s?k=M2+screw+assortment) | SG90 servo mounting (4 servos x 2 screws). Often included with servo packaging. |
 | M2 × 4mm Grub/Set Screws (hex socket) | 6 | £2 | [Amazon UK](https://www.amazon.co.uk/s?k=M2+grub+set+screw+4mm) / [CPC Farnell](https://cpc.farnell.com) | Wheel hub shaft retention — tighten against D-flat on N20 3mm shaft to prevent wheels slipping. 1 per wheel. Buy a few spares. See wheel CAD script. |
+| M2 × 10mm Socket Cap Screws | 8 | £1 | [Amazon UK](https://www.amazon.co.uk/s?k=M2+socket+cap+screw+10mm) | Steering horn link pin joints — 2 per link × 4 links. Stainless preferred. EA-27. |
+| M2 Nyloc Nuts | 8 | £1 | [Amazon UK](https://www.amazon.co.uk/s?k=M2+nyloc+nut) | Horn link pin retention — self-locking, essential for vibration. EA-27. |
+| M2 Nylon Flat Washers | 16 | £1 | [Amazon UK](https://www.amazon.co.uk/s?k=M2+nylon+washer) | Horn link pin joints — 2 per pin, smooth rotation on PLA. EA-27. |
 | 3mm × 20mm Steel Dowel Pins | 4 | £2 | [Amazon UK](https://www.amazon.co.uk/s?k=3mm+steel+dowel+pin+20mm) / [RS Components](https://uk.rs-online.com) | Body quadrant alignment — press-fit into matching 3.0mm holes at quadrant seams. Prevents lateral shift when bolting quadrants together. See EA-08 body design. |
 
 ### 3. Shafts

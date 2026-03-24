@@ -10,7 +10,7 @@ Usage:
   1. Open Fusion 360
   2. Shift+S (Scripts and Add-Ins)
   3. Select "BatchExportAll" > Run
-  4. Wait for completion (~5-10 min, exports 28 STL files)
+  4. Wait for completion (~5-10 min, exports 29 STL files)
   5. Check D:/Mars Rover Project/3d-print/ for output
 
 Output: STL files in D:/Mars Rover Project/3d-print/<category>/
@@ -21,7 +21,8 @@ DiffBarAdapter in favour of tube + printed connector approach.
 Those scripts are excluded. New scripts: RoverWheelV3,
 CableClip, BogiePivotConnector, FrontWheelConnector,
 MiddleWheelConnector, RockerHubConnector, TubeSocketTest,
-DifferentialPivotHousing, DifferentialLink, SteeringKnuckle.
+DifferentialPivotHousing, DifferentialLink, SteeringKnuckle,
+SteeringHornLink (EA-27).
 """
 
 import adsk.core
@@ -60,6 +61,7 @@ COMPONENTS = [
     ('FixedWheelMount',  'steering', 'fixed_wheel_mount.stl', None, 'Stage 3 — print x2'),
     ('ServoMount',       'steering', 'servo_mount.stl',       None, 'Stage 3 — print x4'),
     ('SteeringKnuckle',  'steering', 'steering_knuckle.stl', 'Steering Knuckle', 'Stage 3 — print x4'),
+    ('SteeringHornLink', 'steering', 'steering_horn_link.stl', 'Steering Horn Link', 'Stage 3 — print x4 (EA-27)'),
 
     # Stage 4: Suspension Connectors (EA-25 tube + connector, EA-26 diff mechanism)
     # Note: BogieArm, RockerArm, DiffBarAdapter DEPRECATED per EA-25

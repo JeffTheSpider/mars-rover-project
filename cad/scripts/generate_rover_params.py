@@ -144,7 +144,7 @@ FULL_SCALE_PARAMS = {
     "steering": {
         "bracket_length":         88,   # mm (Phase 2)
         "bracket_width":          63,   # mm
-        "bracket_height":        100,   # mm
+        "bracket_height":         63,   # mm (EA-27: bearing carrier only, no motor)
         "bearing_seat_od":        22,   # mm, nominal
         "bearing_seat_depth":      7,   # mm, nominal
         "pivot_bore":              8,   # mm
@@ -152,6 +152,16 @@ FULL_SCALE_PARAMS = {
         "max_angle_deg":          35,   # +/- degrees
         "min_clearance_wheel_arm": 10,  # mm, at full lock (Phase 2)
         "servo_horn_length":      15,   # mm (NOT scaled -- SG90/MG996R horn)
+        "horn_link_length":       50,   # mm, centre-to-centre M2 holes (EA-27)
+        "horn_link_width":        20,   # mm (EA-27)
+        "horn_link_thickness":  12.5,   # mm (EA-27)
+        "knuckle_arm_length":   37.5,   # mm, pivot centre to link hole (EA-27)
+        "hard_stop_tab_width":  12.5,   # mm (EA-27)
+        "hard_stop_tab_radial":   20,   # mm (EA-27)
+        "hard_stop_tab_thickness": 7.5, # mm (EA-27)
+        "hard_stop_channel_deg":  70,   # degrees, ±35° total sweep (NOT scaled)
+        "pivot_shaft_length":    125,   # mm, cut rod per steering pivot (EA-27)
+        "servo_to_pivot_offset":  50,   # mm, horizontal distance between axes (EA-27)
     },
 
     # ------------------------------------------------------------------
@@ -196,6 +206,9 @@ FULL_SCALE_PARAMS = {
 
         # M2 small
         "m2_8mm_qty":              8,   # SG90 servo mounting (4 servos x 2)
+        "m2_10mm_qty":             8,   # horn link pin joints (4 links x 2 pins, EA-27)
+        "m2_nyloc_nut_qty":        8,   # horn link pin retention (EA-27)
+        "m2_nylon_washer_qty":    16,   # horn link pin joints, 2 per pin (EA-27)
         "m2_6mm_grub_qty":         6,   # wheel hub set screws
     },
 
@@ -415,6 +428,7 @@ _NO_SCALE_KEYS = {
     "steering.pivot_bore",
     "steering.max_angle_deg",
     "steering.servo_horn_length",
+    "steering.hard_stop_channel_deg",
 
     # Body features -- cable channels, switch, vents are print minimums
     "body_features.cable_channel_w",
@@ -507,9 +521,18 @@ def get_params(scale=0.4):
     params["body_features"]["battery_tray_h"] = 25
     params["steering"]["bracket_length"] = 35        # EA-08: 35mm
     params["steering"]["bracket_width"] = 30         # EA-08: increased from 25mm for bearing wall thickness
-    params["steering"]["bracket_height"] = 40        # EA-08: 40mm
+    params["steering"]["bracket_height"] = 25        # EA-27: reduced from 40mm (bearing carrier only, no motor)
     params["steering"]["pivot_to_wheel_centre"] = 20 # EA-10: 20mm vertical
     params["steering"]["min_clearance_wheel_arm"] = 5  # EA-08/EA-10: 5mm min
+    params["steering"]["horn_link_length"] = 20      # EA-27: 50 * 0.4 = 20mm
+    params["steering"]["horn_link_width"] = 8        # EA-27: 20 * 0.4 = 8mm
+    params["steering"]["horn_link_thickness"] = 5    # EA-27: 12.5 * 0.4 = 5mm
+    params["steering"]["knuckle_arm_length"] = 15    # EA-27: 37.5 * 0.4 = 15mm
+    params["steering"]["hard_stop_tab_width"] = 5    # EA-27: 12.5 * 0.4 = 5mm
+    params["steering"]["hard_stop_tab_radial"] = 8   # EA-27: 20 * 0.4 = 8mm
+    params["steering"]["hard_stop_tab_thickness"] = 3  # EA-27: 7.5 * 0.4 = 3mm
+    params["steering"]["pivot_shaft_length"] = 50    # EA-27: 125 * 0.4 = 50mm
+    params["steering"]["servo_to_pivot_offset"] = 20 # EA-27: 50 * 0.4 = 20mm
     params["fixed_mount"]["length"] = 25             # EA-08: 25mm
     params["fixed_mount"]["width"] = 25
     params["fixed_mount"]["height"] = 30

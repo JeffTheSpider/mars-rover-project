@@ -661,7 +661,7 @@ void updateSteering(float raw_input) {
 | Steering pivot to wheel centre (vertical) | 20mm | Wheel axle below pivot |
 | Steering bracket width | 35mm | Clears wheel + motor |
 | Steering bracket depth | 25mm | Along arm direction |
-| Steering bracket height | 40mm | Pivot to motor mount |
+| Steering bracket height | 25mm | Bearing carrier only (EA-27: motor moved to knuckle) |
 | SG90 mounting: centre to arm end | 15mm | Standard SG90 horn |
 | Minimum clearance: wheel to arm | 5mm | At full lock (35°) |
 | Wheel sweep radius at full lock | 56mm | Wheel centre traces this circle |
@@ -689,4 +689,18 @@ The steering bracket must be designed with sufficient offset to accommodate this
 
 ---
 
-*Document EA-10 v1.0 — 2026-03-15*
+### 11.3 Physical Steering Mechanism
+
+The physical mechanism connecting the SG90 servo to the steering knuckle is fully defined in **EA-27: Steering System Design Package**. Key points:
+
+- **Architecture**: Offset parallel drive with printed horn link (4-bar linkage)
+- **Linkage**: SG90 horn (15mm) → printed link bar (20mm c/c) → knuckle arm (15mm) → 1:1 ratio
+- **Bearing**: 608ZZ at each steering pivot (4 total)
+- **Hard stops**: Integrated tab-in-channel at ±35° (protects SG90 gears)
+- **New hardware**: M2×10 screws + nyloc nuts + nylon washers for link pin joints
+
+See EA-27 for the complete dimensional chain, assembly instructions, and failure mode analysis.
+
+---
+
+*Document EA-10 v1.1 — 2026-03-24 (added §11.3 cross-reference to EA-27)*

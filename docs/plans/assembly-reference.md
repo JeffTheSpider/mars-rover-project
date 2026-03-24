@@ -152,59 +152,85 @@ Gather everything before starting. Missing a tool mid-stage is frustrating.
 
 ---
 
-## Stage 4: Steering Brackets x4 (~45 min)
+## Stage 4: Steering Assemblies x4 (~45 min)
 
-### Parts per bracket:
-- 1x Steering bracket (steering_bracket.py)
+*Updated per EA-27: steering bracket is now a bearing carrier only (no motor clip).
+Motor is in the knuckle. Horn link provides the servo-to-knuckle connection.*
+
+### Parts per steered wheel:
+- 1x Steering bracket (steering_bracket.py — bearing carrier + hard stops)
 - 1x 608ZZ bearing (pivot bearing)
+- 1x 8mm steel rod segment (~50mm, steering pivot shaft)
 - 1x SG90 servo
 - 1x Servo mount (servo_mount.py)
+- 1x Steering knuckle (steering_knuckle.py — carries motor + wheel axle)
+- 1x Steering horn link (steering_horn_link.py — 4-bar linkage coupler)
+- 2x M2x10mm screws (link pin joints)
+- 2x M2 nyloc nuts (link pin retention)
+- 4x M2 nylon washers (smooth rotation at pins)
 
 ### Assembly:
-1. Press 608ZZ bearing into bracket top bore
-2. Attach servo mount to bracket with M3 x 8mm bolts (into heat-set inserts)
-3. Insert SG90 servo into servo mount pocket
-4. Secure servo with the 2 tiny Phillips screws (from servo package)
-5. Attach servo horn (cross type) to servo spline -- do NOT tighten horn screw yet
+1. Press 608ZZ bearing into bracket top bore (C-clamp, flush with top face)
+2. Insert 8mm pivot rod through bracket bore + bearing inner race
+3. Bolt servo mount to front wheel connector side face (2x M3x12 into heat-set inserts)
+4. Insert SG90 servo into mount pocket, secure with 2x M2x8 Phillips screws
+5. Attach single-arm horn to SG90 spline (centred = straight ahead), tighten horn screw
+6. Snap N20 motor into knuckle motor pocket (shaft exits through axle bore side)
+7. Slide knuckle pivot socket over pivot rod (rod protrudes below bracket)
+8. Tighten M3 grub screw in knuckle socket to retain rod
+9. Connect horn link:
+   - Horn end: M2x10 → nylon washer → horn hole → link hole → nylon washer → M2 nyloc nut
+   - Knuckle arm end: same hardware to knuckle steering arm M2 hole
+   - Finger-tight + 1/4 turn — pins must rotate freely
+10. Bolt steering bracket to connector front face (2x M3x12 into heat-set inserts)
 
 ### Verify:
-- [ ] Bearing seated, pivot shaft rotates freely
-- [ ] Servo centred at 90 degrees (1500us nominal centre). Note: SG90 centre is nominally 1500us. Individual servos may need trim adjustment of +/-50us. Set SERVO_CENTRE_TRIM in config.h after calibration.
-- [ ] Horn clears bracket through full +/-35 degree sweep
-- [ ] Bracket doesn't bind at extremes
+- [ ] Bearing seated, pivot shaft rotates freely (flick inner race)
+- [ ] Servo centred at 1500us — horn perpendicular to bracket
+- [ ] Horn link operates smoothly (manually sweep ±35°)
+- [ ] Hard stops engage at ±35° — knuckle tab contacts bracket walls
+- [ ] Motor spins freely in knuckle pocket
+- [ ] Motor wires have 15mm slack loop for steering sweep
 
 ### Troubleshooting -- Stage 4
 - **Servo jitters at rest**: Check power supply. Likely 5V BEC voltage droop under load (see EA-19). Try powering servo from a separate 5V source to confirm.
-- **Horn hits bracket at full sweep**: Servo horn installed at wrong angle. Remove horn, command servo to 90 degrees centre, reattach horn in straight-ahead orientation.
-- **Servo doesn't respond**: Check 3-pin wiring order: Brown=GND, Red=5V, Orange=Signal. Reversed signal/power will not damage the servo but it won't move.
-- **Bearing feels gritty**: New 608ZZ bearings sometimes have shipping grease mixed with debris. Spin the bearing with your fingers for 30 seconds -- it will smooth out. If persistent, flush with isopropyl alcohol.
+- **Horn link binds**: Pin joints too tight. Loosen M2 nyloc 1/8 turn. Nylon washers essential for smooth rotation.
+- **Hard stops don't engage at ±35°**: Tab or walls may be under-printed. Verify with protractor. Sand if too tall, add shim if too short.
+- **Servo doesn't respond**: Check 3-pin wiring order: Brown=GND, Red=5V, Orange=Signal.
+- **Bearing feels gritty**: Spin bearing 30 seconds to distribute grease. Flush with IPA if persistent.
 
-> **TEST GATE**: Command each servo to 0 degrees, 90 degrees, and 180 degrees (544us, 1500us, 2400us). Verify smooth motion, no grinding, no jitter. Horn clears bracket at all positions. All 4 brackets done.
+> **TEST GATE**: Command each servo to 1111us (−35°), 1500us (centre), 1889us (+35°). Verify smooth motion through full range. Hard stops engage. Horn link operates freely. All 4 assemblies done.
 
 ---
 
-## Stage 5: Front Wheel Assemblies x2 (~20 min)
+## Stage 5: Steered Wheel Assemblies x4 (~20 min)
 
-### Parts:
-- 1x Steering bracket (with servo, from Stage 4)
+*Updated per EA-27: motor is now in the knuckle (not the bracket).
+All 4 steered wheels follow the same assembly (FL, FR, RL, RR).*
+
+### Parts per wheel:
+- 1x Steering assembly (from Stage 4)
 - 1x Wheel sub-assembly (from Stage 2)
 
 ### Assembly:
-1. Insert front N20 motor into steering bracket's motor clip
-2. Motor shaft exits through horizontal shaft hole
-3. Attach wheel to motor shaft with grub screw
+1. Motor is already in the knuckle from Stage 4
+2. Insert motor D-shaft through knuckle axle bore
+3. Press wheel hub bore onto motor D-shaft
+4. Tighten M2 grub screw against D-flat
 
 ### Verify:
-- [ ] Wheel turns with servo (steering)
-- [ ] Wheel turns with motor (driving)
-- [ ] No mechanical interference through full steering range
-- [ ] Motor wires have slack for full +/-35 degree steering sweep
+- [ ] Wheel turns with motor (driving) — spin by hand, check motor shaft engagement
+- [ ] Wheel turns with servo (steering) — manually rotate horn link
+- [ ] No mechanical interference through full ±35° steering range
+- [ ] Wheel doesn't hit arm tube at full lock (≥5mm gap per EA-08)
+- [ ] Motor wires have adequate slack through full steering sweep
 
 ### Troubleshooting -- Stage 5
-- **Wheel hits bracket when steered**: Check motor is fully seated in clip. If interference persists, lightly sand the inner face of the bracket wall.
-- **Motor wire pulls tight at full steer**: Route wire with extra slack loop. Secure with tape at the neutral position, verify full sweep doesn't pull taut.
+- **Wheel wobbles**: D-flat not aligned in hub bore. Loosen grub screw, rotate wheel until D-flat seats.
+- **Wheel hits bracket when steered**: Motor not fully seated in knuckle clip. Check for brim remnants in pocket.
+- **Motor wire pulls tight at full steer**: Route wire through connector wire exit hole with 15mm slack loop. Secure with zip-tie anchor at neutral position.
 
-> **TEST GATE**: Each front wheel steers smoothly through full range while motor spins. No mechanical interference. Wires have adequate slack.
+> **TEST GATE**: Each steered wheel drives smoothly while steering through full ±35° range. No mechanical interference. Wires have adequate slack. All 4 steered wheels + 2 fixed wheels = 6 total ready for suspension assembly.
 
 ---
 
