@@ -1,8 +1,8 @@
 # Mars Rover Garden Robot — Master Todo List
 
 **Created**: 2026-03-15
-**Last Updated**: 2026-03-15 (evening)
-**Status**: Design phase complete, all software scaffolded, awaiting hardware for validation
+**Last Updated**: 2026-03-25
+**Status**: 95% design-complete. All software, firmware, docs, and CAD scripts done. 0% physically built. Next: printer setup, parts ordering, print campaign.
 
 ---
 
@@ -28,7 +28,7 @@
   - [x] Cross-reference EA-18 binary protocol for Phase 2
 
 ### 1.2 Cross-Reference Audit (DONE — 3 HIGH issues fixed, 3 MEDIUM noted, 5 LOW noted)
-- [x] Verify all 28 EAs reference each other correctly where dependent
+- [x] Verify all 29 EAs (EA-00 through EA-28) reference each other correctly where dependent
 - [x] Check EA-02 torque calcs match EA-05 weight budget values — consistent (34.2kg design weight)
 - [x] Check EA-03 power budget matches EA-02 motor selections — consistent (peak 24A = 6×4A stall)
 - [x] Check EA-06 cost breakdown matches all component selections — **fixed**: filament $10→$20
@@ -106,48 +106,59 @@
 - [x] Implement ultrasonic sensors (6 channels) — non-blocking trigger/echo, median filter
 - [x] Add WiFi AP mode for initial configuration
 - [x] Add OTA firmware update support
-- [x] Test compile for ESP32-S3 DevKitC-1 (971KB/74% flash, 48KB/14% RAM — ESP32 Core v3.3.7)
+- [x] Test compile for ESP32-S3 DevKitC-1 (1045KB/79% flash, 53KB/16% RAM — v0.3.0, ESP32 Core v3.3.7)
 - [ ] **All modules need on-hardware validation** (requires ESP32-S3 + peripherals)
 
 ---
 
-## 3. CAD & MECHANICAL (Requires Fusion 360 — Charlie's involvement)
+## 3. CAD & MECHANICAL (Fusion 360 + CTC Bizer)
 
-### 3.1 Fusion 360 CAD Design
-- [ ] Install and set up Fusion 360
-- [ ] Create assembly structure (top-down design)
-- [ ] Design body/chassis (main enclosure with 4 access panels)
-- [ ] Design rocker arms (left + right, 608ZZ bearing mounts)
-- [ ] Design bogie arms (left + right, 608ZZ bearing mounts)
-- [ ] Design differential bar mechanism
-- [ ] Design wheel hubs (Mars-aesthetic curved spokes, EA-11)
-- [ ] Design TPU tyres (interference fit: 0.3mm Phase 1)
-- [ ] Design steering knuckles (4x, servo horn mount)
-- [ ] Design motor mounts (6x, N20/Chihai motor)
-- [ ] Design mast base and pan/tilt mechanism
-- [ ] Design arm mounting points (Phase 2 prep)
-- [ ] Design solar panel mount rails
-- [ ] Design mini fridge compartment (Phase 2)
-- [ ] Design electronics tray (ESP32, BMS, power dist)
-- [ ] Design cable routing channels
-- [ ] Create 3D-printable segment plan (EA-11 segmentation strategy)
-- [ ] Add heat-set insert hole locations (4.2mm for M3, verify with test print)
-- [ ] Export STL files with correct orientation annotations
-- [ ] Create assembly drawing with exploded views
+### 3.1 Fusion 360 CAD Scripts (39 scripts: 27 active + 4 deprecated + 6 reference + 2 superseded)
+- [x] Install Fusion 360 Personal + MCP-Link add-in
+- [x] Create parametric dimension script (`generate_rover_params.py`)
+- [x] Design body quadrants — `body_bottom_*.py` (FL/FR/RL/RR), `top_deck_tile.py`
+- [x] Design wheels — `rover_wheel_v3.py` (Mars-aesthetic spokes, O-ring grooves, 608ZZ seat)
+- [x] Design suspension — tube+connector approach (EA-25/26):
+  - [x] `rocker_hub_connector.py`, `bogie_pivot_connector.py`
+  - [x] `front_wheel_connector.py`, `middle_wheel_connector.py`
+  - [x] `differential_pivot_housing.py`, `cable_clip.py`
+- [x] Design steering — offset parallel drive + horn link 4-bar (EA-27):
+  - [x] `steering_bracket.py`, `steering_knuckle.py`, `steering_horn_link.py`
+  - [x] `servo_mount.py`, `fixed_wheel_mount.py`
+- [x] Design drivetrain — `motor_mount_n20.py`
+- [x] Design electronics — `electronics_tray.py`, `strain_relief.py`, `fuse_holder.py`, `switch_mount.py`
+- [x] Design calibration — `bearing_test.py`, `tube_socket_test.py`
+- [x] Create 6 reference models (N20, SG90, 608ZZ, ESP32, L298N, 2S LiPo)
+- [x] Create BatchExportAll script (28 STL exports)
+- [x] Create printer calibration script (`printer_calibration.py`, zeroed — needs real data)
+- [~] Run BatchExportAll to generate all 28 STLs (needs Fusion 360 session)
+- [ ] Remove 6 stale STLs from deprecated scripts
 
-### 3.2 3D Printing (After CAD complete)
-- [ ] Print test block for heat-set insert hole sizing (4.2mm vs 4.8mm)
-- [ ] Print test block for TPU interference fit (0.2, 0.3, 0.4mm)
-- [ ] Print Phase 1 chassis segments (~65hr print time per EA-08)
-- [ ] Print wheel hubs (6x) and TPU tyres (6x)
-- [ ] Print rocker and bogie arms
-- [ ] Print steering knuckles (4x)
-- [ ] Print motor mounts (6x)
-- [ ] Print differential bar
-- [ ] Print electronics tray
-- [ ] Print mast parts
-- [ ] Post-processing: sand, clean, verify fits
-- [ ] Install heat-set inserts (soldering iron, 170-180°C for PLA)
+### 3.2 Printer Setup & Calibration (CTC Bizer, not used in years)
+- [ ] Mechanical inspection (belts, rods, nozzle, bed)
+- [ ] Park right extruder, bed level, load PLA
+- [ ] Print XYZ calibration cube — measure ±0.2mm
+- [ ] Print bearing test piece — test 608ZZ press-fit
+- [ ] Print tube socket test — test 8mm rod slide-fit
+- [ ] Iterate up to 3× until snug push-fit achieved
+- [ ] Update `printer_calibration.py` with real measured values
+
+### 3.3 Print Campaign (~72 hrs, 28 unique parts × copies ≈ 76 pieces)
+- [ ] Batch A: 1× Wheel + 1× Steering bracket (gate: motor D-shaft, bearing seat)
+- [ ] Batch B: 1× Servo mount + horn link + knuckle (gate: SG90 pocket, link geometry)
+- [ ] Batch C: 5× remaining wheels (gate: O-ring grooves, batch quality)
+- [ ] Batch D: 3× Steering brackets + 2× fixed mounts (gate: all 6 wheel mounts)
+- [ ] Batch E: 3× Servo mounts + horn links + knuckles (gate: 4 steering assemblies)
+- [ ] Batch F: 11× Suspension connectors (gate: tube socket fit, bearing fit)
+- [ ] Batch G: Diff pivot housing (gate: centre bearing, diff bar clamp)
+- [ ] Batch H: 12× Cable clips (gate: wire bundle fit)
+- [ ] Batch I: Electronics tray (gate: ESP32 + L298N standoffs)
+- [ ] Batch J: Body FL + FR (gate: tongue/groove, bearing boss)
+- [ ] Batch K: Body RL + RR (gate: rocker pivots, bed clearance)
+- [ ] Batch L: 4× Top deck tiles (gate: snap clips, seam alignment)
+- [ ] Batch M: Strain relief + fuse holder + switch mount (gate: fit)
+- [ ] Post-processing: sand, clean, verify all fits
+- [ ] Install heat-set inserts (~40, soldering iron at 170-180°C for PLA)
 
 ---
 
@@ -176,7 +187,8 @@
   - [ ] TPU filament (1 spool for tyres) (Phase 2 — CTC Bizer cannot print TPU)
 
 ### 4.2 Electronics Assembly
-- [ ] Create wiring harness diagram (from EA-09 GPIO pinmap)
+- [x] Create wiring harness design (EA-23: 57-wire schedule, connectors, colour codes, build order)
+- [x] Create wiring diagrams (EA-19: 4 ASCII diagrams + 4 rendered Mermaid SVGs)
 - [ ] Solder/connect ESP32-S3 development breadboard
 - [ ] Wire motor drivers (L298N, power + signal)
 - [ ] Wire steering servos (signal + 5V power bus)
@@ -330,14 +342,14 @@
 - [x] Create simulation test suite (21 Gazebo scenarios: mobility, sensors, nav, terrain, safety)
 - [x] Create integration test: UART bridge round-trip (30 tests: NMEA codec, commands, odometry, streams)
 - [ ] Create integration test: full Nav2 stack in simulation
-- [x] Set up CI/CD for ROS2 packages (GitHub Actions: ESP32 compile, ROS2 build, lint, docs check)
+- [x] Set up CI/CD for ROS2 packages (GitHub Actions: ESP32 compile, firmware tests, ROS2 build, lint, docs check EA-00..EA-28)
 - [ ] Performance benchmarks: YOLO FPS, EKF update rate, UART throughput
 
 ---
 
 ## 10. PROJECT MANAGEMENT
 
-- [x] Complete all 28 engineering analyses (EA-00 through EA-27)
+- [x] Complete all 29 engineering analyses (EA-00 through EA-28)
 - [x] Create Phase 1 firmware skeleton (all modules implemented)
 - [x] Create ROS2 package scaffolding (all 10 nodes implemented)
 - [x] Create PWA app
@@ -352,23 +364,34 @@
 - [x] Back up project to C: and E: drives (periodic)
 - [x] Consolidate reference docs' best findings into EAs (EA-04: TensorRT export, EA-09: I2C expander strategy, EA-11: insert sizing + UV protection, EA-13: dual EKF + udev + use_sim_time)
 - [x] Update CLAUDE.md when significant changes happen
-- [ ] Maintain this todo list as work progresses
+- [x] Create 39 Fusion 360 CAD scripts (27 active + 4 deprecated + 6 reference + 2 superseded)
+- [x] Full project audit: fix 65+ stale refs across 19 files
+- [x] Create EA-28 systems integration (42 cross-domain interfaces, 6 diagrams)
+- [x] Create open-source CAD reference (30+ models, 8 categories)
+- [x] Render 10 Mermaid diagrams to SVG (4 wiring + 6 integration)
+- [~] Maintain this todo list as work progresses
 
 ---
 
 ## Priority Order (Recommended)
 
-1. ~~**Now (no hardware)**: Documentation fixes, config corrections, firmware implementation, simulation setup~~ **DONE**
-2. **When back from holiday**: Fusion 360 CAD design, 3D print test blocks, order Phase 1 parts (see shopping list)
-3. **After parts arrive**: 3D printing (~65hr), electronics bench test
-4. **After print + electronics**: Phase 1 mechanical assembly, firmware bring-up on real hardware
-5. **After Phase 1 works**: Jetson setup, sensor integration, Nav2 tuning
-6. **After navigation works**: YOLO, autonomy, binary protocol, PWA telemetry
-7. **Phase 2**: Full-scale reprint, reinforcement, solar, arms, mast, fridge
-8. **Phase 3**: Metal chassis (long-term)
+1. ~~**Software & docs**: Documentation, firmware, ROS2, PWA, simulation~~ **DONE**
+2. ~~**CAD scripts**: 39 Fusion 360 scripts, parametric dimensions, reference models~~ **DONE**
+3. ~~**Engineering audit**: 29 EAs consistent, 65+ stale refs fixed, EA-28 integration~~ **DONE**
+4. **NOW → Run BatchExportAll in Fusion 360** to generate 28 STLs
+5. **NOW → Printer setup**: CTC Bizer calibration, bearing/tube socket test prints
+6. **NOW → Order parts**: 4 orders (~£153), filament first for calibration
+7. **After calibration + filament**: Print campaign (~72 hrs, 13 batches with test-fit gates)
+8. **After electronics arrive**: Bench test (flash ESP32, L298N 3.3V test, servo/motor check)
+9. **After all printed + tested**: Mechanical assembly (8 stages, 6-8 hrs)
+10. **FIRST DRIVE**: 10 acceptance tests (EA-21), all 3 steering modes
+11. **Post-drive**: Tuning, EA-29 lessons learned, firmware iteration
+12. **Phase 2**: Jetson, sensors, Nav2, YOLO, full autonomy, 1.0× scale
+13. **Phase 3**: Metal chassis (long-term)
 
 ---
 
-*Total items: ~180+ tasks across 10 categories*
-*Software/documentation tasks: ~90% complete (all scaffolded, awaiting hardware validation)*
-*Next physical milestone: CAD design in Fusion 360 + order Phase 1 components*
+*Total items: ~200+ tasks across 10 categories*
+*Software/documentation/CAD: ~95% complete*
+*Hardware/physical build: 0% — next milestone is printer calibration + parts ordering*
+*See `docs/plans/pre-print-checklist.md` (v3.0) for operational print workflow*
