@@ -1,38 +1,40 @@
 MARS ROVER — BATCH EXPORT COMPLETE
 ==================================================
-Components processed: 28/28
-STL files exported:   27
+Components processed: 29/29
+STL files exported:   29
 Errors:               0
-Elapsed time:         58s (1.0 min)
+Elapsed time:         182s (3.0 min)
 
 EXPORTED FILES:
   calibration\calibration_test_card.stl             266 KB
-  calibration\tube_socket_test.stl                   89 KB
-  wheels\rover_wheel_v3.stl                         108 KB
+  calibration\bearing_test_piece.stl                289 KB
+  calibration\tube_socket_test.stl                  502 KB
+  wheels\rover_wheel_v3.stl                         160 KB
   wheels\rover_tire.stl                              99 KB
-  steering\steering_bracket.stl                      50 KB
-  steering\fixed_wheel_mount.stl                     35 KB
-  steering\servo_mount.stl                           70 KB
-  steering\steering_knuckle.stl                      39 KB
-  steering\steering_horn_link.stl                    35 KB
-  suspension\rocker_hub_connector.stl                19 KB
-  suspension\bogie_pivot_connector.stl               81 KB
-  suspension\front_wheel_connector.stl               46 KB
-  suspension\middle_wheel_connector.stl               1 KB
-  suspension\differential_pivot_housing.stl          47 KB
-  suspension\cable_clip.stl                          36 KB
-  body\body_quadrant_fl.stl                          95 KB
-  body\body_quadrant_fr.stl                          95 KB
-  body\body_quadrant_rl.stl                         123 KB
-  body\body_quadrant_rr.stl                         123 KB
-  body\top_deck_fl.stl                               44 KB
-  body\top_deck_fr.stl                              106 KB
-  body\top_deck_rl.stl                              106 KB
-  body\top_deck_rr.stl                               60 KB
-  body\electronics_tray.stl                         242 KB
-  body\strain_relief_clip.stl                        30 KB
-  body\fuse_holder_bracket.stl                       44 KB
-  body\switch_mount_plate.stl                        30 KB
+  steering\steering_bracket.stl                     551 KB
+  steering\fixed_wheel_mount.stl                    492 KB
+  steering\servo_mount.stl                          719 KB
+  steering\steering_knuckle.stl                     610 KB
+  steering\steering_horn_link.stl                   233 KB
+  suspension\rocker_hub_connector.stl               495 KB
+  suspension\bogie_pivot_connector.stl              795 KB
+  suspension\front_wheel_connector.stl              282 KB
+  suspension\middle_wheel_connector.stl             255 KB
+  suspension\differential_pivot_housing.stl         294 KB
+  suspension\cable_clip.stl                         451 KB
+  body\body_quadrant_fl.stl                        3944 KB
+  body\body_quadrant_fr.stl                        3944 KB
+  body\body_quadrant_rl.stl                        2795 KB
+  body\body_quadrant_rr.stl                        2666 KB
+  body\top_deck_fl.stl                             2829 KB
+  body\top_deck_fr.stl                             2930 KB
+  body\top_deck_rl.stl                             3097 KB
+  body\top_deck_rr.stl                             2999 KB
+  body\electronics_tray.stl                        1949 KB
+  body\strain_relief_clip.stl                       307 KB
+  body\fuse_holder_bracket.stl                      558 KB
+  body\switch_mount_plate.stl                       229 KB
+  body\battery_tray.stl                             938 KB
 
 NEXT STEPS:
   1. Open each STL in Cura, verify dimensions
@@ -40,4 +42,4 @@ NEXT STEPS:
   3. Export gcode, convert: gpx -m cr1d input.gcode output.x3g
   4. Copy .x3g to SD card, print on CTC Bizer
 
-Timestamp: 2026-03-25 12:13:10
+Timestamp: 2026-03-25 15:27:21

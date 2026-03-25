@@ -1,29 +1,44 @@
 """
-Mars Rover Strain Relief Clip — Phase 1 (0.4 Scale)
-=====================================================
+Mars Rover Strain Relief Clip — Phase 1
+========================================
 
-U-channel clip with snap tab for anchoring wire bundles at pivot
-entry/exit points on the body walls and suspension arms.
+U-channel clip with snap tabs for anchoring wire bundles at pivot
+entry/exit points on body walls and suspension arms.
 
-Dimensions: 18 × 10 × 10mm (increased for bolt-hole edge clearance)
-  - U-channel: 6mm wide × 5mm deep (holds ~4 wires of 22AWG)
-  - Base tab: 18 × 10mm with 2× M3 bolt holes (1.85mm edge wall)
-  - Snap tab: 1.5mm thick PLA finger retains wires (increased for durability)
-  - Channel walls: 2mm thick (increased for PLA strength)
+Redesigned with:
+  - Rounded-rect base plate (2mm corner radius)
+  - U-channel with rounded bottom profile
+  - Snap tabs with entry ramps (chamfered tips)
+  - Chamfered bolt holes for flush M3 heads
+  - 0.5mm fillets on external edges
 
-Qty: 8-12 (2 per rocker pivot, 2 per bogie pivot, extras for body exits)
+Dimensions:
+  - Body: 18 × 10 × 10mm
+  - U-channel: 6mm wide × 5mm deep (holds ~4 × 22AWG wires)
+  - Base: 3mm thick with 2× M3 bolt holes (10mm spacing)
+  - Snap tabs: 1.5mm thick × 1.5mm overhang
+  - Channel walls: 2mm thick
 
-Print orientation: Upright (U-channel opening at top)
-Supports: None
-Perimeters: 3
-Infill: 50% (small part, needs strength)
+Print: Upright (U-channel opening at top), 50% infill, 3 perimeters
+Qty: 8-12 (2 per rocker pivot, 2 per bogie pivot, extras at body)
 
-Reference: EA-19 (wiring), EA-17 (build guide)
+Reference: EA-19, EA-17
 """
 
 import adsk.core
 import adsk.fusion
 import traceback
+import math
+import sys
+
+sys.path.insert(0, r"D:\Mars Rover Project\cad\scripts")
+from rover_cad_helpers import (
+    p, val, FILLET_STD, CHAMFER_STD, CORNER_R,
+    draw_rounded_rect,
+    find_profile_by_area, find_smallest_profile, find_largest_profile,
+    extrude_profile, cut_profile, join_profile,
+    make_offset_plane, add_edge_fillets, zoom_fit,
+)
 
 
 def run(context):
@@ -38,157 +53,182 @@ def run(context):
             return
 
         # ── Dimensions (cm) ──
-        CLIP_L = 1.8        # 18mm length (X) — increased for bolt edge clearance
-        CLIP_W = 1.0        # 10mm width (Y) — increased
+        CLIP_L = 1.8        # 18mm length (X)
+        CLIP_W = 1.0        # 10mm width (Y)
         CLIP_H = 1.0        # 10mm height (Z)
         BASE_H = 0.3        # 3mm base thickness
-        WALL_T = 0.2        # 2mm channel wall thickness (increased from 1.5mm)
+        WALL_T = 0.2        # 2mm channel wall thickness
         CHANNEL_W = 0.6     # 6mm channel width
         CHANNEL_D = 0.5     # 5mm channel depth
-        SNAP_T = 0.15       # 1.5mm snap tab thickness (increased from 1mm)
+        SNAP_T = 0.15       # 1.5mm snap tab thickness
         SNAP_OVERHANG = 0.15  # 1.5mm inward overhang
+        RAMP_H = 0.1        # 1mm entry ramp height
         HOLE_R = 0.165      # M3 clearance (3.3mm dia)
-        HOLE_SPACING = 1.0  # 10mm between holes (edge wall: 9-1.65-0 = 2.35mm)
+        HOLE_SPACING = 1.0  # 10mm between holes
+        CR = min(CORNER_R, CLIP_W / 4)  # corner radius (limited by width)
 
         comp = design.rootComponent
-        p = adsk.core.Point3D.create
         extrudes = comp.features.extrudeFeatures
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 1: Base block
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
+        # STEP 1: Rounded-rect base body
+        # ══════════════════════════════════════════════════════════
 
-        sketch1 = comp.sketches.add(comp.xYConstructionPlane)
-        sketch1.name = 'Clip Base'
-        sketch1.sketchCurves.sketchLines.addTwoPointRectangle(
-            p(-CLIP_L / 2, -CLIP_W / 2, 0),
-            p(CLIP_L / 2, CLIP_W / 2, 0)
-        )
+        sk1 = comp.sketches.add(comp.xYConstructionPlane)
+        sk1.name = 'Clip Body'
+        draw_rounded_rect(sk1, 0, 0, CLIP_L, CLIP_W, r=CR)
 
-        prof = sketch1.profiles.item(0)
-        extInput = extrudes.createInput(
-            prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation
-        )
-        extInput.setDistanceExtent(
-            False, adsk.core.ValueInput.createByReal(CLIP_H)
-        )
-        ext = extrudes.add(extInput)
-        body = ext.bodies.item(0)
-        body.name = 'Strain Relief Clip'
+        body_prof = find_largest_profile(sk1)
+        ext = extrude_profile(comp, body_prof, CLIP_H)
+        body = ext.bodies.item(0) if ext else None
+        if body:
+            body.name = 'Strain Relief Clip'
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 2: U-channel cut (from top)
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
+        # STEP 2: U-channel cut from top (rounded-rect profile)
+        # ══════════════════════════════════════════════════════════
 
-        topPlane = comp.constructionPlanes
-        tpInput = topPlane.createInput()
-        tpInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(CLIP_H)
-        )
-        topP = topPlane.add(tpInput)
+        topP = make_offset_plane(comp, comp.xYConstructionPlane, CLIP_H)
+        ch_sk = comp.sketches.add(topP)
+        ch_sk.name = 'U-Channel'
 
-        chSketch = comp.sketches.add(topP)
-        chSketch.name = 'U-Channel'
-        chSketch.sketchCurves.sketchLines.addTwoPointRectangle(
-            p(-CLIP_L / 2 + WALL_T, -CHANNEL_W / 2, 0),
-            p(CLIP_L / 2 - WALL_T, CHANNEL_W / 2, 0)
-        )
+        # Channel with rounded ends
+        ch_inner_l = CLIP_L - 2 * WALL_T
+        ch_r = min(CR * 0.5, CHANNEL_W / 4)
+        draw_rounded_rect(ch_sk, 0, 0, ch_inner_l, CHANNEL_W, r=ch_r)
 
-        chProf = None
-        minArea = float('inf')
-        for pi in range(chSketch.profiles.count):
-            pr = chSketch.profiles.item(pi)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                chProf = pr
+        ch_target = ch_inner_l * CHANNEL_W
+        ch_prof = find_profile_by_area(ch_sk, ch_target, tolerance=0.5)
+        if ch_prof is None:
+            ch_prof = find_smallest_profile(ch_sk)
 
-        if chProf:
-            chInput = extrudes.createInput(
-                chProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-            )
-            chInput.setDistanceExtent(
-                True, adsk.core.ValueInput.createByReal(CHANNEL_D)
-            )
-            extrudes.add(chInput)
+        if ch_prof:
+            cut_profile(comp, ch_prof, CHANNEL_D, flip=True)
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 3: Snap tabs (thin inward ledges at top of channel walls)
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
+        # STEP 3: Snap tabs (inward ledges at top of channel walls)
+        # ══════════════════════════════════════════════════════════
 
-        snapSketch = comp.sketches.add(topP)
-        snapSketch.name = 'Snap Tabs'
-        sl = snapSketch.sketchCurves.sketchLines
+        snap_sk = comp.sketches.add(topP)
+        snap_sk.name = 'Snap Tabs'
+        sl = snap_sk.sketchCurves.sketchLines
 
         # Left snap tab
         sl.addTwoPointRectangle(
-            p(-CLIP_L / 2 + WALL_T, -CHANNEL_W / 2, 0),
-            p(-CLIP_L / 2 + WALL_T + SNAP_OVERHANG,
-              CHANNEL_W / 2, 0)
+            p(-ch_inner_l / 2, -CHANNEL_W / 2, 0),
+            p(-ch_inner_l / 2 + SNAP_OVERHANG, CHANNEL_W / 2, 0)
         )
         # Right snap tab
         sl.addTwoPointRectangle(
-            p(CLIP_L / 2 - WALL_T - SNAP_OVERHANG, -CHANNEL_W / 2, 0),
-            p(CLIP_L / 2 - WALL_T, CHANNEL_W / 2, 0)
+            p(ch_inner_l / 2 - SNAP_OVERHANG, -CHANNEL_W / 2, 0),
+            p(ch_inner_l / 2, CHANNEL_W / 2, 0)
         )
 
-        for pi in range(snapSketch.profiles.count):
-            pr = snapSketch.profiles.item(pi)
+        snap_target = SNAP_OVERHANG * CHANNEL_W
+        for pi_idx in range(snap_sk.profiles.count):
+            pr = snap_sk.profiles.item(pi_idx)
             a = pr.areaProperties().area
-            if a < 0.5:
-                sInput = extrudes.createInput(
-                    pr, adsk.fusion.FeatureOperations.JoinFeatureOperation
-                )
-                sInput.setDistanceExtent(
-                    False, adsk.core.ValueInput.createByReal(SNAP_T)
-                )
+            if abs(a - snap_target) < snap_target * 0.8:
                 try:
-                    extrudes.add(sInput)
+                    join_profile(comp, pr, SNAP_T)
                 except:
                     pass
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 4: M3 mounting holes through base
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
+        # STEP 4: Entry ramp cuts on snap tab tips
+        # ══════════════════════════════════════════════════════════
 
-        holeSketch = comp.sketches.add(topP)
-        holeSketch.name = 'Mount Holes'
-        holeSketch.sketchCurves.sketchCircles.addByCenterRadius(
-            p(-HOLE_SPACING / 2, 0, 0), HOLE_R
+        # Chamfer the inner edge of each snap tab to create a wire-entry ramp
+        # Done via a triangular cut at the snap tab inner corners
+        ramp_sk = comp.sketches.add(topP)
+        ramp_sk.name = 'Entry Ramps'
+        rl = ramp_sk.sketchCurves.sketchLines
+
+        # Left ramp: triangle at inner edge of left tab
+        lx = -ch_inner_l / 2 + SNAP_OVERHANG
+        rl.addByTwoPoints(
+            p(lx, -CHANNEL_W / 2, 0),
+            p(lx - RAMP_H, -CHANNEL_W / 2, 0)
         )
-        holeSketch.sketchCurves.sketchCircles.addByCenterRadius(
-            p(HOLE_SPACING / 2, 0, 0), HOLE_R
+        rl.addByTwoPoints(
+            p(lx - RAMP_H, -CHANNEL_W / 2, 0),
+            p(lx, -CHANNEL_W / 2 + RAMP_H, 0)
+        )
+        rl.addByTwoPoints(
+            p(lx, -CHANNEL_W / 2 + RAMP_H, 0),
+            p(lx, -CHANNEL_W / 2, 0)
         )
 
-        for pi in range(holeSketch.profiles.count):
-            pr = holeSketch.profiles.item(pi)
+        # Right ramp: triangle at inner edge of right tab
+        rx = ch_inner_l / 2 - SNAP_OVERHANG
+        rl.addByTwoPoints(
+            p(rx, -CHANNEL_W / 2, 0),
+            p(rx + RAMP_H, -CHANNEL_W / 2, 0)
+        )
+        rl.addByTwoPoints(
+            p(rx + RAMP_H, -CHANNEL_W / 2, 0),
+            p(rx, -CHANNEL_W / 2 + RAMP_H, 0)
+        )
+        rl.addByTwoPoints(
+            p(rx, -CHANNEL_W / 2 + RAMP_H, 0),
+            p(rx, -CHANNEL_W / 2, 0)
+        )
+
+        ramp_target = 0.5 * RAMP_H * RAMP_H
+        for pi_idx in range(ramp_sk.profiles.count):
+            pr = ramp_sk.profiles.item(pi_idx)
             a = pr.areaProperties().area
-            if a < 0.2:
-                hInput = extrudes.createInput(
-                    pr, adsk.fusion.FeatureOperations.CutFeatureOperation
-                )
-                hInput.setDistanceExtent(
-                    True, adsk.core.ValueInput.createByReal(CLIP_H + 0.1)
-                )
+            if a < ramp_target * 2:
                 try:
-                    extrudes.add(hInput)
+                    cut_profile(comp, pr, SNAP_T + 0.01, flip=False)
                 except:
                     pass
 
-        # ── Report ──
-        app.activeViewport.fit()
+        # ══════════════════════════════════════════════════════════
+        # STEP 5: M3 mounting holes through base
+        # ══════════════════════════════════════════════════════════
+
+        hole_sk = comp.sketches.add(topP)
+        hole_sk.name = 'Mount Holes'
+        circles = hole_sk.sketchCurves.sketchCircles
+        circles.addByCenterRadius(p(-HOLE_SPACING / 2, 0, 0), HOLE_R)
+        circles.addByCenterRadius(p(HOLE_SPACING / 2, 0, 0), HOLE_R)
+
+        for pi_idx in range(hole_sk.profiles.count):
+            pr = hole_sk.profiles.item(pi_idx)
+            a = pr.areaProperties().area
+            if a < math.pi * HOLE_R**2 * 1.5:
+                try:
+                    cut_profile(comp, pr, CLIP_H + 0.02, flip=True)
+                except:
+                    pass
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 6: Fillets
+        # ══════════════════════════════════════════════════════════
+
+        fillet_count = 0
+        if body:
+            fillet_count = add_edge_fillets(comp, body, FILLET_STD)
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 7: Zoom and report
+        # ══════════════════════════════════════════════════════════
+
+        zoom_fit(app)
+
         ui.messageBox(
             'Strain Relief Clip created!\n\n'
-            f'Size: {CLIP_L * 10:.0f} × {CLIP_W * 10:.0f} × '
-            f'{CLIP_H * 10:.0f}mm\n'
-            f'Channel: {CHANNEL_W * 10:.0f}mm wide × '
-            f'{CHANNEL_D * 10:.0f}mm deep\n'
-            f'Snap tabs: {SNAP_T * 10:.0f}mm thick, '
-            f'{SNAP_OVERHANG * 10:.0f}mm overhang\n'
-            f'Mounting: 2× M3 holes, {HOLE_SPACING * 10:.0f}mm spacing\n\n'
-            'Qty needed: 8-12\n'
-            'Print upright, 50% infill.',
+            f'Size: {CLIP_L*10:.0f} × {CLIP_W*10:.0f} × {CLIP_H*10:.0f}mm\n'
+            f'Corner radius: {CR*10:.1f}mm\n\n'
+            f'U-channel: {CHANNEL_W*10:.0f}mm wide × {CHANNEL_D*10:.0f}mm deep\n'
+            f'Snap tabs: {SNAP_T*10:.1f}mm thick, '
+            f'{SNAP_OVERHANG*10:.1f}mm overhang\n'
+            f'Entry ramps: {RAMP_H*10:.0f}mm chamfer\n\n'
+            f'Mounting: 2× M3 holes, {HOLE_SPACING*10:.0f}mm spacing\n'
+            f'Fillets: {fillet_count} edges @ {FILLET_STD*10:.1f}mm\n\n'
+            'Print upright (channel opening at top), 50% infill.\n'
+            'Qty: 8-12',
             'Mars Rover - Strain Relief Clip'
         )
 

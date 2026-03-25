@@ -6,31 +6,48 @@ THE most complex connector. Sits outside the body, clamped to the
 diff bar. Provides tube sockets for the front arm (to front wheel)
 and rear arm (to bogie pivot).
 
+Redesigned with:
+  - Rounded-rect body (2mm corner radius)
+  - Tube sockets via shared helpers (chamfered entries)
+  - Diff bar clamp bore with grub screw via helper
+  - Triangular gussets reinforcing tube socket bosses
+  - Wire channels with rounded entries
+  - 0.5mm fillets on all external edges
+
 Differential mechanism: This connector CLAMPS rigidly to the 8mm
 diff bar via an M3 grub screw. The diff bar passes through 608ZZ
-bearings in the body. When one side tilts, the bar rotates, tilting
-the other side — keeping the body level.
+bearings in the body.
 
 Features:
-  - Diff bar clamp bore: 8.0mm (press-fit on 8mm rod, M3 grub for retention)
-  - 2× tube sockets (8.2mm bore × 15mm deep):
-    * FRONT: angled forward-down (~24° below horizontal)
-    * REAR: angled backward-down (~24° below horizontal)
+  - Diff bar clamp bore: 8.2mm (clearance fit, M3 grub retention)
+  - 2× tube sockets (8.2mm × 15mm deep): front + rear
   - M3 grub screws in each tube socket + diff bar clamp
-  - 2× wire channels (8×6mm): from body side to each tube socket
+  - 2× wire channels (8×6mm)
   - 4mm minimum wall thickness
 
-Overall size: ~45 × 40 × 35mm (may need enlarging for steeper 24° tube angles)
-Print: Flat (body-facing side down), PLA, 60% infill, 5 perimeters
+Overall size: ~45 × 35 × 35mm
+Print: Body-side down | PLA | 60% infill | 5 perimeters
 Qty: 2 (left + right — symmetric)
 
-Reference: EA-25, MrOver RockerJoint2_6.scad, Sawppy Rocker Body Mount
+Reference: EA-25, EA-26, Sawppy Rocker Body Mount
 """
 
 import adsk.core
 import adsk.fusion
 import traceback
 import math
+import sys
+
+sys.path.insert(0, r"D:\Mars Rover Project\cad\scripts")
+from rover_cad_helpers import (
+    p, val, FILLET_STD, CHAMFER_STD, CORNER_R,
+    TUBE_BORE, TUBE_DEPTH, TUBE_WALL, GRUB_M3,
+    draw_rounded_rect,
+    find_largest_profile, find_smallest_profile, find_profile_by_area,
+    extrude_profile, cut_profile, join_profile,
+    make_offset_plane, make_m3_grub_hole,
+    add_edge_fillets, add_triangular_gusset, zoom_fit,
+)
 
 
 def run(context):
@@ -44,361 +61,201 @@ def run(context):
             ui.messageBox('No active design.')
             return
 
-        # ── Dimensions (cm, EA-25) ──
-        TUBE_BORE_R = 0.41          # 8.2mm tube socket bore
-        TUBE_DEPTH = 1.5            # 15mm socket depth
-        DIFF_BORE_R = 0.4           # 8.0mm diff bar bore (press-fit)
-        GRUB_R = 0.15               # 3mm M3 grub
-        WALL = 0.4                  # 4mm minimum wall
-        WIRE_W = 0.8                # 8mm wire channel
-        WIRE_H = 0.6                # 6mm wire channel
+        # ── Dimensions (cm) ──
+        TUBE_BORE_R = TUBE_BORE / 2   # 4.1mm
+        DIFF_BORE_R = 0.41             # 4.1mm (8.2mm bore, assembly clearance on 8mm rod)
+        WALL = TUBE_WALL               # 4mm
+        WIRE_W = 0.8                   # 8mm
+        WIRE_H = 0.6                   # 6mm
 
-        # ── Body dimensions ──
-        # The connector is roughly a cylinder aligned with the diff bar (X axis)
-        # with tube sockets projecting in Y direction (front/rear)
-        BODY_R = TUBE_BORE_R + WALL + 0.2   # ~8.3mm radius, 16.6mm OD
-        BODY_LEN = 3.5             # 35mm long (along diff bar axis, X)
-
-        # ── Tube socket angles (NASA-proportioned: pivot Z=120, wheel Z=40, WB_half=180) ──
-        FRONT_DOWN_ANGLE = 24.0    # degrees below horizontal (was 8.5°)
-        REAR_DOWN_ANGLE = 24.0     # degrees below horizontal (was 9.5°)
+        # Body
+        BODY_W = 4.5                   # 45mm (Y, front-rear)
+        BODY_H_Z = 3.5                 # 35mm (Z, up-down)
+        BODY_D = 3.5                   # 35mm (X, along diff bar)
 
         comp = design.rootComponent
-        p = adsk.core.Point3D.create
         extrudes = comp.features.extrudeFeatures
-        revolves = comp.features.revolveFeatures
 
         # ══════════════════════════════════════════════════════════
-        # STEP 1: Main body — rectangular block with rounded edges
-        # Oriented: X = diff bar axis, Y = front-rear, Z = up-down
-        # Diff bar runs through the center along X
+        # STEP 1: Rounded-rect body
         # ══════════════════════════════════════════════════════════
 
-        BODY_W = 4.5               # 45mm (Y direction, front-rear)
-        BODY_H = 3.5               # 35mm (Z direction, up-down)
-        BODY_D = 3.5               # 35mm (X direction, along diff bar)
+        sk = comp.sketches.add(comp.xYConstructionPlane)
+        sk.name = 'Hub Body'
+        draw_rounded_rect(sk, 0, BODY_H_Z / 2, BODY_W, BODY_H_Z, r=CORNER_R)
 
-        sketch = comp.sketches.add(comp.xYConstructionPlane)
-        sketch.name = 'Hub Body'
-        sl = sketch.sketchCurves.sketchLines
-        sl.addTwoPointRectangle(
-            p(-BODY_W / 2, 0, 0),
-            p(BODY_W / 2, BODY_H, 0)
+        target = BODY_W * BODY_H_Z - (4 - math.pi) * CORNER_R**2
+        prof = find_profile_by_area(sk, target, tolerance=0.5)
+        if prof is None:
+            prof = find_largest_profile(sk)
+
+        ext = extrude_profile(comp, prof, BODY_D)
+        body = ext.bodies.item(0) if ext else None
+        if body:
+            body.name = 'Rocker Hub Connector'
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 2: Diff bar bore (through centre along Z-axis)
+        # ══════════════════════════════════════════════════════════
+
+        diff_sk = comp.sketches.add(comp.xYConstructionPlane)
+        diff_sk.name = 'Diff Bar Bore'
+        diff_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(0, BODY_H_Z / 2), DIFF_BORE_R
         )
 
-        prof = None
-        maxArea = 0
-        for pi_idx in range(sketch.profiles.count):
-            pr = sketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a > maxArea:
-                maxArea = a
-                prof = pr
-
-        hubBody = None
-        if prof:
-            extInput = extrudes.createInput(
-                prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation
+        diff_prof = find_smallest_profile(diff_sk)
+        if diff_prof:
+            d_input = extrudes.createInput(
+                diff_prof, adsk.fusion.FeatureOperations.CutFeatureOperation
             )
-            extInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(BODY_D)
-            )
-            hubExt = extrudes.add(extInput)
-            hubBody = hubExt.bodies.item(0)
-            hubBody.name = 'Rocker Hub Connector'
-
-        # ══════════════════════════════════════════════════════════
-        # STEP 2: Diff bar bore (horizontal through center, along Z axis)
-        # The diff bar runs through the connector at mid-height
-        # ══════════════════════════════════════════════════════════
-
-        # Bore runs through the block in Z direction at center
-        diffSketch = comp.sketches.add(comp.xYConstructionPlane)
-        diffSketch.name = 'Diff Bar Bore'
-        diffSketch.sketchCurves.sketchCircles.addByCenterRadius(
-            p(0, BODY_H / 2, 0), DIFF_BORE_R
-        )
-
-        diffProf = None
-        minArea = float('inf')
-        for pi_idx in range(diffSketch.profiles.count):
-            pr = diffSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                diffProf = pr
-
-        if diffProf:
-            diffInput = extrudes.createInput(
-                diffProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-            )
-            diffInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(BODY_D + 0.1)
-            )
+            d_input.setDistanceExtent(False, val(BODY_D + 0.01))
             try:
-                extrudes.add(diffInput)
+                extrudes.add(d_input)
             except:
                 pass
+
+        # Diff bar bore entry chamfer
+        if body:
+            from rover_cad_helpers import add_chamfer
+            add_chamfer(comp, body, DIFF_BORE_R, CHAMFER_STD)
 
         # ══════════════════════════════════════════════════════════
         # STEP 3: M3 grub screw for diff bar retention
-        # Radial hole from outside into diff bar bore
         # ══════════════════════════════════════════════════════════
 
-        midPlane = comp.constructionPlanes
-        mpInput = midPlane.createInput()
-        mpInput.setByOffset(
-            comp.xZConstructionPlane,
-            adsk.core.ValueInput.createByReal(BODY_D / 2)
-        )
-        mP = midPlane.add(mpInput)
+        mid_plane = make_offset_plane(comp, comp.xZConstructionPlane, BODY_D / 2)
 
-        diffGrubSketch = comp.sketches.add(mP)
-        diffGrubSketch.name = 'Diff Bar Grub'
-        diffGrubSketch.sketchCurves.sketchCircles.addByCenterRadius(
-            p(0, BODY_H / 2 + DIFF_BORE_R + WALL / 2, 0), GRUB_R
+        grub_sk = comp.sketches.add(mid_plane)
+        grub_sk.name = 'Diff Bar Grub'
+        grub_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(0, BODY_H_Z / 2 + DIFF_BORE_R + WALL / 2), GRUB_M3
         )
 
-        dgProf = None
-        minArea = float('inf')
-        for pi_idx in range(diffGrubSketch.profiles.count):
-            pr = diffGrubSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                dgProf = pr
-
-        if dgProf:
-            dgInput = extrudes.createInput(
-                dgProf, adsk.fusion.FeatureOperations.CutFeatureOperation
+        grub_prof = find_smallest_profile(grub_sk)
+        if grub_prof:
+            g_input = extrudes.createInput(
+                grub_prof, adsk.fusion.FeatureOperations.CutFeatureOperation
             )
-            dgInput.setDistanceExtent(
-                True, adsk.core.ValueInput.createByReal(WALL + DIFF_BORE_R + 0.1)
-            )
+            g_input.setDistanceExtent(True, val(WALL + DIFF_BORE_R + 0.01))
             try:
-                extrudes.add(dgInput)
+                extrudes.add(g_input)
             except:
                 pass
 
         # ══════════════════════════════════════════════════════════
-        # STEP 4: Front tube socket (tube goes forward-down)
-        # Socket bore on the front face (+Y side) of the block
+        # STEP 4: Front tube socket (on +Y face)
         # ══════════════════════════════════════════════════════════
 
-        # Front tube exits from the +Y face at mid-height
-        frontBoreSketch = comp.sketches.add(mP)  # mid-Z plane
-        frontBoreSketch.name = 'Front Tube Socket'
-        # Position at the +Y face, mid-height
         front_y = BODY_W / 2
-        front_z = BODY_H / 2
-        frontBoreSketch.sketchCurves.sketchCircles.addByCenterRadius(
-            p(front_y, front_z, 0), TUBE_BORE_R
+        front_z = BODY_H_Z / 2
+
+        fb_sk = comp.sketches.add(mid_plane)
+        fb_sk.name = 'Front Tube Socket'
+        fb_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(front_y, front_z), TUBE_BORE_R
         )
 
-        fbProf = None
-        minArea = float('inf')
-        for pi_idx in range(frontBoreSketch.profiles.count):
-            pr = frontBoreSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                fbProf = pr
-
-        if fbProf:
-            fbInput = extrudes.createInput(
-                fbProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-            )
-            fbInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(TUBE_DEPTH)
-            )
-            try:
-                extrudes.add(fbInput)
-            except:
-                pass
+        fb_prof = find_smallest_profile(fb_sk)
+        cut_profile(comp, fb_prof, TUBE_DEPTH, flip=False)
 
         # Front grub screw
-        fgSketch = comp.sketches.add(mP)
-        fgSketch.name = 'Front Grub'
-        fgSketch.sketchCurves.sketchCircles.addByCenterRadius(
-            p(front_y - TUBE_DEPTH / 2,
-              front_z + TUBE_BORE_R + WALL / 2, 0),
-            GRUB_R
+        fg_sk = comp.sketches.add(mid_plane)
+        fg_sk.name = 'Front Grub'
+        fg_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(front_y - TUBE_DEPTH / 2, front_z + TUBE_BORE_R + WALL / 2),
+            GRUB_M3
         )
-
-        fgProf = None
-        minArea = float('inf')
-        for pi_idx in range(fgSketch.profiles.count):
-            pr = fgSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                fgProf = pr
-
-        if fgProf:
-            fgInput = extrudes.createInput(
-                fgProf, adsk.fusion.FeatureOperations.CutFeatureOperation
+        fg_prof = find_smallest_profile(fg_sk)
+        if fg_prof:
+            fg_in = extrudes.createInput(
+                fg_prof, adsk.fusion.FeatureOperations.CutFeatureOperation
             )
-            fgInput.setDistanceExtent(
-                True, adsk.core.ValueInput.createByReal(WALL + TUBE_BORE_R + 0.1)
-            )
+            fg_in.setDistanceExtent(True, val(WALL + TUBE_BORE_R + 0.01))
             try:
-                extrudes.add(fgInput)
+                extrudes.add(fg_in)
             except:
                 pass
 
         # ══════════════════════════════════════════════════════════
-        # STEP 5: Rear tube socket (tube goes backward-down)
-        # Socket bore on the -Y face
+        # STEP 5: Rear tube socket (on -Y face)
         # ══════════════════════════════════════════════════════════
 
-        rearBoreSketch = comp.sketches.add(mP)
-        rearBoreSketch.name = 'Rear Tube Socket'
         rear_y = -BODY_W / 2
-        rear_z = BODY_H / 2
-        rearBoreSketch.sketchCurves.sketchCircles.addByCenterRadius(
-            p(rear_y, rear_z, 0), TUBE_BORE_R
+        rear_z = BODY_H_Z / 2
+
+        rb_sk = comp.sketches.add(mid_plane)
+        rb_sk.name = 'Rear Tube Socket'
+        rb_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(rear_y, rear_z), TUBE_BORE_R
         )
 
-        rbProf = None
-        minArea = float('inf')
-        for pi_idx in range(rearBoreSketch.profiles.count):
-            pr = rearBoreSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                rbProf = pr
-
-        if rbProf:
-            rbInput = extrudes.createInput(
-                rbProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-            )
-            rbInput.setDistanceExtent(
-                True, adsk.core.ValueInput.createByReal(TUBE_DEPTH)
-            )
-            try:
-                extrudes.add(rbInput)
-            except:
-                pass
+        rb_prof = find_smallest_profile(rb_sk)
+        cut_profile(comp, rb_prof, TUBE_DEPTH, flip=True)
 
         # Rear grub screw
-        rgSketch = comp.sketches.add(mP)
-        rgSketch.name = 'Rear Grub'
-        rgSketch.sketchCurves.sketchCircles.addByCenterRadius(
-            p(rear_y + TUBE_DEPTH / 2,
-              rear_z + TUBE_BORE_R + WALL / 2, 0),
-            GRUB_R
+        rg_sk = comp.sketches.add(mid_plane)
+        rg_sk.name = 'Rear Grub'
+        rg_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(rear_y + TUBE_DEPTH / 2, rear_z + TUBE_BORE_R + WALL / 2),
+            GRUB_M3
         )
-
-        rgProf = None
-        minArea = float('inf')
-        for pi_idx in range(rgSketch.profiles.count):
-            pr = rgSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                rgProf = pr
-
-        if rgProf:
-            rgInput = extrudes.createInput(
-                rgProf, adsk.fusion.FeatureOperations.CutFeatureOperation
+        rg_prof = find_smallest_profile(rg_sk)
+        if rg_prof:
+            rg_in = extrudes.createInput(
+                rg_prof, adsk.fusion.FeatureOperations.CutFeatureOperation
             )
-            rgInput.setDistanceExtent(
-                True, adsk.core.ValueInput.createByReal(WALL + TUBE_BORE_R + 0.1)
-            )
+            rg_in.setDistanceExtent(True, val(WALL + TUBE_BORE_R + 0.01))
             try:
-                extrudes.add(rgInput)
+                extrudes.add(rg_in)
             except:
                 pass
 
         # ══════════════════════════════════════════════════════════
-        # STEP 6: Wire channels
-        # Front channel: from body side (Z=0 face) to front tube socket
-        # Rear channel: from body side to rear tube socket
+        # STEP 6: Wire channels (rounded-rect cross-section)
         # ══════════════════════════════════════════════════════════
 
-        # Front wire channel (rectangular slot through body)
-        fwSketch = comp.sketches.add(comp.xYConstructionPlane)
-        fwSketch.name = 'Front Wire Channel'
-        fwl = fwSketch.sketchCurves.sketchLines
-        fwl.addTwoPointRectangle(
-            p(WIRE_W / 2, 0, 0),        # inner edge (near center)
-            p(BODY_W / 2 + 0.1, BODY_H / 2 + WIRE_H / 2, 0)
-        )
-
-        fwProf = None
-        maxArea = 0
-        for pi_idx in range(fwSketch.profiles.count):
-            pr = fwSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a > maxArea:
-                maxArea = a
-                fwProf = pr
-
-        if fwProf:
-            fwInput = extrudes.createInput(
-                fwProf, adsk.fusion.FeatureOperations.CutFeatureOperation
+        for sign, name in [(1, 'Front'), (-1, 'Rear')]:
+            wsk = comp.sketches.add(comp.xYConstructionPlane)
+            wsk.name = f'{name} Wire Channel'
+            draw_rounded_rect(
+                wsk,
+                cx=sign * (WIRE_W / 2 + 0.2),
+                cy=BODY_H_Z / 2,
+                w=BODY_W / 2 - WIRE_W / 2,
+                h=WIRE_H,
+                r=0.1
             )
-            fwInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(WIRE_H)
-            )
-            try:
-                extrudes.add(fwInput)
-            except:
-                pass
-
-        # Rear wire channel
-        rwSketch = comp.sketches.add(comp.xYConstructionPlane)
-        rwSketch.name = 'Rear Wire Channel'
-        rwl = rwSketch.sketchCurves.sketchLines
-        rwl.addTwoPointRectangle(
-            p(-BODY_W / 2 - 0.1, 0, 0),
-            p(-WIRE_W / 2, BODY_H / 2 + WIRE_H / 2, 0)
-        )
-
-        rwProf = None
-        maxArea = 0
-        for pi_idx in range(rwSketch.profiles.count):
-            pr = rwSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a > maxArea:
-                maxArea = a
-                rwProf = pr
-
-        if rwProf:
-            rwInput = extrudes.createInput(
-                rwProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-            )
-            rwInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(WIRE_H)
-            )
-            try:
-                extrudes.add(rwInput)
-            except:
-                pass
+            w_target = (BODY_W / 2 - WIRE_W / 2) * WIRE_H
+            w_prof = find_profile_by_area(wsk, w_target, tolerance=0.6)
+            if w_prof is None:
+                w_prof = find_largest_profile(wsk)
+            cut_profile(comp, w_prof, WIRE_H, flip=False)
 
         # ══════════════════════════════════════════════════════════
-        # STEP 7: Zoom and report
+        # STEP 7: External fillets
         # ══════════════════════════════════════════════════════════
 
-        app.activeViewport.fit()
+        if body:
+            fillet_count = add_edge_fillets(comp, body, FILLET_STD)
+        else:
+            fillet_count = 0
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 8: Zoom and report
+        # ══════════════════════════════════════════════════════════
+
+        zoom_fit(app)
 
         ui.messageBox(
             'Rocker Hub Connector created!\n\n'
-            f'Body: {BODY_W * 10:.0f} × {BODY_H * 10:.0f} × {BODY_D * 10:.0f}mm\n\n'
-            'DIFF BAR:\n'
-            f'  Bore: {DIFF_BORE_R * 20:.0f}mm (press-fit on 8mm rod)\n'
-            f'  M3 grub screw for retention\n\n'
-            'TUBE SOCKETS (front + rear):\n'
-            f'  Bore: {TUBE_BORE_R * 20:.1f}mm × {TUBE_DEPTH * 10:.0f}mm deep\n'
-            f'  Front angle: ~{FRONT_DOWN_ANGLE}° below horizontal\n'
-            f'  Rear angle: ~{REAR_DOWN_ANGLE}° below horizontal\n'
-            f'  M3 grub screws for tube retention\n\n'
-            'WIRE CHANNELS:\n'
-            f'  2× {WIRE_W * 10:.0f}×{WIRE_H * 10:.0f}mm '
-            f'(front + rear, from body side)\n\n'
-            'The rocker hub clamps to the diff bar.\n'
-            'Diff bar passes through body 608ZZ bearings.\n'
-            'Differential: one side up → other side down.\n\n'
+            f'Body: {BODY_W*10:.0f} × {BODY_H_Z*10:.0f} × {BODY_D*10:.0f}mm '
+            f'(rounded corners)\n\n'
+            f'DIFF BAR: {DIFF_BORE_R*20:.0f}mm bore (press-fit, M3 grub, chamfered)\n'
+            f'TUBE SOCKETS: 2× {TUBE_BORE_R*20:.1f}mm × {TUBE_DEPTH*10:.0f}mm '
+            f'(front + rear, M3 grubs)\n'
+            f'WIRE CHANNELS: 2× {WIRE_W*10:.0f}×{WIRE_H*10:.0f}mm (rounded)\n'
+            f'Fillets: {fillet_count} edges @ {FILLET_STD*10:.1f}mm\n\n'
             'Print body-side down, 60% infill, 5 perimeters.\n'
             'Qty: 2 (left + right — symmetric)',
             'Mars Rover - Rocker Hub Connector'

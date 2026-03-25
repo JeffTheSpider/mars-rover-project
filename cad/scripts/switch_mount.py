@@ -1,31 +1,44 @@
 """
-Mars Rover Switch Mount Plate — Phase 1 (0.4 Scale)
-=====================================================
+Mars Rover Switch Mount Plate — Phase 1
+=========================================
 
-Reinforcing plate for the panel-mount toggle switch on the
-RR body quadrant rear wall. Glued/bolted to the inside of the
-body wall to strengthen the 3mm PLA around the 15mm switch bore.
+Reinforcing plate for panel-mount toggle switch on the RR body
+quadrant rear wall. Glued/bolted inside the body wall to strengthen
+the 3mm PLA around the 15mm switch bore.
 
-Dimensions: 30 × 30 × 5mm
-  - 15mm centre bore (switch barrel)
-  - 2× M3 bolt holes for body wall attachment (diagonal)
-  - 5mm thick (reinforces 3mm wall from inside)
-  - 2.85mm wall from bolt holes to plate edge (safe for PLA)
+Redesigned with:
+  - Rounded-rect plate (2mm corner radius)
+  - Centre bore with entry chamfer (eases switch insertion)
+  - M3 counterbored bolt holes (flush mounting)
+  - 0.5mm fillets on external edges
 
+Dimensions:
+  - Plate: 30 × 30 × 5mm
+  - Centre bore: 15mm diameter (switch barrel)
+  - Bore chamfer: 0.5mm × 45° entry
+  - 2× M3 bolt holes (diagonal), counterbored for cap heads
+  - 2.85mm min wall from bolt hole to plate edge
+
+Print: Flat (face down), 60% infill, 4 perimeters (solid for strength)
 Qty: 1
 
-Print orientation: Flat (face down)
-Supports: None
-Perimeters: 4 (solid for strength)
-Infill: 60%
-
-Reference: EA-15 (safety), EA-08 (body spec)
+Reference: EA-15, EA-08
 """
 
 import adsk.core
 import adsk.fusion
 import traceback
 import math
+import sys
+
+sys.path.insert(0, r"D:\Mars Rover Project\cad\scripts")
+from rover_cad_helpers import (
+    p, val, FILLET_STD, CHAMFER_STD, CORNER_R,
+    draw_rounded_rect,
+    find_profile_by_area, find_smallest_profile, find_largest_profile,
+    extrude_profile, cut_profile,
+    make_offset_plane, add_edge_fillets, add_chamfer, zoom_fit,
+)
 
 
 def run(context):
@@ -40,124 +53,143 @@ def run(context):
             return
 
         # ── Dimensions (cm) ──
-        PLATE_L = 3.0       # 30mm (X) — increased from 25mm for bolt-hole clearance
-        PLATE_W = 3.0       # 30mm (Y)
-        PLATE_H = 0.5       # 5mm thickness (Z)
-        BORE_R = 0.75       # 15mm diameter / 2
-        HOLE_R = 0.165      # M3 clearance (3.3mm dia)
-        HOLE_OFFSET = 1.05  # 10.5mm from centre (wall to edge: 15-12.15 = 2.85mm)
+        PLATE_S = 3.0        # 30mm square plate
+        PLATE_H = 0.5        # 5mm thickness (Z)
+        BORE_R = 0.75        # 15mm diameter / 2
+        BORE_CHAMFER = 0.05  # 0.5mm entry chamfer
+        HOLE_R = 0.165       # M3 clearance (3.3mm dia)
+        CB_R = 0.3           # 6mm counterbore diameter / 2 (M3 cap head)
+        CB_D = 0.2           # 2mm counterbore depth
+        HOLE_OFFSET = 1.05   # 10.5mm from centre (diagonal)
+        CR = CORNER_R        # 2mm corner radius
 
         comp = design.rootComponent
-        p = adsk.core.Point3D.create
-        extrudes = comp.features.extrudeFeatures
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 1: Base plate
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
+        # STEP 1: Rounded-rect plate
+        # ══════════════════════════════════════════════════════════
 
-        sketch1 = comp.sketches.add(comp.xYConstructionPlane)
-        sketch1.name = 'Switch Plate'
-        sketch1.sketchCurves.sketchLines.addTwoPointRectangle(
-            p(-PLATE_L / 2, -PLATE_W / 2, 0),
-            p(PLATE_L / 2, PLATE_W / 2, 0)
-        )
+        sk1 = comp.sketches.add(comp.xYConstructionPlane)
+        sk1.name = 'Switch Plate'
+        draw_rounded_rect(sk1, 0, 0, PLATE_S, PLATE_S, r=CR)
 
-        # Find the outer profile
-        outerProf = None
-        maxArea = 0
-        for pi in range(sketch1.profiles.count):
-            pr = sketch1.profiles.item(pi)
-            a = pr.areaProperties().area
-            if a > maxArea:
-                maxArea = a
-                outerProf = pr
+        body_prof = find_largest_profile(sk1)
+        ext = extrude_profile(comp, body_prof, PLATE_H)
+        body = ext.bodies.item(0) if ext else None
+        if body:
+            body.name = 'Switch Mount Plate'
 
-        extInput = extrudes.createInput(
-            outerProf, adsk.fusion.FeatureOperations.NewBodyFeatureOperation
-        )
-        extInput.setDistanceExtent(
-            False, adsk.core.ValueInput.createByReal(PLATE_H)
-        )
-        ext = extrudes.add(extInput)
-        body = ext.bodies.item(0)
-        body.name = 'Switch Mount Plate'
+        # ══════════════════════════════════════════════════════════
+        # STEP 2: Centre bore (15mm for toggle switch barrel)
+        # ══════════════════════════════════════════════════════════
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 2: Centre bore (15mm for toggle switch barrel)
-        # ══════════════════════════════════════════════════════════════
-
-        topPlane = comp.constructionPlanes
-        tpInput = topPlane.createInput()
-        tpInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(PLATE_H)
-        )
-        topP = topPlane.add(tpInput)
-
-        boreSketch = comp.sketches.add(topP)
-        boreSketch.name = 'Switch Bore'
-        boreSketch.sketchCurves.sketchCircles.addByCenterRadius(
+        topP = make_offset_plane(comp, comp.xYConstructionPlane, PLATE_H)
+        bore_sk = comp.sketches.add(topP)
+        bore_sk.name = 'Switch Bore'
+        bore_sk.sketchCurves.sketchCircles.addByCenterRadius(
             p(0, 0, 0), BORE_R
         )
 
-        boreProf = None
-        minArea = float('inf')
-        for pi in range(boreSketch.profiles.count):
-            pr = boreSketch.profiles.item(pi)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                boreProf = pr
+        bore_prof = find_smallest_profile(bore_sk)
+        if bore_prof:
+            cut_profile(comp, bore_prof, PLATE_H + 0.02, flip=True)
 
-        if boreProf:
-            boreInput = extrudes.createInput(
-                boreProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-            )
-            boreInput.setDistanceExtent(
-                True, adsk.core.ValueInput.createByReal(PLATE_H + 0.1)
-            )
-            extrudes.add(boreInput)
+        # ══════════════════════════════════════════════════════════
+        # STEP 3: Bore entry chamfer (ring cut at top edge)
+        # ══════════════════════════════════════════════════════════
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 3: M3 mounting holes (diagonal corners)
-        # ══════════════════════════════════════════════════════════════
+        # Chamfer ring: annular cut at bore mouth
+        cham_sk = comp.sketches.add(topP)
+        cham_sk.name = 'Bore Chamfer'
+        circles = cham_sk.sketchCurves.sketchCircles
+        circles.addByCenterRadius(p(0, 0, 0), BORE_R + BORE_CHAMFER)
+        circles.addByCenterRadius(p(0, 0, 0), BORE_R)
 
-        holeSketch = comp.sketches.add(topP)
-        holeSketch.name = 'Mount Holes'
-        holeSketch.sketchCurves.sketchCircles.addByCenterRadius(
+        # Find the annular ring profile
+        ring_target = math.pi * ((BORE_R + BORE_CHAMFER)**2 - BORE_R**2)
+        ring_prof = find_profile_by_area(cham_sk, ring_target, tolerance=0.5)
+        if ring_prof is None:
+            ring_prof = find_smallest_profile(cham_sk)
+
+        if ring_prof:
+            try:
+                cut_profile(comp, ring_prof, BORE_CHAMFER, flip=True)
+            except:
+                pass
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 4: M3 bolt holes with counterbores (diagonal corners)
+        # ══════════════════════════════════════════════════════════
+
+        # Through holes
+        hole_sk = comp.sketches.add(topP)
+        hole_sk.name = 'Bolt Holes'
+        hole_circles = hole_sk.sketchCurves.sketchCircles
+        hole_circles.addByCenterRadius(
             p(-HOLE_OFFSET, -HOLE_OFFSET, 0), HOLE_R
         )
-        holeSketch.sketchCurves.sketchCircles.addByCenterRadius(
+        hole_circles.addByCenterRadius(
             p(HOLE_OFFSET, HOLE_OFFSET, 0), HOLE_R
         )
 
-        for pi in range(holeSketch.profiles.count):
-            pr = holeSketch.profiles.item(pi)
+        hole_area = math.pi * HOLE_R**2
+        for pi_idx in range(hole_sk.profiles.count):
+            pr = hole_sk.profiles.item(pi_idx)
             a = pr.areaProperties().area
-            if a < 0.2:
-                hInput = extrudes.createInput(
-                    pr, adsk.fusion.FeatureOperations.CutFeatureOperation
-                )
-                hInput.setDistanceExtent(
-                    True, adsk.core.ValueInput.createByReal(PLATE_H + 0.1)
-                )
+            if a < hole_area * 1.5:
                 try:
-                    extrudes.add(hInput)
+                    cut_profile(comp, pr, PLATE_H + 0.02, flip=True)
                 except:
                     pass
 
-        # ── Report ──
-        app.activeViewport.fit()
+        # Counterbores (larger diameter, shallow from top)
+        cb_sk = comp.sketches.add(topP)
+        cb_sk.name = 'Counterbores'
+        cb_circles = cb_sk.sketchCurves.sketchCircles
+        cb_circles.addByCenterRadius(
+            p(-HOLE_OFFSET, -HOLE_OFFSET, 0), CB_R
+        )
+        cb_circles.addByCenterRadius(
+            p(HOLE_OFFSET, HOLE_OFFSET, 0), CB_R
+        )
+
+        cb_area = math.pi * CB_R**2
+        for pi_idx in range(cb_sk.profiles.count):
+            pr = cb_sk.profiles.item(pi_idx)
+            a = pr.areaProperties().area
+            # Select the annular ring (counterbore minus through-hole)
+            if a < cb_area * 1.5 and a > hole_area * 0.5:
+                try:
+                    cut_profile(comp, pr, CB_D, flip=True)
+                except:
+                    pass
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 5: Fillets
+        # ══════════════════════════════════════════════════════════
+
+        fillet_count = 0
+        if body:
+            fillet_count = add_edge_fillets(comp, body, FILLET_STD)
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 6: Zoom and report
+        # ══════════════════════════════════════════════════════════
+
+        zoom_fit(app)
+
         ui.messageBox(
             'Switch Mount Plate created!\n\n'
-            f'Size: {PLATE_L * 10:.0f} × {PLATE_W * 10:.0f} × '
-            f'{PLATE_H * 10:.0f}mm\n'
-            f'Centre bore: {BORE_R * 20:.0f}mm diameter\n'
-            f'Mounting: 2× M3 holes (diagonal, 2.85mm edge wall)\n\n'
-            'Glue + bolt to inside of RR body rear wall,\n'
-            'aligned with the 15mm kill switch hole.\n\n'
-            'Qty needed: 1\n'
-            'Print flat, 60% infill, 4 perimeters.',
+            f'Size: {PLATE_S*10:.0f} × {PLATE_S*10:.0f} × {PLATE_H*10:.0f}mm\n'
+            f'Corner radius: {CR*10:.1f}mm\n\n'
+            f'Centre bore: {BORE_R*20:.0f}mm dia\n'
+            f'Bore chamfer: {BORE_CHAMFER*10:.1f}mm entry\n\n'
+            f'Mounting: 2× M3 holes (diagonal)\n'
+            f'  Counterbore: {CB_R*20:.0f}mm × {CB_D*10:.0f}mm deep\n'
+            f'  Edge wall: 2.85mm min\n'
+            f'Fillets: {fillet_count} edges @ {FILLET_STD*10:.1f}mm\n\n'
+            'Glue + bolt inside RR body rear wall.\n'
+            'Print flat, 60% infill, 4 perimeters.\nQty: 1',
             'Mars Rover - Switch Mount Plate'
         )
 

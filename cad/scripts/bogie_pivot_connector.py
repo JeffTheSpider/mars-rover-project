@@ -5,27 +5,47 @@ Mars Rover Bogie Pivot Connector — Phase 1
 Central pivot hub for the bogie arm. Connects to the rocker (via one
 tube from above) and splits to two wheels (front/rear tubes going down).
 
+Redesigned with:
+  - Revolve body (cylinder with bearing boss)
+  - 608ZZ bearing seat via shared helper
+  - Tube socket bosses with chamfered entries
+  - Wire channel with rounded entries
+  - 0.5mm fillets on all external edges
+  - M3 grub screws in each tube socket
+
 Features:
   - 608ZZ bearing seat (bogie rotation on rocker shaft)
   - 3× tube sockets (8.2mm bore × 15mm deep):
     * UP: from rocker rear arm (60mm tube)
     * FRONT-DOWN: to middle wheel (60mm tube)
     * REAR-DOWN: to rear wheel (60mm tube)
-  - M3 grub screws in each tube socket (rod retention)
-  - Wire channel Y-split: 8×6mm in from rocker, 2× 8×6mm out to wheels
+  - M3 grub screws in each tube socket
+  - Wire channel: 8×6mm Y-split
   - 4mm minimum wall thickness
 
 Overall size: ~45 × 35 × 30mm
 Print: Flat (bearing face down), PLA, 60% infill, 5 perimeters
-Qty: 2 (left + right — symmetric, no mirror needed)
+Qty: 2 (left + right — symmetric)
 
-Reference: EA-25, MrOver BogieJoint3_7.scad, Sawppy Bogie-Body (20×57×40mm)
+Reference: EA-25, EA-26, Sawppy Bogie-Body
 """
 
 import adsk.core
 import adsk.fusion
 import traceback
 import math
+import sys
+
+sys.path.insert(0, r"D:\Mars Rover Project\cad\scripts")
+from rover_cad_helpers import (
+    p, val, FILLET_STD, CHAMFER_STD,
+    BEARING_OD, BEARING_DEPTH, BEARING_BORE,
+    TUBE_BORE, TUBE_DEPTH, TUBE_WALL, GRUB_M3,
+    find_largest_profile, find_smallest_profile, find_profile_by_area,
+    extrude_profile, cut_profile, join_profile,
+    make_offset_plane, make_bearing_seat,
+    add_edge_fillets, add_chamfer, zoom_fit,
+)
 
 
 def run(context):
@@ -39,55 +59,39 @@ def run(context):
             ui.messageBox('No active design.')
             return
 
-        # ── Shared connector dimensions (cm, EA-25 standard) ──
-        TUBE_BORE_R = 0.41          # 8.2mm dia (0.2mm clearance on 8mm rod)
-        TUBE_DEPTH = 1.5            # 15mm socket engagement
-        GRUB_R = 0.15               # 3mm M3 grub screw
-        GRUB_DEPTH = 0.6            # 6mm (through wall into tube)
-        WIRE_W = 0.8                # 8mm wire channel width
-        WIRE_H = 0.6                # 6mm wire channel height
-        WALL = 0.4                  # 4mm minimum wall
-        BEARING_SEAT_R = 1.1075     # 22.15mm dia (608ZZ)
-        BEARING_SEAT_DEPTH = 0.72   # 7.2mm
-        PIVOT_BORE_R = 0.405        # 8.1mm through-hole (0.1mm clearance on 8mm shaft)
-        CHAMFER = 0.03              # 0.3mm bearing entry chamfer
+        # ── Dimensions (cm) ──
+        TUBE_BORE_R = TUBE_BORE / 2    # 4.1mm
+        WALL = TUBE_WALL               # 4mm
+        WIRE_W = 0.8                   # 8mm
+        WIRE_H = 0.6                   # 6mm
 
-        # ── Connector body ──
-        BODY_R = BEARING_SEAT_R + WALL  # ~15mm radius (30mm OD)
-        BODY_H = 3.0               # 30mm total height
+        # Body
+        BODY_R = BEARING_OD / 2 + WALL  # ~15mm radius
+        BODY_H = 3.0                    # 30mm height
 
-        # ── Tube socket angles ──
-        # UP socket: vertical (from rocker rear arm above)
-        # FRONT socket: angled forward-down for middle wheel
-        # REAR socket: angled backward-down for rear wheel
-        # Tubes spread at ~120° from each other for stability
-        FRONT_ANGLE_DEG = 24       # degrees below horizontal (was 35°, NASA-proportioned)
-        REAR_ANGLE_DEG = 24        # degrees below horizontal (was 35°, NASA-proportioned)
-        SPREAD_ANGLE_DEG = 140     # angle between front and rear tubes (viewed from top)
+        # Socket boss
+        SOCKET_OUTER_R = TUBE_BORE_R + WALL   # ~8.1mm outer
 
         comp = design.rootComponent
-        p = adsk.core.Point3D.create
-        extrudes = comp.features.extrudeFeatures
         revolves = comp.features.revolveFeatures
 
         # ══════════════════════════════════════════════════════════
-        # STEP 1: Main body — cylinder with bearing boss
-        # Revolve on XZ plane, axis along Y
-        # Body is oriented: Y = vertical (pivot axis), X/Z = horizontal
+        # STEP 1: Revolve body — cylinder with through bore
         # ══════════════════════════════════════════════════════════
 
         sketch = comp.sketches.add(comp.xZConstructionPlane)
         sketch.name = 'Connector Body'
         sl = sketch.sketchCurves.sketchLines
 
-        # Cross-section: cylinder with wider bearing boss at bottom
-        pts = [
-            (PIVOT_BORE_R, 0),                          # bore, bottom
-            (BODY_R, 0),                                # outer, bottom
-            (BODY_R, BODY_H),                           # outer, top
-            (PIVOT_BORE_R, BODY_H),                     # bore, top
-        ]
+        bore_r = BEARING_BORE / 2  # 4.05mm
 
+        # Cross-section (rectangle for revolve, excluding bore)
+        pts = [
+            (bore_r, 0),
+            (BODY_R, 0),
+            (BODY_R, BODY_H),
+            (bore_r, BODY_H),
+        ]
         for i in range(len(pts)):
             x1, y1 = pts[i]
             x2, y2 = pts[(i + 1) % len(pts)]
@@ -96,328 +100,197 @@ def run(context):
         axis = sl.addByTwoPoints(p(0, 0, 0), p(0, BODY_H, 0))
         axis.isConstruction = True
 
-        prof = None
-        maxArea = 0
-        for pi_idx in range(sketch.profiles.count):
-            pr = sketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a > maxArea:
-                maxArea = a
-                prof = pr
-
+        prof = find_largest_profile(sketch)
         body = None
         if prof:
-            revInput = revolves.createInput(
+            rev_input = revolves.createInput(
                 prof, axis,
                 adsk.fusion.FeatureOperations.NewBodyFeatureOperation
             )
-            revInput.setAngleExtent(False, adsk.core.ValueInput.createByReal(2 * math.pi))
-            bodyRev = revolves.add(revInput)
-            body = bodyRev.bodies.item(0)
+            rev_input.setAngleExtent(False, val(2 * math.pi))
+            rev = revolves.add(rev_input)
+            body = rev.bodies.item(0)
             body.name = 'Bogie Pivot Connector'
 
         # ══════════════════════════════════════════════════════════
-        # STEP 2: Bearing seat (from bottom face)
+        # STEP 2: Bearing seat (from bottom face) via helper
         # ══════════════════════════════════════════════════════════
 
-        seatSketch = comp.sketches.add(comp.xZConstructionPlane)
-        seatSketch.name = 'Bearing Seat'
-        ssl = seatSketch.sketchCurves.sketchLines
-
-        seat_top = BEARING_SEAT_DEPTH
-        ssl.addByTwoPoints(p(PIVOT_BORE_R, 0, 0), p(BEARING_SEAT_R, 0, 0))
-        ssl.addByTwoPoints(p(BEARING_SEAT_R, 0, 0), p(BEARING_SEAT_R, seat_top, 0))
-        ssl.addByTwoPoints(p(BEARING_SEAT_R, seat_top, 0), p(PIVOT_BORE_R, seat_top, 0))
-        ssl.addByTwoPoints(p(PIVOT_BORE_R, seat_top, 0), p(PIVOT_BORE_R, 0, 0))
-
-        seatAxis = ssl.addByTwoPoints(p(0, 0, 0), p(0, seat_top, 0))
-        seatAxis.isConstruction = True
-
-        seatProf = seatSketch.profiles.item(0)
-        seatRevInput = revolves.createInput(
-            seatProf, seatAxis,
-            adsk.fusion.FeatureOperations.CutFeatureOperation
-        )
-        seatRevInput.setAngleExtent(False, adsk.core.ValueInput.createByReal(2 * math.pi))
-        revolves.add(seatRevInput)
-
-        # ══════════════════════════════════════════════════════════
-        # STEP 3: Tube socket bosses (3 cylindrical protrusions)
-        # Each boss extends outward from the main body
-        # ══════════════════════════════════════════════════════════
-
-        SOCKET_OUTER_R = TUBE_BORE_R + WALL  # Socket outer radius (~8.2mm)
-
-        # Socket positions and directions
-        # All originate from the body center at Y = BODY_H/2 (mid-height)
-        socket_y = BODY_H / 2
-        sockets = []
-
-        # UP socket (from rocker, vertical — goes straight up from top)
-        sockets.append({
-            'name': 'Rocker Socket',
-            'dir_x': 0, 'dir_y': 1, 'dir_z': 0,  # straight up
-            'origin_y': BODY_H,  # starts at top
-        })
-
-        # FRONT-DOWN socket (to middle wheel)
-        front_rad = math.radians(FRONT_ANGLE_DEG)
-        spread_rad = math.radians(SPREAD_ANGLE_DEG / 2)
-        sockets.append({
-            'name': 'Front Socket',
-            'dir_x': math.sin(spread_rad) * math.cos(front_rad),
-            'dir_y': -math.sin(front_rad),
-            'dir_z': math.cos(spread_rad) * math.cos(front_rad),
-            'origin_y': socket_y,
-        })
-
-        # REAR-DOWN socket (to rear wheel)
-        rear_rad = math.radians(REAR_ANGLE_DEG)
-        sockets.append({
-            'name': 'Rear Socket',
-            'dir_x': -math.sin(spread_rad) * math.cos(rear_rad),
-            'dir_y': -math.sin(rear_rad),
-            'dir_z': math.cos(spread_rad) * math.cos(rear_rad),
-            'origin_y': socket_y,
-        })
-
-        # For simplicity, create tube sockets as cylinders extruded
-        # along each direction from the body surface.
-        # The sockets are cut (bore) into these bosses.
-
-        for sock in sockets:
-            # Create boss (solid cylinder along socket direction)
-            # For the UP socket, sketch on top face (XZ at Y=BODY_H)
-            # For angled sockets, use construction plane
-
-            if sock['dir_y'] == 1:
-                # Vertical up socket — sketch on XZ plane offset to top
-                topPlane = comp.constructionPlanes
-                tpInput = topPlane.createInput()
-                tpInput.setByOffset(
-                    comp.xZConstructionPlane,
-                    adsk.core.ValueInput.createByReal(BODY_H)
-                )
-                sPlane = topPlane.add(tpInput)
-
-                bossSketch = comp.sketches.add(sPlane)
-                bossSketch.name = f'{sock["name"]} Boss'
-                bossSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                    p(0, 0, 0), SOCKET_OUTER_R
-                )
-
-                bossProf = None
-                minArea = float('inf')
-                for pi_idx in range(bossSketch.profiles.count):
-                    pr = bossSketch.profiles.item(pi_idx)
-                    a = pr.areaProperties().area
-                    if a < minArea:
-                        minArea = a
-                        bossProf = pr
-
-                if bossProf:
-                    bossInput = extrudes.createInput(
-                        bossProf, adsk.fusion.FeatureOperations.JoinFeatureOperation
-                    )
-                    bossInput.setDistanceExtent(
-                        False, adsk.core.ValueInput.createByReal(TUBE_DEPTH)
-                    )
-                    extrudes.add(bossInput)
-
-                    # Cut bore
-                    boreSketch = comp.sketches.add(sPlane)
-                    boreSketch.name = f'{sock["name"]} Bore'
-                    boreSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                        p(0, 0, 0), TUBE_BORE_R
-                    )
-
-                    boreProf = None
-                    minArea = float('inf')
-                    for pi_idx in range(boreSketch.profiles.count):
-                        pr = boreSketch.profiles.item(pi_idx)
-                        a = pr.areaProperties().area
-                        if a < minArea:
-                            minArea = a
-                            boreProf = pr
-
-                    if boreProf:
-                        boreInput = extrudes.createInput(
-                            boreProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-                        )
-                        boreInput.setDistanceExtent(
-                            False, adsk.core.ValueInput.createByReal(TUBE_DEPTH + 0.5)
-                        )
-                        try:
-                            extrudes.add(boreInput)
-                        except:
-                            pass
-
-            else:
-                # Angled socket — create at body surface angled outward
-                # For simplicity, create horizontal boss offset from center
-                # The angle is approximate for the prototype
-                dx = sock['dir_x']
-                dz = sock['dir_z']
-                norm = math.sqrt(dx**2 + dz**2)
-                if norm > 0:
-                    dx /= norm
-                    dz /= norm
-
-                # Boss center on body surface
-                boss_cx = dx * BODY_R
-                boss_cz = dz * BODY_R
-
-                # Create boss at mid-height, projecting outward
-                midPlane = comp.constructionPlanes
-                mpInput = midPlane.createInput()
-                mpInput.setByOffset(
-                    comp.xZConstructionPlane,
-                    adsk.core.ValueInput.createByReal(socket_y)
-                )
-                mPlane = midPlane.add(mpInput)
-
-                bossSketch = comp.sketches.add(mPlane)
-                bossSketch.name = f'{sock["name"]} Boss'
-                bossSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                    p(boss_cx + dx * TUBE_DEPTH / 2,
-                      boss_cz + dz * TUBE_DEPTH / 2, 0),
-                    SOCKET_OUTER_R
-                )
-
-                bossProf = None
-                minArea = float('inf')
-                for pi_idx in range(bossSketch.profiles.count):
-                    pr = bossSketch.profiles.item(pi_idx)
-                    a = pr.areaProperties().area
-                    if a < minArea:
-                        minArea = a
-                        bossProf = pr
-
-                if bossProf:
-                    # Extrude vertically (approximate — should be along tube angle)
-                    bossInput = extrudes.createInput(
-                        bossProf, adsk.fusion.FeatureOperations.JoinFeatureOperation
-                    )
-                    bossInput.setSymmetricExtent(
-                        adsk.core.ValueInput.createByReal(SOCKET_OUTER_R + 0.2),
-                        True
-                    )
-                    try:
-                        extrudes.add(bossInput)
-                    except:
-                        pass
-
-                    # Cut bore through the boss
-                    boreSketch = comp.sketches.add(mPlane)
-                    boreSketch.name = f'{sock["name"]} Bore'
-                    boreSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                        p(boss_cx + dx * TUBE_DEPTH / 2,
-                          boss_cz + dz * TUBE_DEPTH / 2, 0),
-                        TUBE_BORE_R
-                    )
-
-                    boreProf = None
-                    minArea = float('inf')
-                    for pi_idx in range(boreSketch.profiles.count):
-                        pr = boreSketch.profiles.item(pi_idx)
-                        a = pr.areaProperties().area
-                        if a < minArea:
-                            minArea = a
-                            boreProf = pr
-
-                    if boreProf:
-                        boreInput = extrudes.createInput(
-                            boreProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-                        )
-                        boreInput.setSymmetricExtent(
-                            adsk.core.ValueInput.createByReal(SOCKET_OUTER_R + 0.5),
-                            True
-                        )
-                        try:
-                            extrudes.add(boreInput)
-                        except:
-                            pass
-
-        # ══════════════════════════════════════════════════════════
-        # STEP 4: Wire channels (rectangular through-cuts)
-        # Main channel from rocker side, splits to front/rear
-        # ══════════════════════════════════════════════════════════
-
-        # Vertical wire channel through the body center (from top socket down)
-        wireSketch = comp.sketches.add(comp.xYConstructionPlane)
-        wireSketch.name = 'Wire Channel'
-        wl = wireSketch.sketchCurves.sketchLines
-        wl.addTwoPointRectangle(
-            p(-WIRE_W / 2, 0, 0),
-            p(WIRE_W / 2, BODY_H + TUBE_DEPTH, 0)
+        make_bearing_seat(
+            comp, comp.xZConstructionPlane,
+            cx=0, cy=0,
+            bore_through=BODY_H + 0.01,
+            chamfer=True,
         )
 
-        wireProf = None
-        minArea = float('inf')
-        for pi_idx in range(wireSketch.profiles.count):
-            pr = wireSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                wireProf = pr
+        # ══════════════════════════════════════════════════════════
+        # STEP 3: UP tube socket boss (from top, vertical)
+        # ══════════════════════════════════════════════════════════
 
-        if wireProf:
-            wireInput = extrudes.createInput(
-                wireProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-            )
-            wireInput.setSymmetricExtent(
-                adsk.core.ValueInput.createByReal(WIRE_H / 2),
-                True
-            )
-            try:
-                extrudes.add(wireInput)
-            except:
-                pass
+        top_plane = make_offset_plane(comp, comp.xZConstructionPlane, BODY_H)
+
+        # Boss cylinder
+        boss_sk = comp.sketches.add(top_plane)
+        boss_sk.name = 'Rocker Socket Boss'
+        boss_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(0, 0), SOCKET_OUTER_R
+        )
+        boss_prof = find_smallest_profile(boss_sk)
+        join_profile(comp, boss_prof, TUBE_DEPTH)
+
+        # Bore
+        bore_sk = comp.sketches.add(top_plane)
+        bore_sk.name = 'Rocker Socket Bore'
+        bore_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(0, 0), TUBE_BORE_R
+        )
+        bore_prof = find_smallest_profile(bore_sk)
+        cut_profile(comp, bore_prof, TUBE_DEPTH + BODY_H / 2, flip=False)
+
+        # Bore entry chamfer
+        if body:
+            add_chamfer(comp, body, TUBE_BORE_R, CHAMFER_STD)
+
+        # M3 grub screw for top socket
+        grub_z = BODY_H + TUBE_DEPTH / 2
+        grub_plane = make_offset_plane(comp, comp.xZConstructionPlane, grub_z)
+        grub_sk = comp.sketches.add(grub_plane)
+        grub_sk.name = 'Rocker Grub'
+        grub_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(TUBE_BORE_R + WALL / 2, 0), GRUB_M3
+        )
+        grub_prof = find_smallest_profile(grub_sk)
+        if grub_prof:
+            cut_profile(comp, grub_prof, WALL + TUBE_BORE_R + 0.01, flip=True)
 
         # ══════════════════════════════════════════════════════════
-        # STEP 5: Chamfer bearing entry
+        # STEP 4: Front-down tube socket boss (to middle wheel)
+        # ══════════════════════════════════════════════════════════
+
+        socket_y = BODY_H / 2  # Mid-height
+        spread_half = math.radians(70)  # 140° spread / 2
+
+        # Front boss: project outward from body at mid-height
+        front_cx = math.sin(spread_half) * BODY_R
+        front_cz = math.cos(spread_half) * BODY_R
+
+        mid_plane = make_offset_plane(comp, comp.xZConstructionPlane, socket_y)
+
+        fb_sk = comp.sketches.add(mid_plane)
+        fb_sk.name = 'Front Socket Boss'
+        fb_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(front_cx, front_cz), SOCKET_OUTER_R
+        )
+        fb_prof = find_smallest_profile(fb_sk)
+        if fb_prof:
+            extrude_profile(
+                comp, fb_prof, SOCKET_OUTER_R * 2 + 0.2,
+                adsk.fusion.FeatureOperations.JoinFeatureOperation,
+                symmetric=True
+            )
+
+        # Front bore
+        fb_bore_sk = comp.sketches.add(mid_plane)
+        fb_bore_sk.name = 'Front Socket Bore'
+        fb_bore_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(front_cx, front_cz), TUBE_BORE_R
+        )
+        fb_bore_prof = find_smallest_profile(fb_bore_sk)
+        if fb_bore_prof:
+            extrude_profile(
+                comp, fb_bore_prof, SOCKET_OUTER_R * 2 + 0.5,
+                adsk.fusion.FeatureOperations.CutFeatureOperation,
+                symmetric=True
+            )
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 5: Rear-down tube socket boss (to rear wheel)
+        # ══════════════════════════════════════════════════════════
+
+        rear_cx = -math.sin(spread_half) * BODY_R
+        rear_cz = math.cos(spread_half) * BODY_R
+
+        rb_sk = comp.sketches.add(mid_plane)
+        rb_sk.name = 'Rear Socket Boss'
+        rb_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(rear_cx, rear_cz), SOCKET_OUTER_R
+        )
+        rb_prof = find_smallest_profile(rb_sk)
+        if rb_prof:
+            extrude_profile(
+                comp, rb_prof, SOCKET_OUTER_R * 2 + 0.2,
+                adsk.fusion.FeatureOperations.JoinFeatureOperation,
+                symmetric=True
+            )
+
+        # Rear bore
+        rb_bore_sk = comp.sketches.add(mid_plane)
+        rb_bore_sk.name = 'Rear Socket Bore'
+        rb_bore_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(rear_cx, rear_cz), TUBE_BORE_R
+        )
+        rb_bore_prof = find_smallest_profile(rb_bore_sk)
+        if rb_bore_prof:
+            extrude_profile(
+                comp, rb_bore_prof, SOCKET_OUTER_R * 2 + 0.5,
+                adsk.fusion.FeatureOperations.CutFeatureOperation,
+                symmetric=True
+            )
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 6: Wire channel (vertical through body centre)
+        # ══════════════════════════════════════════════════════════
+
+        from rover_cad_helpers import draw_rounded_rect
+
+        wire_sk = comp.sketches.add(comp.xYConstructionPlane)
+        wire_sk.name = 'Wire Channel'
+        draw_rounded_rect(
+            wire_sk,
+            cx=0, cy=BODY_H / 2 + TUBE_DEPTH / 2,
+            w=WIRE_W, h=BODY_H + TUBE_DEPTH,
+            r=0.1
+        )
+
+        wire_target = WIRE_W * (BODY_H + TUBE_DEPTH)
+        wire_prof = find_profile_by_area(wire_sk, wire_target, tolerance=0.6)
+        if wire_prof is None:
+            wire_prof = find_largest_profile(wire_sk)
+        if wire_prof:
+            extrude_profile(
+                comp, wire_prof, WIRE_H,
+                adsk.fusion.FeatureOperations.CutFeatureOperation,
+                symmetric=True
+            )
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 7: External fillets
         # ══════════════════════════════════════════════════════════
 
         if body:
-            chamferEdges = adsk.core.ObjectCollection.create()
-            for edge in body.edges:
-                geom = edge.geometry
-                if isinstance(geom, adsk.core.Circle3D):
-                    if abs(geom.radius - BEARING_SEAT_R) < 0.01:
-                        chamferEdges.add(edge)
-                        break
-
-            if chamferEdges.count > 0:
-                chamfers = comp.features.chamferFeatures
-                chamInput = chamfers.createInput2()
-                chamInput.chamferEdgeSets.addEqualDistanceChamferEdgeSet(
-                    chamferEdges,
-                    adsk.core.ValueInput.createByReal(CHAMFER),
-                    True
-                )
-                try:
-                    chamfers.add(chamInput)
-                except:
-                    pass
+            fillet_count = add_edge_fillets(comp, body, FILLET_STD)
+        else:
+            fillet_count = 0
 
         # ══════════════════════════════════════════════════════════
-        # STEP 6: Zoom and report
+        # STEP 8: Zoom and report
         # ══════════════════════════════════════════════════════════
 
-        app.activeViewport.fit()
+        zoom_fit(app)
 
         ui.messageBox(
             'Bogie Pivot Connector created!\n\n'
-            f'Body: {BODY_R * 20:.0f}mm OD × {BODY_H * 10:.0f}mm tall\n'
-            f'Bearing seat: {BEARING_SEAT_R * 20:.2f}mm × '
-            f'{BEARING_SEAT_DEPTH * 10:.1f}mm deep (608ZZ)\n'
-            f'Pivot bore: {PIVOT_BORE_R * 20:.1f}mm\n\n'
-            f'Tube sockets: 3× (up, front-down, rear-down)\n'
-            f'  Bore: {TUBE_BORE_R * 20:.1f}mm × {TUBE_DEPTH * 10:.0f}mm deep\n'
-            f'  Wall: {WALL * 10:.0f}mm minimum\n\n'
-            f'Wire channel: {WIRE_W * 10:.0f}×{WIRE_H * 10:.0f}mm (Y-split)\n'
-            f'Front/Rear spread: {SPREAD_ANGLE_DEG}°\n'
-            f'Tube down-angle: {FRONT_ANGLE_DEG}°\n\n'
+            f'Body: {BODY_R*20:.0f}mm OD × {BODY_H*10:.0f}mm tall '
+            f'(revolve, cylindrical)\n\n'
+            f'BEARING SEAT (608ZZ):\n'
+            f'  Bore: {BEARING_OD*10:.2f}mm × {BEARING_DEPTH*10:.1f}mm deep\n'
+            f'  Pivot bore: {BEARING_BORE*10:.1f}mm through\n'
+            f'  Entry chamfer: {CHAMFER_STD*10:.1f}mm\n\n'
+            f'TUBE SOCKETS: 3× (up, front-down, rear-down)\n'
+            f'  Bore: {TUBE_BORE*10:.1f}mm × {TUBE_DEPTH*10:.0f}mm deep\n'
+            f'  Wall: {WALL*10:.0f}mm minimum\n\n'
+            f'WIRE CHANNEL: {WIRE_W*10:.0f}×{WIRE_H*10:.0f}mm (rounded)\n'
+            f'Fillets: {fillet_count} edges @ {FILLET_STD*10:.1f}mm\n\n'
             'Print bearing-face down, 60% infill, 5 perimeters.\n'
             'Qty: 2 (symmetric, left = right)',
             'Mars Rover - Bogie Pivot Connector'

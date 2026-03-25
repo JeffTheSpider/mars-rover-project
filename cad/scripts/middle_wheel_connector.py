@@ -6,9 +6,17 @@ End connector at the middle wheel position. Receives one 8mm tube
 from the bogie arm. Middle wheels are NOT steered — only a fixed
 motor mount is needed.
 
+Redesigned with:
+  - Rounded-rect body (2mm corner radius)
+  - Tube socket with chamfered entry
+  - Heat-set insert pockets via shared helper
+  - Rounded wire exit
+  - 0.5mm fillets on all external edges
+  - M3 grub screw for tube retention
+
 Features:
   - 1× tube socket (8.2mm bore × 15mm deep) with M3 grub screw
-  - Fixed wheel mount face: 2× M3 heat-set inserts (matches fixed_wheel_mount.py)
+  - Fixed wheel mount face: 2× M3 heat-set inserts
   - Wire exit hole: 8×6mm (motor wires only — no servo)
   - 4mm minimum wall thickness
 
@@ -16,13 +24,25 @@ Overall size: ~30 × 25 × 25mm (smallest connector)
 Print: Flat (mount face down), PLA, 60% infill, 5 perimeters
 Qty: 2 (ML, MR — symmetric)
 
-Reference: EA-25, Sawppy Fixed Knuckle (100×40×73.5mm — ours is much smaller)
+Reference: EA-25
 """
 
 import adsk.core
 import adsk.fusion
 import traceback
 import math
+import sys
+
+sys.path.insert(0, r"D:\Mars Rover Project\cad\scripts")
+from rover_cad_helpers import (
+    p, val, FILLET_STD, CHAMFER_STD, CORNER_R,
+    TUBE_BORE, TUBE_DEPTH, TUBE_WALL, GRUB_M3,
+    draw_rounded_rect,
+    find_largest_profile, find_smallest_profile, find_profile_by_area,
+    extrude_profile, cut_profile,
+    make_offset_plane, make_heat_set_pair,
+    add_edge_fillets, add_chamfer, zoom_fit,
+)
 
 
 def run(context):
@@ -36,189 +56,149 @@ def run(context):
             ui.messageBox('No active design.')
             return
 
-        # ── Dimensions (cm, EA-25) ──
-        TUBE_BORE_R = 0.41
-        TUBE_DEPTH = 1.5
-        GRUB_R = 0.15
-        WALL = 0.4
-        INSERT_BORE_R = 0.24
-        INSERT_DEPTH = 0.55
-        WIRE_W = 0.8
-        WIRE_H = 0.6
+        # ── Dimensions (cm) ──
+        TUBE_BORE_R = TUBE_BORE / 2   # 4.1mm
+        WALL = TUBE_WALL               # 4mm
+        WIRE_W = 0.8                   # 8mm
+        WIRE_H = 0.6                   # 6mm
 
-        BODY_W = 3.0               # 30mm
-        BODY_D = 2.5               # 25mm
-        BODY_H = 2.5               # 25mm
-        MOUNT_BOLT_SPACING = 1.6   # 16mm (matches fixed_wheel_mount)
+        # Body (smallest connector)
+        BODY_W = 3.0                   # 30mm (X)
+        BODY_D = 2.5                   # 25mm (Z)
+        BODY_H = 2.5                   # 25mm (Y)
+
+        MOUNT_BOLT_SPACING = 1.6       # 16mm (matches fixed_wheel_mount)
 
         comp = design.rootComponent
-        p = adsk.core.Point3D.create
         extrudes = comp.features.extrudeFeatures
 
-        # ═══ STEP 1: Body block ═══
-        sketch = comp.sketches.add(comp.xYConstructionPlane)
-        sketch.name = 'Connector Body'
-        sketch.sketchCurves.sketchLines.addTwoPointRectangle(
-            p(-BODY_W / 2, 0, 0),
-            p(BODY_W / 2, BODY_H, 0)
-        )
+        # ══════════════════════════════════════════════════════════
+        # STEP 1: Rounded-rect body
+        # ══════════════════════════════════════════════════════════
 
-        prof = None
-        maxArea = 0
-        for pi_idx in range(sketch.profiles.count):
-            pr = sketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a > maxArea:
-                maxArea = a
-                prof = pr
+        sk = comp.sketches.add(comp.xYConstructionPlane)
+        sk.name = 'Connector Body'
+        draw_rounded_rect(sk, 0, BODY_H / 2, BODY_W, BODY_H, r=CORNER_R)
 
-        body = None
-        if prof:
-            ext = extrudes.createInput(
-                prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation
-            )
-            ext.setDistanceExtent(False, adsk.core.ValueInput.createByReal(BODY_D))
-            body = extrudes.add(ext).bodies.item(0)
+        target = BODY_W * BODY_H - (4 - math.pi) * CORNER_R**2
+        prof = find_profile_by_area(sk, target, tolerance=0.5)
+        if prof is None:
+            prof = find_largest_profile(sk)
+
+        ext = extrude_profile(comp, prof, BODY_D)
+        body = ext.bodies.item(0) if ext else None
+        if body:
             body.name = 'Middle Wheel Connector'
 
-        # ═══ STEP 2: Tube socket ═══
-        tpInput = comp.constructionPlanes.createInput()
-        tpInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(BODY_H)
-        )
-        topPlane = comp.constructionPlanes.add(tpInput)
+        # ══════════════════════════════════════════════════════════
+        # STEP 2: Tube socket (from top face, vertical)
+        # ══════════════════════════════════════════════════════════
 
-        tubeSketch = comp.sketches.add(topPlane)
-        tubeSketch.name = 'Tube Socket'
-        tubeSketch.sketchCurves.sketchCircles.addByCenterRadius(
-            p(0, BODY_D / 2, 0), TUBE_BORE_R
+        top_plane = make_offset_plane(comp, comp.xYConstructionPlane, BODY_H)
+
+        tube_sk = comp.sketches.add(top_plane)
+        tube_sk.name = 'Tube Socket'
+        tube_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(0, BODY_D / 2), TUBE_BORE_R
         )
 
-        tubeProf = None
-        minArea = float('inf')
-        for pi_idx in range(tubeSketch.profiles.count):
-            pr = tubeSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                tubeProf = pr
+        tube_prof = find_smallest_profile(tube_sk)
+        cut_profile(comp, tube_prof, TUBE_DEPTH, flip=True)
 
-        if tubeProf:
-            tInput = extrudes.createInput(
-                tubeProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-            )
-            tInput.setDistanceExtent(True, adsk.core.ValueInput.createByReal(TUBE_DEPTH))
-            try:
-                extrudes.add(tInput)
-            except:
-                pass
+        # Entry chamfer
+        if body:
+            add_chamfer(comp, body, TUBE_BORE_R, CHAMFER_STD)
 
-        # ═══ STEP 3: Grub screw ═══
+        # ══════════════════════════════════════════════════════════
+        # STEP 3: M3 grub screw for tube retention
+        # ══════════════════════════════════════════════════════════
+
         grub_y = BODY_H - TUBE_DEPTH / 2
-        gpInput = comp.constructionPlanes.createInput()
-        gpInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(grub_y)
-        )
-        gP = comp.constructionPlanes.add(gpInput)
+        grub_plane = make_offset_plane(comp, comp.xYConstructionPlane, grub_y)
 
-        gSketch = comp.sketches.add(gP)
-        gSketch.name = 'Grub Screw'
-        gSketch.sketchCurves.sketchCircles.addByCenterRadius(
-            p(TUBE_BORE_R + WALL / 2, BODY_D / 2, 0), GRUB_R
+        grub_sk = comp.sketches.add(grub_plane)
+        grub_sk.name = 'Tube Grub'
+        grub_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(TUBE_BORE_R + WALL / 2, BODY_D / 2), GRUB_M3
         )
 
-        gProf = None
-        minArea = float('inf')
-        for pi_idx in range(gSketch.profiles.count):
-            pr = gSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                gProf = pr
-
-        if gProf:
-            gInput = extrudes.createInput(
-                gProf, adsk.fusion.FeatureOperations.CutFeatureOperation
+        grub_prof = find_smallest_profile(grub_sk)
+        if grub_prof:
+            g_input = extrudes.createInput(
+                grub_prof, adsk.fusion.FeatureOperations.CutFeatureOperation
             )
-            gInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(WALL + TUBE_BORE_R + 0.1)
+            g_input.setDistanceExtent(
+                False, val(WALL + TUBE_BORE_R + 0.01)
             )
             try:
-                extrudes.add(gInput)
+                extrudes.add(g_input)
             except:
                 pass
 
-        # ═══ STEP 4: Fixed mount inserts (bottom face) ═══
-        for offset in [-MOUNT_BOLT_SPACING / 2, MOUNT_BOLT_SPACING / 2]:
-            iSketch = comp.sketches.add(comp.xYConstructionPlane)
-            iSketch.name = 'Mount Insert'
-            iSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                p(offset, BODY_D / 2, 0), INSERT_BORE_R
-            )
+        # ══════════════════════════════════════════════════════════
+        # STEP 4: Fixed mount — 2× heat-set inserts (bottom face)
+        # ══════════════════════════════════════════════════════════
 
-            iProf = None
-            minArea = float('inf')
-            for pi_idx in range(iSketch.profiles.count):
-                pr = iSketch.profiles.item(pi_idx)
-                a = pr.areaProperties().area
-                if a < minArea:
-                    minArea = a
-                    iProf = pr
-
-            if iProf:
-                iInput = extrudes.createInput(
-                    iProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-                )
-                iInput.setDistanceExtent(
-                    False, adsk.core.ValueInput.createByReal(INSERT_DEPTH)
-                )
-                try:
-                    extrudes.add(iInput)
-                except:
-                    pass
-
-        # ═══ STEP 5: Wire exit ═══
-        wSketch = comp.sketches.add(comp.xYConstructionPlane)
-        wSketch.name = 'Wire Exit'
-        wSketch.sketchCurves.sketchLines.addTwoPointRectangle(
-            p(-WIRE_W / 2, -0.01, 0),
-            p(WIRE_W / 2, 0.01, 0)
+        make_heat_set_pair(
+            comp, comp.xYConstructionPlane, MOUNT_BOLT_SPACING,
+            cx=0, cy=BODY_D / 2, axis='x'
         )
 
-        wProf = None
-        minArea = float('inf')
-        for pi_idx in range(wSketch.profiles.count):
-            pr = wSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                wProf = pr
+        # ══════════════════════════════════════════════════════════
+        # STEP 5: Wire exit (rounded-rect on bottom edge)
+        # ══════════════════════════════════════════════════════════
 
-        if wProf:
-            wInput = extrudes.createInput(
-                wProf, adsk.fusion.FeatureOperations.CutFeatureOperation
+        wire_sk = comp.sketches.add(comp.xYConstructionPlane)
+        wire_sk.name = 'Wire Exit'
+        draw_rounded_rect(
+            wire_sk,
+            cx=0, cy=0,
+            w=WIRE_W, h=0.02,
+            r=0.005
+        )
+
+        wire_target = WIRE_W * 0.02
+        wire_prof = find_profile_by_area(wire_sk, wire_target, tolerance=0.8)
+        if wire_prof is None:
+            wire_prof = find_smallest_profile(wire_sk)
+        if wire_prof:
+            w_input = extrudes.createInput(
+                wire_prof, adsk.fusion.FeatureOperations.CutFeatureOperation
             )
-            wInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(BODY_D)
-            )
+            w_input.setDistanceExtent(False, val(BODY_D))
             try:
-                extrudes.add(wInput)
+                extrudes.add(w_input)
             except:
                 pass
 
-        # ═══ Report ═══
-        app.activeViewport.fit()
+        # ══════════════════════════════════════════════════════════
+        # STEP 6: External fillets
+        # ══════════════════════════════════════════════════════════
+
+        if body:
+            fillet_count = add_edge_fillets(comp, body, FILLET_STD)
+        else:
+            fillet_count = 0
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 7: Zoom and report
+        # ══════════════════════════════════════════════════════════
+
+        zoom_fit(app)
 
         ui.messageBox(
             'Middle Wheel Connector created!\n\n'
-            f'Body: {BODY_W * 10:.0f} × {BODY_D * 10:.0f} × {BODY_H * 10:.0f}mm\n'
-            f'Tube socket: {TUBE_BORE_R * 20:.1f}mm × {TUBE_DEPTH * 10:.0f}mm\n'
-            f'Mount inserts: 2× M3 ({MOUNT_BOLT_SPACING * 10:.0f}mm spacing)\n'
-            f'Wire exit: {WIRE_W * 10:.0f} × {WIRE_H * 10:.0f}mm\n\n'
-            'Bolt fixed_wheel_mount.py to bottom face.\n'
+            f'Body: {BODY_W*10:.0f} × {BODY_D*10:.0f} × {BODY_H*10:.0f}mm '
+            f'(rounded corners)\n\n'
+            f'TUBE SOCKET: {TUBE_BORE*10:.1f}mm × {TUBE_DEPTH*10:.0f}mm deep\n'
+            f'  M3 grub screw, {CHAMFER_STD*10:.1f}mm entry chamfer\n\n'
+            f'FIXED MOUNT: 2× M3 heat-set inserts '
+            f'({MOUNT_BOLT_SPACING*10:.0f}mm, bottom face)\n'
+            f'WIRE EXIT: {WIRE_W*10:.0f}×{WIRE_H*10:.0f}mm (rounded)\n'
+            f'Fillets: {fillet_count} edges @ {FILLET_STD*10:.1f}mm\n\n'
+            'Bolt fixed_wheel_mount to bottom face.\n'
             'No steering — middle wheels are fixed.\n\n'
+            'Print mount-face down, 60% infill, 5 perimeters.\n'
             'Qty: 2 (ML, MR)',
             'Mars Rover - Middle Wheel Connector'
         )

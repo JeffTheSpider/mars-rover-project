@@ -3,8 +3,14 @@ Mars Rover Cable Clip — Phase 1
 ================================
 
 Snap-fit clip that wraps around 8mm steel suspension rods to hold
-wires against the rod. Inspired by Sawppy Rod Support and general
-cable management clips.
+wires against the rod.
+
+Redesigned with:
+  - C-shaped clip body (~330° arc)
+  - Wire channel on back with rounded profile
+  - Entry chamfers on snap lips
+  - Locating ridge on back for wire retention
+  - 0.5mm fillets on external edges
 
 Dimensions:
   - Rod bore: 8.3mm (slight clearance on 8mm rod)
@@ -12,19 +18,25 @@ Dimensions:
   - Wire channel: 5mm wide × 3mm deep (on back of clip)
   - Snap gap: 3mm opening, flexes open to snap onto rod
 
-The clip wraps ~270° around the rod with a 3mm gap for snap-on.
-A flat back surface has a groove for wire routing.
-
 Print: Flat (gap facing up), PLA, 100% infill (small part, needs flex)
-Qty: 12 (3 per arm tube × 4 tubes, rough estimate)
+Qty: 12 (3 per arm tube × 4 tubes)
 
-Reference: EA-25, Sawppy Rod Support (11×22×30mm)
+Reference: EA-25
 """
 
 import adsk.core
 import adsk.fusion
 import traceback
 import math
+import sys
+
+sys.path.insert(0, r"D:\Mars Rover Project\cad\scripts")
+from rover_cad_helpers import (
+    p, val, FILLET_STD, CHAMFER_STD,
+    find_profile_by_area, find_smallest_profile,
+    extrude_profile, cut_profile,
+    add_edge_fillets, zoom_fit,
+)
 
 
 def run(context):
@@ -39,21 +51,24 @@ def run(context):
             return
 
         # ── Dimensions (cm) ──
-        ROD_R = 0.415           # 4.15mm radius (8.3mm bore, 0.3mm clearance on 8mm)
-        CLIP_WALL = 0.2         # 2mm wall around rod
-        CLIP_OUTER_R = ROD_R + CLIP_WALL  # 6.15mm outer radius
-        CLIP_H = 0.5            # 5mm clip height (along rod axis)
-        SNAP_GAP = 0.3          # 3mm snap opening
-        WIRE_CHANNEL_W = 0.5    # 5mm wire channel width
-        WIRE_CHANNEL_D = 0.3    # 3mm wire channel depth
+        ROD_R = 0.415               # 4.15mm radius (8.3mm bore)
+        CLIP_WALL = 0.2             # 2mm wall around rod
+        CLIP_OUTER_R = ROD_R + CLIP_WALL   # 6.15mm outer radius
+        CLIP_H = 0.5               # 5mm clip height (along rod)
+        SNAP_GAP = 0.3             # 3mm snap opening
+        WIRE_W = 0.5               # 5mm wire channel width
+        WIRE_D = 0.3               # 3mm wire channel depth
+        GROOVE_WALL = 0.1          # 1mm wall on sides of groove
+
+        # Locating ridge
+        RIDGE_H = 0.15             # 1.5mm ridge height
+        RIDGE_W = 0.1              # 1mm ridge width
 
         comp = design.rootComponent
-        p = adsk.core.Point3D.create
         extrudes = comp.features.extrudeFeatures
 
         # ══════════════════════════════════════════════════════════
-        # STEP 1: Create clip body
-        # Sketch on XY plane: C-shaped clip (270° arc) with flat back
+        # STEP 1: C-shaped clip body
         # ══════════════════════════════════════════════════════════
 
         sketch = comp.sketches.add(comp.xYConstructionPlane)
@@ -61,169 +76,180 @@ def run(context):
         arcs = sketch.sketchCurves.sketchArcs
         lines = sketch.sketchCurves.sketchLines
 
-        center = p(0, 0, 0)
-
-        # The clip opens at the top (positive Y). Gap width = SNAP_GAP.
-        # Half-gap angle from vertical: asin(gap/2 / radius)
-        gap_half_angle = math.asin(SNAP_GAP / (2 * ROD_R))
-        # Clip arc spans from (pi/2 + gap_half) to (pi/2 - gap_half + 2*pi)
-        # i.e., almost full circle minus the gap at top
-
+        # Gap at top (positive Y)
+        gap_half_angle = math.asin(SNAP_GAP / (2 * CLIP_OUTER_R))
         arc_start_angle = math.pi / 2 + gap_half_angle
-        arc_sweep = 2 * math.pi - 2 * gap_half_angle  # ~330° for 3mm gap on 8.3mm bore
+        arc_sweep = 2 * math.pi - 2 * gap_half_angle
+
+        center = p(0, 0)
 
         # Outer arc
         outer_start = p(
             CLIP_OUTER_R * math.cos(arc_start_angle),
-            CLIP_OUTER_R * math.sin(arc_start_angle), 0
+            CLIP_OUTER_R * math.sin(arc_start_angle)
         )
-        outer_arc = arcs.addByCenterStartSweep(center, outer_start, -arc_sweep)
+        arcs.addByCenterStartSweep(center, outer_start, -arc_sweep)
 
         # Inner arc (rod bore)
         inner_start = p(
             ROD_R * math.cos(arc_start_angle),
-            ROD_R * math.sin(arc_start_angle), 0
+            ROD_R * math.sin(arc_start_angle)
         )
-        inner_arc = arcs.addByCenterStartSweep(center, inner_start, -arc_sweep)
+        arcs.addByCenterStartSweep(center, inner_start, -arc_sweep)
 
-        # Close the ends with lines (the gap edges)
-        # End 1 (at arc_start_angle)
+        # Close the gap ends with lines
+        end_angle = arc_start_angle - arc_sweep
+
         lines.addByTwoPoints(
             p(ROD_R * math.cos(arc_start_angle),
-              ROD_R * math.sin(arc_start_angle), 0),
+              ROD_R * math.sin(arc_start_angle)),
             p(CLIP_OUTER_R * math.cos(arc_start_angle),
-              CLIP_OUTER_R * math.sin(arc_start_angle), 0)
+              CLIP_OUTER_R * math.sin(arc_start_angle))
         )
 
-        # End 2 (at arc_start_angle - arc_sweep = pi/2 - gap_half_angle)
-        end_angle = arc_start_angle - arc_sweep
         lines.addByTwoPoints(
             p(ROD_R * math.cos(end_angle),
-              ROD_R * math.sin(end_angle), 0),
+              ROD_R * math.sin(end_angle)),
             p(CLIP_OUTER_R * math.cos(end_angle),
-              CLIP_OUTER_R * math.sin(end_angle), 0)
+              CLIP_OUTER_R * math.sin(end_angle))
         )
 
-        # Find the C-shaped profile
-        clipProf = None
-        # The clip profile area ≈ arc_sweep * (outer_r² - inner_r²) / 2
+        # Find C-shaped profile
         expected = arc_sweep * (CLIP_OUTER_R**2 - ROD_R**2) / 2
-        bestDiff = float('inf')
-        for pi_idx in range(sketch.profiles.count):
-            pr = sketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            diff = abs(a - expected)
-            if diff < bestDiff:
-                bestDiff = diff
-                clipProf = pr
+        clip_prof = find_profile_by_area(sketch, expected, tolerance=0.5)
+        if clip_prof is None:
+            # Fallback: find profile closest to expected
+            best = None
+            best_diff = float('inf')
+            for pi_idx in range(sketch.profiles.count):
+                pr = sketch.profiles.item(pi_idx)
+                a = pr.areaProperties().area
+                d = abs(a - expected)
+                if d < best_diff:
+                    best_diff = d
+                    best = pr
+            clip_prof = best
 
-        clipBody = None
-        if clipProf:
-            extInput = extrudes.createInput(
-                clipProf, adsk.fusion.FeatureOperations.NewBodyFeatureOperation
-            )
-            extInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(CLIP_H)
-            )
-            clipExt = extrudes.add(extInput)
-            clipBody = clipExt.bodies.item(0)
-            clipBody.name = 'Cable Clip'
+        body = None
+        if clip_prof:
+            ext = extrude_profile(comp, clip_prof, CLIP_H)
+            body = ext.bodies.item(0) if ext else None
+            if body:
+                body.name = 'Cable Clip'
 
         # ══════════════════════════════════════════════════════════
-        # STEP 2: Add wire channel on the back (bottom, -Y side)
-        # Rectangular groove on the outside of the clip
+        # STEP 2: Wire channel housing (join material on back)
         # ══════════════════════════════════════════════════════════
 
-        channelSketch = comp.sketches.add(comp.xYConstructionPlane)
-        channelSketch.name = 'Wire Channel'
-        cl = channelSketch.sketchCurves.sketchLines
+        ch_sk = comp.sketches.add(comp.xYConstructionPlane)
+        ch_sk.name = 'Wire Channel Block'
+        ch_lines = ch_sk.sketchCurves.sketchLines
 
-        # Channel is on the bottom of the clip (opposite to the gap)
-        # Center at Y = -(CLIP_OUTER_R + WIRE_CHANNEL_D/2)
-        ch_y_outer = -(CLIP_OUTER_R + WIRE_CHANNEL_D)
-        ch_y_inner = -CLIP_OUTER_R + 0.01  # slight overlap for cut
-        ch_x_half = WIRE_CHANNEL_W / 2
+        # Channel housing on bottom (-Y side) of clip
+        ch_y_outer = -(CLIP_OUTER_R + WIRE_D)
+        ch_y_inner = -CLIP_OUTER_R + 0.01
+        ch_x_half = WIRE_W / 2
 
-        cl.addTwoPointRectangle(
-            p(-ch_x_half, ch_y_inner, 0),
-            p(ch_x_half, ch_y_outer, 0)
+        ch_lines.addTwoPointRectangle(
+            p(-ch_x_half, ch_y_inner),
+            p(ch_x_half, ch_y_outer)
         )
 
-        chProf = None
-        minArea = float('inf')
-        for pi_idx in range(channelSketch.profiles.count):
-            pr = channelSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                chProf = pr
+        ch_target = WIRE_W * (WIRE_D + 0.01)
+        ch_prof = find_profile_by_area(ch_sk, ch_target, tolerance=0.6)
+        if ch_prof is None:
+            ch_prof = find_smallest_profile(ch_sk)
 
-        if chProf:
-            chInput = extrudes.createInput(
-                chProf, adsk.fusion.FeatureOperations.JoinFeatureOperation
+        if ch_prof:
+            extrude_profile(
+                comp, ch_prof, CLIP_H,
+                adsk.fusion.FeatureOperations.JoinFeatureOperation
             )
-            chInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(CLIP_H)
-            )
-            try:
-                extrudes.add(chInput)
-            except:
-                pass
 
-        # Cut the actual channel groove into the added material
-        chCutSketch = comp.sketches.add(comp.xYConstructionPlane)
-        chCutSketch.name = 'Wire Channel Cut'
-        ccl = chCutSketch.sketchCurves.sketchLines
+        # ══════════════════════════════════════════════════════════
+        # STEP 3: Wire channel groove (cut into housing)
+        # ══════════════════════════════════════════════════════════
 
-        # The channel is a U-shaped groove
-        groove_wall = 0.1  # 1mm walls on sides of groove
-        gx_half = (WIRE_CHANNEL_W / 2) - groove_wall
-        gy_outer = ch_y_outer + groove_wall
+        groove_sk = comp.sketches.add(comp.xYConstructionPlane)
+        groove_sk.name = 'Wire Channel Groove'
+        g_lines = groove_sk.sketchCurves.sketchLines
+
+        gx_half = (WIRE_W / 2) - GROOVE_WALL
+        gy_outer = ch_y_outer + GROOVE_WALL
         gy_inner = ch_y_inner
 
-        ccl.addTwoPointRectangle(
-            p(-gx_half, gy_inner, 0),
-            p(gx_half, gy_outer, 0)
+        g_lines.addTwoPointRectangle(
+            p(-gx_half, gy_inner),
+            p(gx_half, gy_outer)
         )
 
-        ccProf = None
-        minArea = float('inf')
-        for pi_idx in range(chCutSketch.profiles.count):
-            pr = chCutSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                ccProf = pr
+        g_target = (gx_half * 2) * (gy_outer - gy_inner)
+        g_prof = find_profile_by_area(groove_sk, abs(g_target), tolerance=0.6)
+        if g_prof is None:
+            g_prof = find_smallest_profile(groove_sk)
 
-        if ccProf:
-            ccInput = extrudes.createInput(
-                ccProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-            )
-            ccInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(CLIP_H + 0.01)
-            )
-            try:
-                extrudes.add(ccInput)
-            except:
-                pass
+        if g_prof:
+            cut_profile(comp, g_prof, CLIP_H + 0.01, flip=False)
 
         # ══════════════════════════════════════════════════════════
-        # STEP 3: Zoom and report
+        # STEP 4: Locating ridge (centre of wire channel back)
         # ══════════════════════════════════════════════════════════
 
-        app.activeViewport.fit()
+        ridge_sk = comp.sketches.add(comp.xYConstructionPlane)
+        ridge_sk.name = 'Locating Ridge'
+        ridge_sk.sketchCurves.sketchLines.addTwoPointRectangle(
+            p(-RIDGE_W / 2, ch_y_outer - RIDGE_H),
+            p(RIDGE_W / 2, ch_y_outer)
+        )
+
+        ridge_target = RIDGE_W * RIDGE_H
+        ridge_prof = find_profile_by_area(ridge_sk, ridge_target, tolerance=0.6)
+        if ridge_prof is None:
+            ridge_prof = find_smallest_profile(ridge_sk)
+
+        if ridge_prof:
+            extrude_profile(
+                comp, ridge_prof, CLIP_H,
+                adsk.fusion.FeatureOperations.JoinFeatureOperation
+            )
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 5: Entry chamfers on snap lips
+        # ══════════════════════════════════════════════════════════
+
+        if body:
+            from rover_cad_helpers import add_chamfer
+            add_chamfer(comp, body, ROD_R, CHAMFER_STD)
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 6: External fillets
+        # ══════════════════════════════════════════════════════════
+
+        if body:
+            fillet_count = add_edge_fillets(comp, body, FILLET_STD)
+        else:
+            fillet_count = 0
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 7: Zoom and report
+        # ══════════════════════════════════════════════════════════
+
+        zoom_fit(app)
 
         ui.messageBox(
             'Cable Clip created!\n\n'
-            f'Rod bore: {ROD_R * 20:.1f}mm (snap-fit on 8mm rod)\n'
-            f'Clip wall: {CLIP_WALL * 10:.0f}mm\n'
-            f'Clip height: {CLIP_H * 10:.0f}mm (along rod)\n'
-            f'Snap gap: {SNAP_GAP * 10:.0f}mm\n'
-            f'Wire channel: {WIRE_CHANNEL_W * 10:.0f} × '
-            f'{WIRE_CHANNEL_D * 10:.0f}mm\n\n'
+            f'Rod bore: {ROD_R*20:.1f}mm (snap-fit on 8mm rod)\n'
+            f'Clip wall: {CLIP_WALL*10:.0f}mm\n'
+            f'Clip height: {CLIP_H*10:.0f}mm (along rod)\n'
+            f'Snap gap: {SNAP_GAP*10:.0f}mm\n\n'
+            f'Wire channel: {WIRE_W*10:.0f}×{WIRE_D*10:.0f}mm\n'
+            f'  Groove wall: {GROOVE_WALL*10:.0f}mm\n'
+            f'  Locating ridge: {RIDGE_W*10:.0f}×{RIDGE_H*10:.1f}mm\n\n'
+            f'Chamfer: {CHAMFER_STD*10:.1f}mm (snap lip entry)\n'
+            f'Fillets: {fillet_count} edges @ {FILLET_STD*10:.1f}mm\n\n'
             'Snap onto 8mm steel rod, route wires through channel.\n'
-            'Print flat (gap up), 100% infill, PLA.\n\n'
-            'Qty needed: ~12 (3 per arm tube)',
+            'Print flat (gap up), 100% infill, PLA.\n'
+            'Qty: ~12 (3 per arm tube)',
             'Mars Rover - Cable Clip'
         )
 

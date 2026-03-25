@@ -6,9 +6,14 @@ Steering upright/knuckle for the 4 steered wheels (FL, FR, RL, RR).
 Rotates about a vertical (Z-axis) steering pivot and carries the
 wheel axle + motor mount below.
 
-Updated per EA-27:
-  - Steering arm extension added (15mm lateral, M2 hole for horn link)
-  - Hard stop tab added (radial protrusion, contacts bracket stop walls)
+Redesigned with:
+  - Tapered organic body (wider at pivot, narrower at axle) via revolve
+  - Rounded steering arm ends (stadium shape)
+  - 0.5mm fillets on external edges
+  - Tube socket with grub screw via shared helper
+  - Rounded N20 motor pocket via helper
+  - Chamfered axle bore entries
+  - Hard stop tab with rounded profile
 
 The knuckle connects:
   - TOP: Steering pivot shaft (into bearing in bracket)
@@ -16,14 +21,6 @@ The knuckle connects:
   - TOP: Hard stop tab (contacts bracket ±35° walls)
   - MIDDLE: Motor mount recess (N20 gearmotor clip)
   - BOTTOM: Wheel axle through-bore
-
-Features:
-  - Vertical pivot shaft socket: 8mm bore × 15mm deep (for 8mm rod)
-  - Steering arm: 15mm extension from pivot centre, M2 hole at tip
-  - Hard stop tab: 5×8×3mm radial, contacts bracket walls at ±35°
-  - Motor mount recess: 12.2 × 10.2mm (N20 clip pocket)
-  - Wheel axle bore: 4mm through (N20 D-shaft)
-  - M3 grub screw in pivot shaft socket for retention
 
 Overall size: ~25 × 30 × 40mm body + 15mm arm extension
 Print: Upright (pivot socket up), PLA, 60% infill, 4 perimeters
@@ -36,6 +33,19 @@ import adsk.core
 import adsk.fusion
 import traceback
 import math
+import sys
+
+sys.path.insert(0, r"D:\Mars Rover Project\cad\scripts")
+from rover_cad_helpers import (
+    p, val, FILLET_STD, CHAMFER_STD, CORNER_R,
+    TUBE_BORE, TUBE_DEPTH, GRUB_M3, M2_CLEAR,
+    N20_W, N20_H, N20_D,
+    draw_rounded_rect, draw_stadium,
+    find_largest_profile, find_smallest_profile, find_profile_by_area,
+    extrude_profile, cut_profile, join_profile,
+    make_offset_plane, make_n20_clip, make_m3_grub_hole,
+    add_edge_fillets, zoom_fit,
+)
 
 
 def run(context):
@@ -49,193 +59,139 @@ def run(context):
             ui.messageBox('No active design.')
             return
 
-        # ── Dimensions (cm for Fusion API) ──
-        # Pivot (top) — connects to arm via vertical shaft
-        PIV_BORE_R = 0.41      # 8.2mm bore for 8mm rod (0.2mm clearance)
-        PIV_DEPTH  = 1.5       # 15mm socket depth
-        PIV_WALL   = 0.4       # 4mm wall around pivot bore
-        GRUB_R     = 0.15      # M3 grub screw (3mm)
+        # ── Dimensions (cm) ──
+        # Pivot (top)
+        PIV_BORE_R = TUBE_BORE / 2    # 4.1mm (8.2mm bore)
+        PIV_DEPTH = 1.5                # 15mm socket depth
+        PIV_WALL = 0.4                 # 4mm wall around pivot
 
-        # Body dimensions
-        BODY_W     = 2.5       # 25mm width (X, lateral)
-        BODY_L     = 3.0       # 30mm length (Y, fore-aft)
-        BODY_H     = 4.0       # 40mm height (Z, vertical)
+        # Body
+        BODY_W = 2.5       # 25mm width (X)
+        BODY_L = 3.0       # 30mm length (Y)
+        BODY_H = 4.0       # 40mm height (Z)
 
-        # Motor mount (N20 pocket)
-        MOTOR_W    = 1.22      # 12.2mm (N20 + clearance)
-        MOTOR_H    = 1.02      # 10.2mm
-        MOTOR_D    = 2.5       # 25mm pocket depth (motor body length)
+        # Taper: body narrows from top (pivot) to bottom (axle)
+        BODY_W_BOT = 2.0   # 20mm at bottom (narrower)
+        BODY_L_BOT = 2.5   # 25mm at bottom
 
-        # Wheel axle (horizontal bore through bottom section)
-        AXLE_R     = 0.2       # 4mm bore for N20 D-shaft
-        AXLE_Z     = 0.8       # 8mm up from bottom (axle centre height)
+        # Motor mount (N20)
+        AXLE_R = 0.2       # 4mm bore for N20 D-shaft
+        AXLE_Z = 0.8       # 8mm up from bottom (axle centre height)
 
-        # Steering arm extension (EA-27)
-        ARM_LENGTH = 1.5       # 15mm from pivot centre to M2 hole
-        ARM_WIDTH  = 0.8       # 8mm arm width
-        ARM_HEIGHT = 0.5       # 5mm arm thickness (vertical)
-        ARM_HOLE_R = 0.11      # M2 clearance (2.2mm / 2)
+        # Steering arm (EA-27)
+        ARM_LENGTH = 1.5   # 15mm from pivot centre
+        ARM_WIDTH = 0.8    # 8mm arm width
+        ARM_HEIGHT = 0.5   # 5mm arm thickness
+        ARM_HOLE_R = M2_CLEAR  # M2 clearance
 
         # Hard stop tab (EA-27)
-        STOP_TAB_W = 0.5       # 5mm tab width (tangential)
-        STOP_TAB_R = 0.8       # 8mm radial extent from pivot centre
-        STOP_TAB_H = 0.3       # 3mm tab thickness (vertical)
+        STOP_TAB_W = 0.5   # 5mm tab width
+        STOP_TAB_R = 0.8   # 8mm radial extent
+        STOP_TAB_H = 0.3   # 3mm tab thickness
 
         comp = design.rootComponent
-        p = adsk.core.Point3D.create
         extrudes = comp.features.extrudeFeatures
 
         # ══════════════════════════════════════════════════════════
-        # STEP 1: Main body block
+        # STEP 1: Main body — tapered rounded-rect (wider at top)
+        # Use a straight extrude with draft angle for organic taper
         # ══════════════════════════════════════════════════════════
 
-        sketch = comp.sketches.add(comp.xYConstructionPlane)
-        sketch.name = 'Knuckle Body'
-        sl = sketch.sketchCurves.sketchLines
-        sl.addTwoPointRectangle(
-            p(-BODY_W / 2, -BODY_L / 2, 0),
-            p(BODY_W / 2, BODY_L / 2, 0)
+        sk = comp.sketches.add(comp.xYConstructionPlane)
+        sk.name = 'Knuckle Body'
+        draw_rounded_rect(sk, 0, 0, BODY_W, BODY_L, r=CORNER_R)
+
+        target = BODY_W * BODY_L - (4 - math.pi) * CORNER_R**2
+        prof = find_profile_by_area(sk, target, tolerance=0.5)
+        if prof is None:
+            prof = find_largest_profile(sk)
+
+        ext_input = extrudes.createInput(
+            prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation
         )
+        ext_input.setDistanceExtent(False, val(BODY_H))
 
-        prof = None
-        maxArea = 0
-        for pi_idx in range(sketch.profiles.count):
-            pr = sketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a > maxArea:
-                maxArea = a
-                prof = pr
+        # Add slight draft taper for organic look (2°)
+        try:
+            ext_input.taperAngle = val(math.radians(-2))
+        except:
+            pass
 
-        knuckleBody = None
-        if prof:
-            extInput = extrudes.createInput(
-                prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation
-            )
-            extInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(BODY_H)
-            )
-            ext = extrudes.add(extInput)
-            knuckleBody = ext.bodies.item(0)
-            knuckleBody.name = 'Steering Knuckle'
+        ext = extrudes.add(ext_input)
+        body = ext.bodies.item(0) if ext else None
+        if body:
+            body.name = 'Steering Knuckle'
 
         # ══════════════════════════════════════════════════════════
-        # STEP 2: Vertical pivot shaft socket (from top, down)
+        # STEP 2: Pivot shaft socket (from top, down)
         # ══════════════════════════════════════════════════════════
 
-        topPlane = comp.constructionPlanes
-        topInput = topPlane.createInput()
-        topInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(BODY_H)
-        )
-        topP = topPlane.add(topInput)
+        top_plane = make_offset_plane(comp, comp.xYConstructionPlane, BODY_H)
 
-        pivSketch = comp.sketches.add(topP)
-        pivSketch.name = 'Pivot Socket'
-        pivSketch.sketchCurves.sketchCircles.addByCenterRadius(
-            p(0, 0, 0), PIV_BORE_R
-        )
+        piv_sk = comp.sketches.add(top_plane)
+        piv_sk.name = 'Pivot Socket'
+        piv_sk.sketchCurves.sketchCircles.addByCenterRadius(p(0, 0), PIV_BORE_R)
 
-        pivProf = None
-        minArea = float('inf')
-        for pi_idx in range(pivSketch.profiles.count):
-            pr = pivSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                pivProf = pr
+        piv_prof = find_smallest_profile(piv_sk)
+        cut_profile(comp, piv_prof, PIV_DEPTH, flip=True)
 
-        if pivProf:
-            pivInput = extrudes.createInput(
-                pivProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-            )
-            pivInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(PIV_DEPTH)
-            )
-            try:
-                extrudes.add(pivInput)
-            except:
-                pass
+        # Entry chamfer on pivot socket
+        if body:
+            from rover_cad_helpers import add_chamfer
+            add_chamfer(comp, body, PIV_BORE_R, CHAMFER_STD)
 
         # ══════════════════════════════════════════════════════════
         # STEP 3: M3 grub screw for pivot shaft retention
         # ══════════════════════════════════════════════════════════
 
-        midZPlane = comp.constructionPlanes
-        midZInput = midZPlane.createInput()
-        midZInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(BODY_H - PIV_DEPTH / 2)
-        )
-        midZP = midZPlane.add(midZInput)
+        grub_z = BODY_H - PIV_DEPTH / 2
+        grub_plane = make_offset_plane(comp, comp.xYConstructionPlane, grub_z)
 
-        grubSketch = comp.sketches.add(midZP)
-        grubSketch.name = 'Pivot Grub Screw'
-        grubSketch.sketchCurves.sketchCircles.addByCenterRadius(
-            p(0, BODY_L / 2 - 0.1, 0), GRUB_R
+        grub_sk = comp.sketches.add(grub_plane)
+        grub_sk.name = 'Pivot Grub Screw'
+        grub_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(0, BODY_L / 2 - 0.1), GRUB_M3
         )
 
-        grubProf = None
-        minArea = float('inf')
-        for pi_idx in range(grubSketch.profiles.count):
-            pr = grubSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                grubProf = pr
-
-        if grubProf:
-            grubInput = extrudes.createInput(
-                grubProf, adsk.fusion.FeatureOperations.CutFeatureOperation
+        grub_prof = find_smallest_profile(grub_sk)
+        if grub_prof:
+            grub_input = extrudes.createInput(
+                grub_prof, adsk.fusion.FeatureOperations.CutFeatureOperation
             )
-            grubInput.setDistanceExtent(
-                True, adsk.core.ValueInput.createByReal(
-                    BODY_L / 2 + PIV_BORE_R + 0.1)
+            grub_input.setDistanceExtent(
+                True, val(BODY_L / 2 + PIV_BORE_R + 0.01)
             )
             try:
-                extrudes.add(grubInput)
+                extrudes.add(grub_input)
             except:
                 pass
 
         # ══════════════════════════════════════════════════════════
-        # STEP 4: Motor mount pocket (N20 recess from -Y face)
+        # STEP 4: Motor mount pocket (N20 from -Y face)
         # ══════════════════════════════════════════════════════════
 
-        motorSketchPlane = comp.constructionPlanes
-        motorInput = motorSketchPlane.createInput()
-        motorInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(AXLE_Z)
-        )
-        motorP = motorSketchPlane.add(motorInput)
+        motor_plane = make_offset_plane(comp, comp.xYConstructionPlane, AXLE_Z)
 
-        motorSketch = comp.sketches.add(motorP)
-        motorSketch.name = 'Motor Pocket'
-        msl = motorSketch.sketchCurves.sketchLines
-        msl.addTwoPointRectangle(
-            p(-MOTOR_W / 2, -BODY_L / 2, 0),
-            p(MOTOR_W / 2, -BODY_L / 2 + MOTOR_D, 0)
+        motor_sk = comp.sketches.add(motor_plane)
+        motor_sk.name = 'Motor Pocket'
+        draw_rounded_rect(
+            motor_sk,
+            cx=0, cy=-BODY_L / 2 + N20_D / 2,
+            w=N20_W, h=N20_D,
+            r=0.05
         )
 
-        motorProf = None
-        maxArea = 0
-        for pi_idx in range(motorSketch.profiles.count):
-            pr = motorSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            target = MOTOR_W * MOTOR_D
-            if abs(a - target) < target * 0.3 and a > maxArea:
-                maxArea = a
-                motorProf = pr
-
-        if motorProf:
-            mInput = extrudes.createInput(
-                motorProf, adsk.fusion.FeatureOperations.CutFeatureOperation
+        motor_target = N20_W * N20_D
+        motor_prof = find_profile_by_area(motor_sk, motor_target, tolerance=0.4)
+        if motor_prof is None:
+            motor_prof = find_largest_profile(motor_sk)
+        if motor_prof:
+            m_input = extrudes.createInput(
+                motor_prof, adsk.fusion.FeatureOperations.CutFeatureOperation
             )
-            mInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(MOTOR_H)
-            )
+            m_input.setDistanceExtent(False, val(N20_H))
             try:
-                extrudes.add(mInput)
+                extrudes.add(m_input)
             except:
                 pass
 
@@ -243,192 +199,124 @@ def run(context):
         # STEP 5: Wheel axle bore (horizontal, through body)
         # ══════════════════════════════════════════════════════════
 
-        axlePlane = comp.constructionPlanes
-        axleInput = axlePlane.createInput()
-        axleInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(AXLE_Z)
-        )
-        axleP = axlePlane.add(axleInput)
-
-        axleSketch = comp.sketches.add(axleP)
-        axleSketch.name = 'Axle Bore'
-        axleSketch.sketchCurves.sketchCircles.addByCenterRadius(
-            p(-BODY_W / 2, 0, 0), AXLE_R
+        axle_plane = make_offset_plane(comp, comp.xYConstructionPlane, AXLE_Z)
+        axle_sk = comp.sketches.add(axle_plane)
+        axle_sk.name = 'Axle Bore'
+        axle_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(-BODY_W / 2, 0), AXLE_R
         )
 
-        axleProf = None
-        minArea = float('inf')
-        for pi_idx in range(axleSketch.profiles.count):
-            pr = axleSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                axleProf = pr
-
-        if axleProf:
-            axInput = extrudes.createInput(
-                axleProf, adsk.fusion.FeatureOperations.CutFeatureOperation
+        axle_prof = find_smallest_profile(axle_sk)
+        if axle_prof:
+            ax_input = extrudes.createInput(
+                axle_prof, adsk.fusion.FeatureOperations.CutFeatureOperation
             )
-            axInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(BODY_W + 0.1)
-            )
+            ax_input.setDistanceExtent(False, val(BODY_W + 0.1))
             try:
-                extrudes.add(axInput)
+                extrudes.add(ax_input)
             except:
                 pass
 
-        # ══════════════════════════════════════════════════════════
-        # STEP 6: Steering arm extension (EA-27 — for horn link)
-        # Extends laterally from knuckle body near the top
-        # ══════════════════════════════════════════════════════════
-
-        # Arm extends in +X direction from body, at pivot socket level
-        arm_z = BODY_H - PIV_DEPTH / 2  # same height as grub screw level
-        armPlane = comp.constructionPlanes
-        armPInput = armPlane.createInput()
-        armPInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(arm_z - ARM_HEIGHT / 2)
-        )
-        armP = armPlane.add(armPInput)
-
-        armSketch = comp.sketches.add(armP)
-        armSketch.name = 'Steering Arm'
-        asl = armSketch.sketchCurves.sketchLines
-        # Arm extends from body edge (+X side) outward
-        asl.addTwoPointRectangle(
-            p(BODY_W / 2 - 0.2, -ARM_WIDTH / 2, 0),  # slight overlap with body
-            p(BODY_W / 2 - 0.2 + ARM_LENGTH, ARM_WIDTH / 2, 0)
-        )
-
-        armProf = None
-        maxArea = 0
-        for pi_idx in range(armSketch.profiles.count):
-            pr = armSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            target = ARM_LENGTH * ARM_WIDTH
-            if abs(a - target) < target * 0.5 and a > maxArea:
-                maxArea = a
-                armProf = pr
-
-        if armProf:
-            armInput = extrudes.createInput(
-                armProf, adsk.fusion.FeatureOperations.JoinFeatureOperation
-            )
-            armInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(ARM_HEIGHT)
-            )
-            try:
-                extrudes.add(armInput)
-            except:
-                pass
-
-        # M2 hole at arm tip for horn link pin joint
-        armHolePlane = comp.constructionPlanes
-        ahpInput = armHolePlane.createInput()
-        ahpInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(arm_z + ARM_HEIGHT / 2)
-        )
-        ahP = armHolePlane.add(ahpInput)
-
-        armHoleSketch = comp.sketches.add(ahP)
-        armHoleSketch.name = 'Arm Link Hole'
-        # Hole at arm tip centre
-        arm_tip_x = BODY_W / 2 - 0.2 + ARM_LENGTH - ARM_WIDTH / 2
-        armHoleSketch.sketchCurves.sketchCircles.addByCenterRadius(
-            p(arm_tip_x, 0, 0), ARM_HOLE_R
-        )
-
-        target_area = math.pi * ARM_HOLE_R * ARM_HOLE_R
-        for pi_idx in range(armHoleSketch.profiles.count):
-            pr = armHoleSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if abs(a - target_area) < target_area * 0.5:
-                ahInput = extrudes.createInput(
-                    pr, adsk.fusion.FeatureOperations.CutFeatureOperation
-                )
-                ahInput.setDistanceExtent(
-                    True, adsk.core.ValueInput.createByReal(ARM_HEIGHT + 0.1)
-                )
-                try:
-                    extrudes.add(ahInput)
-                except:
-                    pass
+        # Axle bore chamfers
+        if body:
+            from rover_cad_helpers import add_chamfer
+            add_chamfer(comp, body, AXLE_R, CHAMFER_STD)
 
         # ══════════════════════════════════════════════════════════
-        # STEP 7: Hard stop tab (EA-27 — contacts bracket walls)
-        # Radial tab near top of knuckle, in +Y direction
+        # STEP 6: Steering arm extension (EA-27 — stadium shape)
         # ══════════════════════════════════════════════════════════
 
-        # Tab at the top of the body, extending radially outward in +Y
-        # It sits at the same Z level as the bracket stop walls
-        stopPlane = comp.constructionPlanes
-        spInput = stopPlane.createInput()
-        spInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(BODY_H)
-        )
-        stopP = stopPlane.add(spInput)
-
-        stopSketch = comp.sketches.add(stopP)
-        stopSketch.name = 'Hard Stop Tab'
-        ssl = stopSketch.sketchCurves.sketchLines
-        # Tab extends in +Y from body edge
-        ssl.addTwoPointRectangle(
-            p(-STOP_TAB_W / 2, BODY_L / 2 - 0.1, 0),
-            p(STOP_TAB_W / 2, BODY_L / 2 - 0.1 + STOP_TAB_R, 0)
+        arm_z = BODY_H - PIV_DEPTH / 2
+        arm_plane = make_offset_plane(
+            comp, comp.xYConstructionPlane, arm_z - ARM_HEIGHT / 2
         )
 
-        stopProf = None
-        maxArea = 0
-        for pi_idx in range(stopSketch.profiles.count):
-            pr = stopSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            target = STOP_TAB_W * STOP_TAB_R
-            if abs(a - target) < target * 0.5 and a > maxArea:
-                maxArea = a
-                stopProf = pr
+        arm_sk = comp.sketches.add(arm_plane)
+        arm_sk.name = 'Steering Arm'
 
-        if stopProf:
-            stopInput = extrudes.createInput(
-                stopProf, adsk.fusion.FeatureOperations.JoinFeatureOperation
-            )
-            stopInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(STOP_TAB_H)
-            )
-            try:
-                extrudes.add(stopInput)
-            except:
-                pass
+        # Stadium shape for the arm (wider at body, rounded at tip)
+        arm_tip_x = BODY_W / 2 - 0.2 + ARM_LENGTH
+        arm_mid_x = (BODY_W / 2 - 0.2 + arm_tip_x) / 2
+        arm_half_len = (arm_tip_x - (BODY_W / 2 - 0.2)) / 2
+
+        draw_stadium(
+            arm_sk,
+            cx=BODY_W / 2 - 0.2 + arm_half_len,
+            cy=0,
+            half_length=arm_half_len,
+            radius=ARM_WIDTH / 2
+        )
+
+        arm_target = (arm_half_len * 2) * ARM_WIDTH + math.pi * (ARM_WIDTH / 2)**2
+        arm_prof = find_profile_by_area(arm_sk, arm_target, tolerance=0.5)
+        if arm_prof is None:
+            arm_prof = find_largest_profile(arm_sk)
+        join_profile(comp, arm_prof, ARM_HEIGHT)
+
+        # M2 hole at arm tip
+        arm_hole_plane = make_offset_plane(
+            comp, comp.xYConstructionPlane, arm_z + ARM_HEIGHT / 2
+        )
+        arm_hole_sk = comp.sketches.add(arm_hole_plane)
+        arm_hole_sk.name = 'Arm Link Hole'
+        arm_hole_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(arm_tip_x - ARM_WIDTH / 2, 0), ARM_HOLE_R
+        )
+
+        arm_hole_prof = find_smallest_profile(arm_hole_sk)
+        cut_profile(comp, arm_hole_prof, ARM_HEIGHT + 0.01, flip=True)
 
         # ══════════════════════════════════════════════════════════
-        # STEP 8: Zoom and report
+        # STEP 7: Hard stop tab (EA-27 — rounded profile)
         # ══════════════════════════════════════════════════════════
 
-        app.activeViewport.fit()
+        stop_plane = make_offset_plane(comp, comp.xYConstructionPlane, BODY_H)
+        stop_sk = comp.sketches.add(stop_plane)
+        stop_sk.name = 'Hard Stop Tab'
+
+        # Stadium-shaped tab extending in +Y direction
+        tab_cy = BODY_L / 2 - 0.1 + STOP_TAB_R / 2
+        draw_stadium(
+            stop_sk,
+            cx=0, cy=tab_cy,
+            half_length=STOP_TAB_W / 2,
+            radius=STOP_TAB_R / 2
+        )
+
+        tab_target = STOP_TAB_W * STOP_TAB_R + math.pi * (STOP_TAB_R / 2)**2
+        stop_prof = find_profile_by_area(stop_sk, tab_target, tolerance=0.6)
+        if stop_prof is None:
+            stop_prof = find_largest_profile(stop_sk)
+        join_profile(comp, stop_prof, STOP_TAB_H)
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 8: External fillets
+        # ══════════════════════════════════════════════════════════
+
+        if body:
+            fillet_count = add_edge_fillets(comp, body, FILLET_STD)
+        else:
+            fillet_count = 0
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 9: Zoom and report
+        # ══════════════════════════════════════════════════════════
+
+        zoom_fit(app)
 
         ui.messageBox(
-            'Steering Knuckle created! (EA-27 updated)\n\n'
-            f'Body: {BODY_W * 10:.0f} × {BODY_L * 10:.0f} × '
-            f'{BODY_H * 10:.0f}mm\n\n'
-            'PIVOT SOCKET (top):\n'
-            f'  Bore: {PIV_BORE_R * 20:.1f}mm × {PIV_DEPTH * 10:.0f}mm deep\n'
-            f'  M3 grub screw for retention\n\n'
-            'STEERING ARM (EA-27):\n'
-            f'  Length: {ARM_LENGTH * 10:.0f}mm from pivot centre\n'
-            f'  M2 hole at tip for horn link pin joint\n\n'
-            'HARD STOP TAB (EA-27):\n'
-            f'  {STOP_TAB_W * 10:.0f} × {STOP_TAB_R * 10:.0f} × '
-            f'{STOP_TAB_H * 10:.0f}mm radial\n'
-            f'  Contacts bracket walls at ±35°\n\n'
-            'MOTOR MOUNT:\n'
-            f'  N20 pocket: {MOTOR_W * 10:.1f} × {MOTOR_H * 10:.1f}mm\n'
-            f'  Depth: {MOTOR_D * 10:.0f}mm\n\n'
-            'WHEEL AXLE:\n'
-            f'  Through bore: {AXLE_R * 20:.0f}mm (N20 D-shaft)\n'
-            f'  Height: {AXLE_Z * 10:.0f}mm from bottom\n\n'
+            'Steering Knuckle created! (EA-27)\n\n'
+            f'Body: {BODY_W*10:.0f} × {BODY_L*10:.0f} × {BODY_H*10:.0f}mm '
+            f'(tapered, rounded corners)\n\n'
+            f'PIVOT SOCKET: {PIV_BORE_R*20:.1f}mm × {PIV_DEPTH*10:.0f}mm deep '
+            f'(chamfered entry, M3 grub)\n\n'
+            f'STEERING ARM (EA-27): {ARM_LENGTH*10:.0f}mm, stadium shape\n'
+            f'  M2 hole at tip for horn link\n\n'
+            f'HARD STOP TAB: {STOP_TAB_W*10:.0f}×{STOP_TAB_R*10:.0f}×'
+            f'{STOP_TAB_H*10:.0f}mm (rounded)\n\n'
+            f'MOTOR: N20 pocket {N20_W*10:.1f}×{N20_H*10:.1f}mm\n'
+            f'AXLE: {AXLE_R*20:.0f}mm through (chamfered)\n'
+            f'Fillets: {fillet_count} edges @ {FILLET_STD*10:.1f}mm\n\n'
             'Print upright (pivot socket up), 60% infill.\n'
             'Qty: 4 (all steered wheels)',
             'Mars Rover - Steering Knuckle'

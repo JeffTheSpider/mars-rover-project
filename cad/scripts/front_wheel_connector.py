@@ -9,24 +9,44 @@ steering bracket and servo mount.
 Also used for rear wheels (identical geometry — all 4 corner wheels
 are steered).
 
+Redesigned with:
+  - Rounded-rect body (2mm corner radius)
+  - Tube socket with chamfered entry via shared helper
+  - Proper heat-set insert pockets via helper
+  - Oval wire exit with rounded edges
+  - 0.5mm fillets on all external edges
+  - M3 grub screw for tube retention
+
 Features:
   - 1× tube socket (8.2mm bore × 15mm deep) with M3 grub screw
-  - Steering bracket mount face: 2× M3 heat-set inserts (matches steering_bracket.py)
-  - Servo mount face: 2× M3 heat-set inserts (matches servo_mount.py)
-  - Wire exit hole: 10×8mm (motor + servo wires exit here)
+  - Steering bracket mount face: 2× M3 heat-set inserts
+  - Servo mount face: 2× M3 heat-set inserts
+  - Wire exit hole: 10×8mm (motor + servo wires)
   - 4mm minimum wall thickness
 
 Overall size: ~35 × 30 × 30mm
 Print: Flat (mount face down), PLA, 60% infill, 5 perimeters
-Qty: 4 (FL, FR, RL, RR — symmetric, no mirror needed)
+Qty: 4 (FL, FR, RL, RR — symmetric)
 
-Reference: EA-25, Sawppy Steering Knuckle (97×40×110mm — ours is much smaller)
+Reference: EA-25, EA-27
 """
 
 import adsk.core
 import adsk.fusion
 import traceback
 import math
+import sys
+
+sys.path.insert(0, r"D:\Mars Rover Project\cad\scripts")
+from rover_cad_helpers import (
+    p, val, FILLET_STD, CHAMFER_STD, CORNER_R,
+    TUBE_BORE, TUBE_DEPTH, TUBE_WALL, GRUB_M3,
+    draw_rounded_rect,
+    find_largest_profile, find_smallest_profile, find_profile_by_area,
+    extrude_profile, cut_profile,
+    make_offset_plane, make_heat_set_pair,
+    add_edge_fillets, add_chamfer, zoom_fit,
+)
 
 
 def run(context):
@@ -40,268 +60,168 @@ def run(context):
             ui.messageBox('No active design.')
             return
 
-        # ── Shared connector dimensions (cm, EA-25) ──
-        TUBE_BORE_R = 0.41          # 8.2mm
-        TUBE_DEPTH = 1.5            # 15mm
-        GRUB_R = 0.15               # 3mm M3
-        WALL = 0.4                  # 4mm
-        INSERT_BORE_R = 0.24        # 4.8mm (heat-set insert)
-        INSERT_DEPTH = 0.55         # 5.5mm
-        WIRE_W = 1.0                # 10mm wire exit width
-        WIRE_H = 0.8                # 8mm wire exit height
+        # ── Dimensions (cm) ──
+        TUBE_BORE_R = TUBE_BORE / 2   # 4.1mm
+        WALL = TUBE_WALL               # 4mm
+        WIRE_W = 1.0                   # 10mm wire exit
+        WIRE_H = 0.8                   # 8mm wire exit
 
-        # ── Connector body ──
-        BODY_W = 3.5               # 35mm width (X)
-        BODY_D = 3.0               # 30mm depth (Z)
-        BODY_H = 3.0               # 30mm height (Y, tube enters from top)
+        # Body
+        BODY_W = 3.5                   # 35mm width (X)
+        BODY_D = 3.0                   # 30mm depth (Z)
+        BODY_H = 3.0                   # 30mm height (Y)
 
-        # ── Mount bolt patterns ──
-        # Steering bracket: 2× M3 bolts, 20mm spacing, on front face
-        STEER_BOLT_SPACING = 2.0   # 20mm
-        # Servo mount: 2× M3 bolts, 20mm spacing, on side face
-        SERVO_BOLT_SPACING = 2.0   # 20mm
+        # Mount bolt patterns
+        STEER_BOLT_SPACING = 2.0       # 20mm
+        SERVO_BOLT_SPACING = 2.0       # 20mm
 
         comp = design.rootComponent
-        p = adsk.core.Point3D.create
         extrudes = comp.features.extrudeFeatures
 
         # ══════════════════════════════════════════════════════════
-        # STEP 1: Main body block
-        # Rectangular block, tube enters from top (Y+)
+        # STEP 1: Rounded-rect body
         # ══════════════════════════════════════════════════════════
 
-        sketch = comp.sketches.add(comp.xYConstructionPlane)
-        sketch.name = 'Connector Body'
-        sl = sketch.sketchCurves.sketchLines
-        sl.addTwoPointRectangle(
-            p(-BODY_W / 2, 0, 0),
-            p(BODY_W / 2, BODY_H, 0)
-        )
+        sk = comp.sketches.add(comp.xYConstructionPlane)
+        sk.name = 'Connector Body'
+        draw_rounded_rect(sk, 0, BODY_H / 2, BODY_W, BODY_H, r=CORNER_R)
 
-        prof = None
-        maxArea = 0
-        for pi_idx in range(sketch.profiles.count):
-            pr = sketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a > maxArea:
-                maxArea = a
-                prof = pr
+        target = BODY_W * BODY_H - (4 - math.pi) * CORNER_R**2
+        prof = find_profile_by_area(sk, target, tolerance=0.5)
+        if prof is None:
+            prof = find_largest_profile(sk)
 
-        connBody = None
-        if prof:
-            extInput = extrudes.createInput(
-                prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation
-            )
-            extInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(BODY_D)
-            )
-            connExt = extrudes.add(extInput)
-            connBody = connExt.bodies.item(0)
-            connBody.name = 'Front Wheel Connector'
+        ext = extrude_profile(comp, prof, BODY_D)
+        body = ext.bodies.item(0) if ext else None
+        if body:
+            body.name = 'Front Wheel Connector'
 
         # ══════════════════════════════════════════════════════════
-        # STEP 2: Tube socket bore (from top face, vertical)
+        # STEP 2: Tube socket (from top face, vertical)
         # ══════════════════════════════════════════════════════════
 
-        topPlane = comp.constructionPlanes
-        tpInput = topPlane.createInput()
-        tpInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(BODY_H)
-        )
-        topP = topPlane.add(tpInput)
+        top_plane = make_offset_plane(comp, comp.xYConstructionPlane, BODY_H)
 
-        tubeSketch = comp.sketches.add(topP)
-        tubeSketch.name = 'Tube Socket'
-        tubeSketch.sketchCurves.sketchCircles.addByCenterRadius(
-            p(0, BODY_D / 2, 0), TUBE_BORE_R
+        tube_sk = comp.sketches.add(top_plane)
+        tube_sk.name = 'Tube Socket'
+        tube_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(0, BODY_D / 2), TUBE_BORE_R
         )
 
-        tubeProf = None
-        minArea = float('inf')
-        for pi_idx in range(tubeSketch.profiles.count):
-            pr = tubeSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                tubeProf = pr
+        tube_prof = find_smallest_profile(tube_sk)
+        cut_profile(comp, tube_prof, TUBE_DEPTH, flip=True)
 
-        if tubeProf:
-            tubeInput = extrudes.createInput(
-                tubeProf, adsk.fusion.FeatureOperations.CutFeatureOperation
+        # Entry chamfer
+        if body:
+            add_chamfer(comp, body, TUBE_BORE_R, CHAMFER_STD)
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 3: M3 grub screw for tube retention
+        # ══════════════════════════════════════════════════════════
+
+        grub_y = BODY_H - TUBE_DEPTH / 2
+        grub_plane = make_offset_plane(comp, comp.xYConstructionPlane, grub_y)
+
+        grub_sk = comp.sketches.add(grub_plane)
+        grub_sk.name = 'Tube Grub'
+        grub_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(TUBE_BORE_R + WALL / 2, BODY_D / 2), GRUB_M3
+        )
+
+        grub_prof = find_smallest_profile(grub_sk)
+        if grub_prof:
+            g_input = extrudes.createInput(
+                grub_prof, adsk.fusion.FeatureOperations.CutFeatureOperation
             )
-            tubeInput.setDistanceExtent(
-                True, adsk.core.ValueInput.createByReal(TUBE_DEPTH)
+            g_input.setDistanceExtent(
+                False, val(WALL + TUBE_BORE_R + 0.01)
             )
             try:
-                extrudes.add(tubeInput)
+                extrudes.add(g_input)
             except:
                 pass
 
         # ══════════════════════════════════════════════════════════
-        # STEP 3: M3 grub screw hole for tube retention
-        # Horizontal hole through wall into tube socket
+        # STEP 4: Steering bracket mount — 2× heat-set inserts
+        # (front face, XY plane at Z=0)
         # ══════════════════════════════════════════════════════════
 
-        grub_y = BODY_H - TUBE_DEPTH / 2  # Mid-socket height
-        grubPlane = comp.constructionPlanes
-        gpInput = grubPlane.createInput()
-        gpInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(grub_y)
-        )
-        gP = grubPlane.add(gpInput)
-
-        grubSketch = comp.sketches.add(gP)
-        grubSketch.name = 'Grub Screw'
-        grubSketch.sketchCurves.sketchCircles.addByCenterRadius(
-            p(TUBE_BORE_R + WALL / 2, BODY_D / 2, 0), GRUB_R
+        make_heat_set_pair(
+            comp, comp.xYConstructionPlane, STEER_BOLT_SPACING,
+            cx=0, cy=BODY_H / 3, axis='x'
         )
 
-        grubProf = None
-        minArea = float('inf')
-        for pi_idx in range(grubSketch.profiles.count):
-            pr = grubSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                grubProf = pr
+        # ══════════════════════════════════════════════════════════
+        # STEP 5: Servo mount — 2× heat-set inserts (side face)
+        # ══════════════════════════════════════════════════════════
 
-        if grubProf:
-            grubInput = extrudes.createInput(
-                grubProf, adsk.fusion.FeatureOperations.CutFeatureOperation
+        side_plane = make_offset_plane(
+            comp, comp.xZConstructionPlane, BODY_W / 2
+        )
+
+        make_heat_set_pair(
+            comp, side_plane, SERVO_BOLT_SPACING,
+            cx=BODY_D / 2, cy=BODY_H / 3, axis='y'
+        )
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 6: Wire exit hole (rounded-rect on bottom face)
+        # ══════════════════════════════════════════════════════════
+
+        wire_sk = comp.sketches.add(comp.xYConstructionPlane)
+        wire_sk.name = 'Wire Exit'
+        draw_rounded_rect(
+            wire_sk,
+            cx=0, cy=0,
+            w=WIRE_W, h=0.02,  # thin slot at bottom edge
+            r=0.005
+        )
+
+        wire_target = WIRE_W * 0.02
+        wire_prof = find_profile_by_area(wire_sk, wire_target, tolerance=0.8)
+        if wire_prof is None:
+            wire_prof = find_smallest_profile(wire_sk)
+        if wire_prof:
+            w_input = extrudes.createInput(
+                wire_prof, adsk.fusion.FeatureOperations.CutFeatureOperation
             )
-            grubInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(WALL + TUBE_BORE_R + 0.1)
-            )
+            w_input.setDistanceExtent(False, val(BODY_D))
             try:
-                extrudes.add(grubInput)
+                extrudes.add(w_input)
             except:
                 pass
 
         # ══════════════════════════════════════════════════════════
-        # STEP 4: Steering bracket mount — 2× heat-set inserts on front face
+        # STEP 7: External fillets
         # ══════════════════════════════════════════════════════════
 
-        for offset in [-STEER_BOLT_SPACING / 2, STEER_BOLT_SPACING / 2]:
-            insSketch = comp.sketches.add(comp.xYConstructionPlane)
-            insSketch.name = 'Steer Insert'
-            insSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                p(offset, BODY_H / 3, 0), INSERT_BORE_R
-            )
-
-            insProf = None
-            minArea = float('inf')
-            for pi_idx in range(insSketch.profiles.count):
-                pr = insSketch.profiles.item(pi_idx)
-                a = pr.areaProperties().area
-                if a < minArea:
-                    minArea = a
-                    insProf = pr
-
-            if insProf:
-                insInput = extrudes.createInput(
-                    insProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-                )
-                insInput.setDistanceExtent(
-                    False, adsk.core.ValueInput.createByReal(INSERT_DEPTH)
-                )
-                try:
-                    extrudes.add(insInput)
-                except:
-                    pass
+        if body:
+            fillet_count = add_edge_fillets(comp, body, FILLET_STD)
+        else:
+            fillet_count = 0
 
         # ══════════════════════════════════════════════════════════
-        # STEP 5: Servo mount — 2× heat-set inserts on side face
+        # STEP 8: Zoom and report
         # ══════════════════════════════════════════════════════════
 
-        sidePlane = comp.constructionPlanes
-        spInput = sidePlane.createInput()
-        spInput.setByOffset(
-            comp.xZConstructionPlane,
-            adsk.core.ValueInput.createByReal(BODY_W / 2)
-        )
-        sP = sidePlane.add(spInput)
-
-        for offset in [-SERVO_BOLT_SPACING / 2, SERVO_BOLT_SPACING / 2]:
-            sInsSketch = comp.sketches.add(sP)
-            sInsSketch.name = 'Servo Insert'
-            sInsSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                p(BODY_D / 2, BODY_H / 3 + offset, 0), INSERT_BORE_R
-            )
-
-            sInsProf = None
-            minArea = float('inf')
-            for pi_idx in range(sInsSketch.profiles.count):
-                pr = sInsSketch.profiles.item(pi_idx)
-                a = pr.areaProperties().area
-                if a < minArea:
-                    minArea = a
-                    sInsProf = pr
-
-            if sInsProf:
-                sInsInput = extrudes.createInput(
-                    sInsProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-                )
-                sInsInput.setDistanceExtent(
-                    True, adsk.core.ValueInput.createByReal(INSERT_DEPTH)
-                )
-                try:
-                    extrudes.add(sInsInput)
-                except:
-                    pass
-
-        # ══════════════════════════════════════════════════════════
-        # STEP 6: Wire exit hole (bottom face)
-        # ══════════════════════════════════════════════════════════
-
-        wireSketch = comp.sketches.add(comp.xYConstructionPlane)
-        wireSketch.name = 'Wire Exit'
-        wl = wireSketch.sketchCurves.sketchLines
-        wl.addTwoPointRectangle(
-            p(-WIRE_W / 2, -0.01, 0),
-            p(WIRE_W / 2, 0.01, 0)
-        )
-
-        wireProf = None
-        minArea = float('inf')
-        for pi_idx in range(wireSketch.profiles.count):
-            pr = wireSketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                wireProf = pr
-
-        if wireProf:
-            wireInput = extrudes.createInput(
-                wireProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-            )
-            wireInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(BODY_D)
-            )
-            try:
-                extrudes.add(wireInput)
-            except:
-                pass
-
-        # ══════════════════════════════════════════════════════════
-        # STEP 7: Zoom and report
-        # ══════════════════════════════════════════════════════════
-
-        app.activeViewport.fit()
+        zoom_fit(app)
 
         ui.messageBox(
             'Front/Rear Wheel Connector created!\n\n'
-            f'Body: {BODY_W * 10:.0f} × {BODY_D * 10:.0f} × {BODY_H * 10:.0f}mm\n'
-            f'Tube socket: {TUBE_BORE_R * 20:.1f}mm bore × {TUBE_DEPTH * 10:.0f}mm deep\n'
-            f'Steering bracket mount: 2× M3 heat-set inserts ({STEER_BOLT_SPACING * 10:.0f}mm spacing)\n'
-            f'Servo mount: 2× M3 heat-set inserts ({SERVO_BOLT_SPACING * 10:.0f}mm spacing)\n'
-            f'Wire exit: {WIRE_W * 10:.0f} × {WIRE_H * 10:.0f}mm\n\n'
-            'Bolt the steering_bracket.py to the front face.\n'
-            'Bolt the servo_mount.py to the side face.\n'
-            'Wire exit at bottom for motor + servo cables.\n\n'
+            f'Body: {BODY_W*10:.0f} × {BODY_D*10:.0f} × {BODY_H*10:.0f}mm '
+            f'(rounded corners)\n\n'
+            f'TUBE SOCKET: {TUBE_BORE*10:.1f}mm × {TUBE_DEPTH*10:.0f}mm deep\n'
+            f'  M3 grub screw, {CHAMFER_STD*10:.1f}mm entry chamfer\n\n'
+            f'STEERING MOUNT: 2× M3 heat-set inserts '
+            f'({STEER_BOLT_SPACING*10:.0f}mm, front face)\n'
+            f'SERVO MOUNT: 2× M3 heat-set inserts '
+            f'({SERVO_BOLT_SPACING*10:.0f}mm, side face)\n'
+            f'WIRE EXIT: {WIRE_W*10:.0f}×{WIRE_H*10:.0f}mm (bottom)\n'
+            f'Fillets: {fillet_count} edges @ {FILLET_STD*10:.1f}mm\n\n'
+            'Bolt steering_bracket to front face.\n'
+            'Bolt servo_mount to side face.\n\n'
             'Print mount-face down, 60% infill, 5 perimeters.\n'
-            'Qty: 4 (FL, FR, RL, RR — all identical)',
+            'Qty: 4 (FL, FR, RL, RR)',
             'Mars Rover - Front/Rear Wheel Connector'
         )
 

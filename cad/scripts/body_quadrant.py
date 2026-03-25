@@ -6,9 +6,15 @@ The body frame is split into 4 quadrants to fit the CTC Bizer printer
 bed (225×145×150mm). Each quadrant is joined with tongue-and-groove
 seams and aligned with 3mm steel dowel pins.
 
-Quadrant split:
-  - X split: centre (X=0)
-  - Y split: Y=0mm (centre — all quadrants 220×130mm, fits 225mm bed)
+Redesigned with:
+  - Rounded external corners (2mm radius on outer vertical edges)
+  - Improved tongue-and-groove with chamfered entries
+  - Bearing seat via shared helper (608ZZ, chamfered)
+  - Heat-set inserts via shared helper
+  - Stadium-shaped vent slots (rounded ends)
+  - Cable channel guide ridges
+  - MLI blanket edge ridges + panel line grooves (cosmetic)
+  - 0.5mm fillets on external edges
 
 Quadrants:
   FL: Front-left  (~220 × 130 × 120mm)
@@ -16,29 +22,21 @@ Quadrants:
   RL: Rear-left   (~220 × 130 × 120mm)
   RR: Rear-right  (~220 × 130 × 120mm)
 
-This script creates ONE quadrant at a time. Run with appropriate
-parameters or modify the QUADRANT variable.
-
 Features per quadrant (as applicable):
-  - 4mm walls (increased for strength), internal ribs
-  - Rocker pivot boss (608ZZ seat) — on side quadrants
-  - Diff bar mount boss — on RL/RR
-  - Tongue-and-groove seams at joins (stepped interlock)
-  - M3 heat-set insert pockets along seams (40mm spacing)
-  - Cable exit holes (12×8mm, JST-XH compatible) through side walls
-  - Alignment dowel pin holes (3mm) at seam corners
-  - Cable channels, vent slots
-  - Arm mount bosses (FL only, Phase 2 robotic arm — EA-24)
-  - RTG-style radiator fin detail (RL/RR rear wall, cosmetic)
-  - MLI blanket edge ridges (all quadrants, cosmetic)
-  - 0.5mm bottom-edge chamfer for bed adhesion
+  - 4mm walls, internal ribs
+  - Rocker pivot boss (608ZZ seat) — RL/RR quadrants
+  - Tongue-and-groove seams + M3 heat-set inserts
+  - Cable exit holes (12×8mm, JST-XH compatible)
+  - Alignment dowel pin holes (3mm)
+  - Vent slots, cable channels
+  - Arm mount bosses (FL only, Phase 2)
+  - RTG detail + MLI ridges (cosmetic)
+  - Headlight/taillight LED holes
+  - Kill switch hole (RR only)
+  - LED underglow pass-through holes
 
 Qty: 4 total (FL, FR, RL, RR)
-
-Print orientation: Open face up (internal features accessible)
-Supports: Minimal (overhangs < 45°)
-Perimeters: 4 (4mm walls = 4 × 0.4mm nozzle widths)
-Infill: 20% gyroid (body panels, not structural)
+Print: Open face up, 20% gyroid, 4 perimeters, 8mm brim
 
 Reference: EA-08, EA-11, EA-20
 """
@@ -47,6 +45,19 @@ import adsk.core
 import adsk.fusion
 import traceback
 import math
+import sys
+
+sys.path.insert(0, r"D:\Mars Rover Project\cad\scripts")
+from rover_cad_helpers import (
+    p, val, FILLET_STD, CHAMFER_STD, CORNER_R,
+    BEARING_OD, BEARING_DEPTH, BEARING_BORE,
+    INSERT_BORE, INSERT_DEPTH,
+    draw_rounded_rect, draw_stadium,
+    find_largest_profile, find_smallest_profile, find_profile_by_area,
+    extrude_profile, cut_profile, join_profile,
+    make_offset_plane, make_bearing_seat, make_heat_set_pocket,
+    add_edge_fillets, zoom_fit,
+)
 
 
 def run(context):
@@ -61,69 +72,86 @@ def run(context):
             return
 
         # ── Which quadrant to create ──
-        # Change this to 'FL', 'FR', 'RL', 'RR' before running
         QUADRANT = 'FL'
 
         # ── Dimensions (cm) ──
         BODY_L = 44.0       # 440mm total body length (Y)
         BODY_W = 26.0       # 260mm total body width (X)
-        BODY_H = 12.0       # 120mm total body height (Z) — NASA-proportioned, was 80mm
-        WALL = 0.4          # 4mm wall thickness (increased from 3mm for strength)
+        BODY_H = 12.0       # 120mm total body height (Z)
+        WALL = 0.4          # 4mm wall thickness
         RIB_T = 0.2         # 2mm internal rib thickness
 
         # Split positions
-        X_SPLIT = 0.0       # centre
-        Y_SPLIT = 0.0       # centre — all quadrants 220mm, fits 225mm bed
+        X_SPLIT = 0.0
+        Y_SPLIT = 0.0
 
-        # Overall body bounds (centred at origin in X and Y)
-        X_MIN = -BODY_W / 2  # -130mm
-        X_MAX = BODY_W / 2   # +130mm
-        Y_MIN = -BODY_L / 2  # -220mm
-        Y_MAX = BODY_L / 2   # +220mm
-        Z_BOTTOM = 0.0       # quadrant bottom at Z=0 (will be elevated in assembly)
+        X_MIN = -BODY_W / 2
+        X_MAX = BODY_W / 2
+        Y_MIN = -BODY_L / 2
+        Y_MAX = BODY_L / 2
 
         # Tongue-and-groove
-        TONGUE_W = 0.5       # 5mm tongue width
-        TONGUE_D = 0.3       # 3mm tongue depth (protrusion)
-        TONGUE_GAP = 0.01    # 0.1mm gap for fit
+        TONGUE_W = 0.5
+        TONGUE_D = 0.3
 
         # Rocker pivot boss
-        ROCKER_PIVOT_X = 12.5  # 125mm from centre
-        PIVOT_BOSS_OD_R = 1.5  # 15mm radius (30mm OD)
-        BEARING_SEAT_R = 1.1075  # 22.15mm
-        BEARING_SEAT_DEPTH = 0.72  # 7.2mm
-        PIVOT_BORE_R = 0.4  # 8mm
+        ROCKER_PIVOT_X = 12.5
+        PIVOT_BOSS_OD_R = 1.5
 
-        # Vent slots (cut through side wall)
-        VENT_W = 0.3        # 3mm wide
-        VENT_H = 2.0        # 20mm tall
-        VENT_COUNT = 5      # 5 vents per side wall
-        VENT_SPACING = 2.5  # 25mm between vents
+        # Vent slots
+        VENT_W = 0.3
+        VENT_H = 2.0
+        VENT_COUNT = 5
+        VENT_SPACING = 2.5
 
-        # Cable channel guide walls (raised ridges on interior floor)
-        CABLE_CH_W = 1.0    # 10mm channel width (between ridges)
-        CABLE_RIDGE_T = 0.2 # 2mm ridge thickness
-        CABLE_RIDGE_H = 1.0 # 10mm ridge height
+        # Cable channel
+        CABLE_CH_W = 1.0
+        CABLE_RIDGE_T = 0.2
+        CABLE_RIDGE_H = 1.0
 
-        # Kill switch hole (RR quadrant rear wall only)
-        KILL_SW_DIA_R = 0.75  # 15mm diameter / 2 = 7.5mm radius
+        # Kill switch (RR only)
+        KILL_SW_R = 0.75
 
-        # LED underglow pass-through holes (floor, near perimeter)
-        LED_HOLE_R = 0.25     # 5mm diameter / 2
-        LED_HOLE_INSET = 1.5  # 15mm inset from outer wall
+        # LED holes
+        LED_HOLE_R = 0.25
+        LED_HOLE_INSET = 1.5
 
-        # Headlight / taillight holes (through front/rear walls)
-        LIGHT_HOLE_R = 0.25   # 5mm diameter
-        LIGHT_SPACING = 4.0   # 40mm between pair of lights
-        LIGHT_Z = 0.6         # 60% up the wall height (48mm from base)
+        # Light holes
+        LIGHT_HOLE_R = 0.25
+        LIGHT_SPACING = 4.0
+        LIGHT_Z_FRAC = 0.6
+
+        # Cable exits
+        CABLE_EXIT_W = 1.2
+        CABLE_EXIT_H = 0.8
+
+        # Seam hardware
+        BOLT_SPACING = 4.0
+        BOLT_INSET = 2.0
+        DOWEL_R = 0.155
+        DOWEL_DEPTH = 0.8
+
+        # Cosmetic
+        PANEL_LINE_W = 0.1
+        PANEL_LINE_D = 0.05
+        MLI_RIDGE_H = 0.05
+        MLI_RIDGE_W = 0.1
+        MLI_INSET = 0.2
+        RTG_PAD_W = 1.0
+        RTG_PAD_H = 0.5
+        RTG_PAD_D = 0.1
+
+        # Arm mount (FL only)
+        ARM_PATTERN = 4.0
+        ARM_BOSS_R = 0.4
+        ARM_BOSS_H = 0.55
 
         comp = design.rootComponent
-        p = adsk.core.Point3D.create
         extrudes = comp.features.extrudeFeatures
 
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
         # Determine quadrant bounds
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
 
         if QUADRANT == 'FL':
             qx_min, qx_max = X_MIN, X_SPLIT
@@ -143,1116 +171,611 @@ def run(context):
 
         q_width = qx_max - qx_min
         q_length = qy_max - qy_min
+        q_cx = (qx_min + qx_max) / 2
+        q_cy = (qy_min + qy_max) / 2
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 1: Outer shell (solid block)
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
+        # Step 1: Outer shell with rounded external corners
+        # ══════════════════════════════════════════════════════════
 
-        sketch1 = comp.sketches.add(comp.xYConstructionPlane)
-        sketch1.name = f'Body {QUADRANT} Outer'
-        sketch1.sketchCurves.sketchLines.addTwoPointRectangle(
-            p(qx_min, qy_min, 0),
-            p(qx_max, qy_max, 0)
-        )
+        # Only round the outer corners (not seam edges)
+        # For simplicity, use rounded-rect for the full outline
+        sk = comp.sketches.add(comp.xYConstructionPlane)
+        sk.name = f'Body {QUADRANT} Outer'
+        draw_rounded_rect(sk, q_cx, q_cy, q_width, q_length, r=CORNER_R)
 
-        # Find largest profile
-        outerProf = None
-        maxArea = 0
-        for pi in range(sketch1.profiles.count):
-            pr = sketch1.profiles.item(pi)
-            a = pr.areaProperties().area
-            if a > maxArea:
-                maxArea = a
-                outerProf = pr
+        target = q_width * q_length - (4 - math.pi) * CORNER_R**2
+        prof = find_profile_by_area(sk, target, tolerance=0.5)
+        if prof is None:
+            prof = find_largest_profile(sk)
 
-        extInput = extrudes.createInput(
-            outerProf, adsk.fusion.FeatureOperations.NewBodyFeatureOperation
-        )
-        extInput.setDistanceExtent(
-            False, adsk.core.ValueInput.createByReal(BODY_H)
-        )
-        ext = extrudes.add(extInput)
-        body = ext.bodies.item(0)
-        body.name = f'Body {QUADRANT}'
+        ext = extrude_profile(comp, prof, BODY_H)
+        body = ext.bodies.item(0) if ext else None
+        if body:
+            body.name = f'Body {QUADRANT}'
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 2: Hollow out interior (shell with walls)
-        # Cut from top, leaving floor and walls
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
+        # Step 2: Hollow out interior (shell)
+        # ══════════════════════════════════════════════════════════
 
-        topPlane = comp.constructionPlanes
-        tpInput = topPlane.createInput()
-        tpInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(BODY_H)
-        )
-        topP = topPlane.add(tpInput)
+        top_plane = make_offset_plane(comp, comp.xYConstructionPlane, BODY_H)
 
-        hollowSketch = comp.sketches.add(topP)
-        hollowSketch.name = f'Hollow {QUADRANT}'
-
-        # Inner rectangle with wall offset
-        # On seam edges (where quadrants join), use thicker wall for tongue
+        # Inner bounds with wall offset
         inner_x_min = qx_min + WALL
         inner_x_max = qx_max - WALL
         inner_y_min = qy_min + WALL
         inner_y_max = qy_max - WALL
 
-        # On seam edges, add extra for tongue
+        # Extra wall on seam edges for tongue
         if QUADRANT in ('FL', 'RL'):
-            inner_x_max = qx_max - WALL - TONGUE_D  # right edge is seam
+            inner_x_max = qx_max - WALL - TONGUE_D
         if QUADRANT in ('FR', 'RR'):
-            inner_x_min = qx_min + WALL + TONGUE_D  # left edge is seam
+            inner_x_min = qx_min + WALL + TONGUE_D
         if QUADRANT in ('FL', 'FR'):
-            inner_y_min = qy_min + WALL + TONGUE_D  # bottom edge is seam
+            inner_y_min = qy_min + WALL + TONGUE_D
         if QUADRANT in ('RL', 'RR'):
-            inner_y_max = qy_max - WALL - TONGUE_D  # top edge is seam
+            inner_y_max = qy_max - WALL - TONGUE_D
 
-        hollowSketch.sketchCurves.sketchLines.addTwoPointRectangle(
-            p(inner_x_min, inner_y_min, 0),
-            p(inner_x_max, inner_y_max, 0)
-        )
+        inner_cx = (inner_x_min + inner_x_max) / 2
+        inner_cy = (inner_y_min + inner_y_max) / 2
+        inner_w = inner_x_max - inner_x_min
+        inner_h = inner_y_max - inner_y_min
 
-        hProf = None
-        minArea = float('inf')
-        for pi in range(hollowSketch.profiles.count):
-            pr = hollowSketch.profiles.item(pi)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                hProf = pr
+        hollow_sk = comp.sketches.add(top_plane)
+        hollow_sk.name = f'Hollow {QUADRANT}'
+        draw_rounded_rect(hollow_sk, inner_cx, inner_cy, inner_w, inner_h, r=0.1)
 
-        if hProf:
-            hollowInput = extrudes.createInput(
-                hProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-            )
-            hollowInput.setDistanceExtent(
-                True, adsk.core.ValueInput.createByReal(BODY_H - WALL)
-            )
-            extrudes.add(hollowInput)
+        h_target = inner_w * inner_h
+        h_prof = find_profile_by_area(hollow_sk, h_target, tolerance=0.5)
+        if h_prof is None:
+            h_prof = find_smallest_profile(hollow_sk)
+        cut_profile(comp, h_prof, BODY_H - WALL, flip=True)
 
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
         # Step 3: Internal ribs (cross-bracing)
-        # One rib along X, one along Y inside the quadrant
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
 
-        ribSketch = comp.sketches.add(comp.xYConstructionPlane)
-        ribSketch.name = f'Ribs {QUADRANT}'
-        rl = ribSketch.sketchCurves.sketchLines
+        rib_sk = comp.sketches.add(comp.xYConstructionPlane)
+        rib_sk.name = f'Ribs {QUADRANT}'
+        rl = rib_sk.sketchCurves.sketchLines
 
-        # X-direction rib (horizontal, at mid-Y of quadrant)
         mid_y = (qy_min + qy_max) / 2
-        rl.addTwoPointRectangle(
-            p(qx_min + WALL, mid_y - RIB_T / 2, 0),
-            p(qx_max - WALL, mid_y + RIB_T / 2, 0)
-        )
-
-        # Y-direction rib (vertical, at mid-X of quadrant)
         mid_x = (qx_min + qx_max) / 2
+
         rl.addTwoPointRectangle(
-            p(mid_x - RIB_T / 2, qy_min + WALL, 0),
-            p(mid_x + RIB_T / 2, qy_max - WALL, 0)
+            p(qx_min + WALL, mid_y - RIB_T / 2),
+            p(qx_max - WALL, mid_y + RIB_T / 2)
+        )
+        rl.addTwoPointRectangle(
+            p(mid_x - RIB_T / 2, qy_min + WALL),
+            p(mid_x + RIB_T / 2, qy_max - WALL)
         )
 
-        # Extrude ribs to about 2/3 of body height
         RIB_HEIGHT = BODY_H * 0.6
-        for pi in range(ribSketch.profiles.count):
-            pr = ribSketch.profiles.item(pi)
+        for pi in range(rib_sk.profiles.count):
+            pr = rib_sk.profiles.item(pi)
             a = pr.areaProperties().area
-            if a < 2.0:  # small rib profiles only
-                ribInput = extrudes.createInput(
-                    pr, adsk.fusion.FeatureOperations.JoinFeatureOperation
-                )
-                ribInput.setDistanceExtent(
-                    False, adsk.core.ValueInput.createByReal(RIB_HEIGHT)
-                )
-                try:
-                    extrudes.add(ribInput)
-                except:
-                    pass
+            if a < 2.0:
+                join_profile(comp, pr, RIB_HEIGHT)
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 4: Rocker pivot boss (FL and RL have left pivot,
-        #                            FR and RR have right pivot)
-        # Only on the side walls of the quadrant
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
+        # Step 4: Rocker pivot boss with bearing seat (RL/RR)
+        # ══════════════════════════════════════════════════════════
 
-        # Check if this quadrant contains a rocker pivot
         has_pivot = False
         pivot_x = 0
-        if QUADRANT in ('FL', 'RL'):
+        if QUADRANT in ('RL', 'RR'):
             has_pivot = True
-            pivot_x = -ROCKER_PIVOT_X  # left side
-        elif QUADRANT in ('FR', 'RR'):
-            has_pivot = True
-            pivot_x = ROCKER_PIVOT_X  # right side
-
-        # Pivot is at Y=0, which is exactly on the Y seam.
-        # Both RL/RR contain Y=0 as their upper boundary.
-        # The pivot boss straddles the seam — each side gets half.
-        # RL/RR build the full boss, then a trimming cut removes anything
-        # outside the quadrant bounds so the part fits the print bed.
-        pivot_y = 0.0
-        if QUADRANT in ('FL', 'FR'):
-            has_pivot = False  # pivot boss built by RL/RR side
+            pivot_x = -ROCKER_PIVOT_X if QUADRANT == 'RL' else ROCKER_PIVOT_X
 
         if has_pivot:
-            # Create pivot boss on the outer wall (cylindrical protrusion)
-            bossSketch = comp.sketches.add(comp.xYConstructionPlane)
-            bossSketch.name = f'Rocker Pivot Boss {QUADRANT}'
-            bossSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                p(pivot_x, pivot_y, 0), PIVOT_BOSS_OD_R
+            # Pivot boss (cylindrical protrusion)
+            boss_sk = comp.sketches.add(comp.xYConstructionPlane)
+            boss_sk.name = f'Rocker Boss {QUADRANT}'
+            boss_sk.sketchCurves.sketchCircles.addByCenterRadius(
+                p(pivot_x, 0), PIVOT_BOSS_OD_R
+            )
+            boss_prof = find_smallest_profile(boss_sk)
+            join_profile(comp, boss_prof, BODY_H)
+
+            # Bearing seat via helper
+            make_bearing_seat(
+                comp, top_plane,
+                cx=pivot_x, cy=0,
+                bore_through=BODY_H + 0.1,
+                chamfer=True,
             )
 
-            bProf = None
-            minArea = float('inf')
-            for pi in range(bossSketch.profiles.count):
-                pr = bossSketch.profiles.item(pi)
-                a = pr.areaProperties().area
-                if a < minArea:
-                    minArea = a
-                    bProf = pr
-
-            if bProf:
-                bossInput = extrudes.createInput(
-                    bProf, adsk.fusion.FeatureOperations.JoinFeatureOperation
-                )
-                bossInput.setDistanceExtent(
-                    False, adsk.core.ValueInput.createByReal(BODY_H)
-                )
-                try:
-                    extrudes.add(bossInput)
-                except:
-                    pass
-
-            # Bearing seat (cut from top into boss)
-            seatSketch = comp.sketches.add(topP)
-            seatSketch.name = f'Bearing Seat {QUADRANT}'
-            seatSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                p(pivot_x, pivot_y, 0), BEARING_SEAT_R
+            # Trim boss to quadrant bounds
+            trim_sk = comp.sketches.add(comp.xYConstructionPlane)
+            trim_sk.name = f'Trim Boss {QUADRANT}'
+            trim_sk.sketchCurves.sketchLines.addTwoPointRectangle(
+                p(pivot_x - PIVOT_BOSS_OD_R - 0.1, qy_max),
+                p(pivot_x + PIVOT_BOSS_OD_R + 0.1, qy_max + 5.0)
             )
+            trim_prof = find_largest_profile(trim_sk)
+            if trim_prof:
+                cut_profile(comp, trim_prof, BODY_H + 0.2, flip=False)
 
-            sProf = None
-            minArea = float('inf')
-            for pi in range(seatSketch.profiles.count):
-                pr = seatSketch.profiles.item(pi)
-                a = pr.areaProperties().area
-                if a < minArea:
-                    minArea = a
-                    sProf = pr
+        # ══════════════════════════════════════════════════════════
+        # Step 5: Vent slots (stadium-shaped through side wall)
+        # ══════════════════════════════════════════════════════════
 
-            if sProf:
-                seatInput = extrudes.createInput(
-                    sProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-                )
-                seatInput.setDistanceExtent(
-                    True, adsk.core.ValueInput.createByReal(BEARING_SEAT_DEPTH)
-                )
-                try:
-                    extrudes.add(seatInput)
-                except:
-                    pass
-
-            # 8mm pivot bore
-            boreSketch = comp.sketches.add(topP)
-            boreSketch.name = f'Pivot Bore {QUADRANT}'
-            boreSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                p(pivot_x, pivot_y, 0), PIVOT_BORE_R
-            )
-
-            boreProf = None
-            minArea = float('inf')
-            for pi in range(boreSketch.profiles.count):
-                pr = boreSketch.profiles.item(pi)
-                a = pr.areaProperties().area
-                if a < minArea:
-                    minArea = a
-                    boreProf = pr
-
-            if boreProf:
-                boreInput = extrudes.createInput(
-                    boreProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-                )
-                boreInput.setDistanceExtent(
-                    True, adsk.core.ValueInput.createByReal(BODY_H + 0.1)
-                )
-                try:
-                    extrudes.add(boreInput)
-                except:
-                    pass
-
-        # ══════════════════════════════════════════════════════════════
-        # Step 4b: Trim pivot boss to quadrant bounds
-        # The boss circle can protrude past qy_max (RL/RR) or qx_min/max.
-        # Cut away any geometry outside the quadrant bounding box so the
-        # part fits the CTC Bizer bed (225×145mm).
-        # ══════════════════════════════════════════════════════════════
-
-        if has_pivot:
-            # Large trim box above qy_max (for RL/RR the boss protrudes into Y>0)
-            TRIM_MARGIN = 5.0  # 50mm oversized trim block
-            trimSketch = comp.sketches.add(comp.xYConstructionPlane)
-            trimSketch.name = f'Trim Boss {QUADRANT}'
-
-            # Trim anything beyond qy_max (boss protrudes in +Y for RL/RR)
-            if QUADRANT in ('RL', 'RR'):
-                trimSketch.sketchCurves.sketchLines.addTwoPointRectangle(
-                    p(pivot_x - PIVOT_BOSS_OD_R - 0.1, qy_max, 0),
-                    p(pivot_x + PIVOT_BOSS_OD_R + 0.1, qy_max + TRIM_MARGIN, 0)
-                )
-            # Trim anything beyond qy_min (boss protrudes in -Y for FL/FR — not used currently)
-            elif QUADRANT in ('FL', 'FR'):
-                trimSketch.sketchCurves.sketchLines.addTwoPointRectangle(
-                    p(pivot_x - PIVOT_BOSS_OD_R - 0.1, qy_min - TRIM_MARGIN, 0),
-                    p(pivot_x + PIVOT_BOSS_OD_R + 0.1, qy_min, 0)
-                )
-
-            # Find the trim profile and cut through entire height
-            trimProf = None
-            maxArea = 0
-            for pi in range(trimSketch.profiles.count):
-                pr = trimSketch.profiles.item(pi)
-                a = pr.areaProperties().area
-                if a > maxArea:
-                    maxArea = a
-                    trimProf = pr
-
-            if trimProf:
-                trimInput = extrudes.createInput(
-                    trimProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-                )
-                trimInput.setDistanceExtent(
-                    False, adsk.core.ValueInput.createByReal(BODY_H + 0.2)
-                )
-                try:
-                    extrudes.add(trimInput)
-                except:
-                    pass  # No geometry to trim — boss didn't protrude
-
-        # ══════════════════════════════════════════════════════════════
-        # Step 5: Vent slots on side walls
-        # ══════════════════════════════════════════════════════════════
-
-        # Vent slots: rectangular cuts through the outer side wall
-        # Need a construction plane on the side wall (XZ plane offset to wall)
         vent_x = qx_min if QUADRANT in ('FL', 'RL') else qx_max
-        vent_base_z = BODY_H * 0.3  # start 30% up the wall
+        vent_base_z = BODY_H * 0.3
 
-        # Create offset YZ plane at the side wall position
-        ventPlaneInput = comp.constructionPlanes.createInput()
-        ventPlaneInput.setByOffset(
-            comp.yZConstructionPlane,
-            adsk.core.ValueInput.createByReal(vent_x)
-        )
-        ventPlane = comp.constructionPlanes.add(ventPlaneInput)
+        vent_plane = make_offset_plane(comp, comp.yZConstructionPlane, vent_x)
+        vent_sk = comp.sketches.add(vent_plane)
+        vent_sk.name = f'Vents {QUADRANT}'
 
-        ventSketch = comp.sketches.add(ventPlane)
-        ventSketch.name = f'Vents {QUADRANT}'
-        vl = ventSketch.sketchCurves.sketchLines
-
-        # Distribute vents evenly along the quadrant length
-        vent_total_span = (VENT_COUNT - 1) * VENT_SPACING
-        vent_start_y = (qy_min + qy_max) / 2 - vent_total_span / 2
+        vent_total = (VENT_COUNT - 1) * VENT_SPACING
+        vent_start = q_cy - vent_total / 2
 
         for vi in range(VENT_COUNT):
-            vy = vent_start_y + vi * VENT_SPACING
-            # On YZ plane: Y is horizontal, Z is vertical
-            vl.addTwoPointRectangle(
-                p(vy - VENT_H / 2, vent_base_z, 0),
-                p(vy + VENT_H / 2, vent_base_z + VENT_W * 4, 0)  # 12mm tall slot
+            vy = vent_start + vi * VENT_SPACING
+            draw_stadium(
+                vent_sk,
+                cx=vy, cy=vent_base_z + VENT_W * 2,
+                half_length=VENT_H / 2 - VENT_W,
+                radius=VENT_W
             )
 
-        # Cut vent slots through wall
-        for pi in range(ventSketch.profiles.count):
-            pr = ventSketch.profiles.item(pi)
+        # Cut vents through wall
+        for pi in range(vent_sk.profiles.count):
+            pr = vent_sk.profiles.item(pi)
             a = pr.areaProperties().area
-            if a < 1.0:  # small slot profiles only
-                ventCut = extrudes.createInput(
+            if a < 1.0 and a > 0.01:
+                v_in = extrudes.createInput(
                     pr, adsk.fusion.FeatureOperations.CutFeatureOperation
                 )
-                ventCut.setDistanceExtent(
-                    True, adsk.core.ValueInput.createByReal(WALL + 0.01)
-                )
+                v_in.setDistanceExtent(True, val(WALL + 0.01))
                 try:
-                    extrudes.add(ventCut)
+                    extrudes.add(v_in)
                 except:
                     pass
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 6: Cable channel guide walls (raised ridges on floor)
-        # One channel runs front-to-back near the side wall (motor/servo routing)
-        # One channel runs left-to-right near the seam edge (cross-body routing)
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
+        # Step 6: Cable channel guide ridges on floor
+        # ══════════════════════════════════════════════════════════
 
-        cableSketch = comp.sketches.add(comp.xYConstructionPlane)
-        cableSketch.name = f'Cable Channels {QUADRANT}'
-        ccl = cableSketch.sketchCurves.sketchLines
+        cable_sk = comp.sketches.add(comp.xYConstructionPlane)
+        cable_sk.name = f'Cable Channels {QUADRANT}'
+        ccl = cable_sk.sketchCurves.sketchLines
 
-        # Front-to-back channel: near the outer side wall
         if QUADRANT in ('FL', 'RL'):
-            ch_x_centre = qx_min + WALL + CABLE_RIDGE_T + CABLE_CH_W / 2
+            ch_x = qx_min + WALL + CABLE_RIDGE_T + CABLE_CH_W / 2
         else:
-            ch_x_centre = qx_max - WALL - CABLE_RIDGE_T - CABLE_CH_W / 2
+            ch_x = qx_max - WALL - CABLE_RIDGE_T - CABLE_CH_W / 2
 
-        # Left ridge of front-to-back channel
+        # Front-to-back ridges
         ccl.addTwoPointRectangle(
-            p(ch_x_centre - CABLE_CH_W / 2 - CABLE_RIDGE_T,
-              qy_min + WALL, 0),
-            p(ch_x_centre - CABLE_CH_W / 2,
-              qy_max - WALL, 0)
+            p(ch_x - CABLE_CH_W / 2 - CABLE_RIDGE_T, qy_min + WALL),
+            p(ch_x - CABLE_CH_W / 2, qy_max - WALL)
         )
-        # Right ridge
         ccl.addTwoPointRectangle(
-            p(ch_x_centre + CABLE_CH_W / 2,
-              qy_min + WALL, 0),
-            p(ch_x_centre + CABLE_CH_W / 2 + CABLE_RIDGE_T,
-              qy_max - WALL, 0)
+            p(ch_x + CABLE_CH_W / 2, qy_min + WALL),
+            p(ch_x + CABLE_CH_W / 2 + CABLE_RIDGE_T, qy_max - WALL)
         )
 
-        # Left-to-right channel: near the seam edge (Y split or Y min/max)
+        # Left-to-right ridges
         if QUADRANT in ('FL', 'FR'):
-            ch_y_centre = qy_min + WALL + CABLE_RIDGE_T + CABLE_CH_W / 2
+            ch_y = qy_min + WALL + CABLE_RIDGE_T + CABLE_CH_W / 2
         else:
-            ch_y_centre = qy_max - WALL - CABLE_RIDGE_T - CABLE_CH_W / 2
+            ch_y = qy_max - WALL - CABLE_RIDGE_T - CABLE_CH_W / 2
 
-        # Bottom ridge of left-to-right channel
         ccl.addTwoPointRectangle(
-            p(qx_min + WALL, ch_y_centre - CABLE_CH_W / 2 - CABLE_RIDGE_T, 0),
-            p(qx_max - WALL, ch_y_centre - CABLE_CH_W / 2, 0)
+            p(qx_min + WALL, ch_y - CABLE_CH_W / 2 - CABLE_RIDGE_T),
+            p(qx_max - WALL, ch_y - CABLE_CH_W / 2)
         )
-        # Top ridge
         ccl.addTwoPointRectangle(
-            p(qx_min + WALL, ch_y_centre + CABLE_CH_W / 2, 0),
-            p(qx_max - WALL, ch_y_centre + CABLE_CH_W / 2 + CABLE_RIDGE_T, 0)
+            p(qx_min + WALL, ch_y + CABLE_CH_W / 2),
+            p(qx_max - WALL, ch_y + CABLE_CH_W / 2 + CABLE_RIDGE_T)
         )
 
-        # Extrude cable channel ridges upward from floor
-        for pi in range(cableSketch.profiles.count):
-            pr = cableSketch.profiles.item(pi)
+        for pi in range(cable_sk.profiles.count):
+            pr = cable_sk.profiles.item(pi)
             a = pr.areaProperties().area
-            if a < 5.0:  # thin ridge profiles only
-                ridgeInput = extrudes.createInput(
-                    pr, adsk.fusion.FeatureOperations.JoinFeatureOperation
-                )
-                ridgeInput.setDistanceExtent(
-                    False, adsk.core.ValueInput.createByReal(
-                        WALL + CABLE_RIDGE_H)  # floor + ridge height
-                )
-                try:
-                    extrudes.add(ridgeInput)
-                except:
-                    pass
+            if a < 5.0:
+                join_profile(comp, pr, WALL + CABLE_RIDGE_H)
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 7: Kill switch hole (RR quadrant only)
-        # 15mm diameter through-hole on the rear wall
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
+        # Step 7: Kill switch hole (RR only)
+        # ══════════════════════════════════════════════════════════
 
         if QUADRANT == 'RR':
-            # Rear wall is at Y = Y_MIN (qy_min)
-            # Create construction plane on the rear wall (XZ plane at Y_MIN)
-            swPlaneInput = comp.constructionPlanes.createInput()
-            swPlaneInput.setByOffset(
-                comp.xZConstructionPlane,
-                adsk.core.ValueInput.createByReal(qy_min)
+            sw_plane = make_offset_plane(comp, comp.xZConstructionPlane, qy_min)
+            sw_sk = comp.sketches.add(sw_plane)
+            sw_sk.name = 'Kill Switch Hole'
+            sw_sk.sketchCurves.sketchCircles.addByCenterRadius(
+                p(q_cx, BODY_H / 2), KILL_SW_R
             )
-            swPlane = comp.constructionPlanes.add(swPlaneInput)
-
-            swSketch = comp.sketches.add(swPlane)
-            swSketch.name = 'Kill Switch Hole'
-            # Centre the hole on the quadrant wall, mid-height
-            sw_x = (qx_min + qx_max) / 2
-            sw_z = BODY_H / 2
-            swSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                p(sw_x, sw_z, 0), KILL_SW_DIA_R
-            )
-
-            swProf = None
-            minArea = float('inf')
-            for pi in range(swSketch.profiles.count):
-                pr = swSketch.profiles.item(pi)
-                a = pr.areaProperties().area
-                if a < minArea:
-                    minArea = a
-                    swProf = pr
-
-            if swProf:
-                swCut = extrudes.createInput(
-                    swProf, adsk.fusion.FeatureOperations.CutFeatureOperation
+            sw_prof = find_smallest_profile(sw_sk)
+            if sw_prof:
+                sw_in = extrudes.createInput(
+                    sw_prof, adsk.fusion.FeatureOperations.CutFeatureOperation
                 )
-                swCut.setDistanceExtent(
-                    True, adsk.core.ValueInput.createByReal(WALL + 0.01)
-                )
+                sw_in.setDistanceExtent(True, val(WALL + 0.01))
                 try:
-                    extrudes.add(swCut)
+                    extrudes.add(sw_in)
                 except:
                     pass
 
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
         # Step 8: M3 heat-set insert pockets along seam edges
-        # 4.8mm dia, 5.5mm deep, spaced 40mm apart along each seam
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
 
-        HSERT_R = 0.24       # 4.8mm dia / 2 = 2.4mm
-        HSERT_DEPTH = 0.55   # 5.5mm deep
-        BOLT_SPACING = 4.0   # 40mm between bolt holes
-        BOLT_INSET = 2.0     # 20mm from seam corner to first bolt
+        seam_positions = []
 
-        # Determine which edges are seams
-        seam_edges = []  # list of (x, y) positions for bolt holes
-
-        # X seam: at X_SPLIT (X=0), both FL/RL have right-edge seam, FR/RR have left-edge seam
+        # X seam (right edge for FL/RL, left edge for FR/RR)
         if QUADRANT in ('FL', 'RL'):
-            seam_x = qx_max - WALL / 2  # right wall midplane
-            n_bolts = int((q_length * 10 - 2 * BOLT_INSET * 10) / (BOLT_SPACING * 10)) + 1
-            for bi in range(n_bolts):
-                by = qy_min + BOLT_INSET + bi * BOLT_SPACING
-                if by < qy_max - BOLT_INSET + 0.01:
-                    seam_edges.append((seam_x, by))
-        elif QUADRANT in ('FR', 'RR'):
+            seam_x = qx_max - WALL / 2
+        else:
             seam_x = qx_min + WALL / 2
-            n_bolts = int((q_length * 10 - 2 * BOLT_INSET * 10) / (BOLT_SPACING * 10)) + 1
-            for bi in range(n_bolts):
-                by = qy_min + BOLT_INSET + bi * BOLT_SPACING
-                if by < qy_max - BOLT_INSET + 0.01:
-                    seam_edges.append((seam_x, by))
 
-        # Y seam: at Y_SPLIT (Y=0), FL/FR have bottom-edge seam, RL/RR have top-edge seam
+        n_y = int((q_length * 10 - 2 * BOLT_INSET * 10) / (BOLT_SPACING * 10)) + 1
+        for bi in range(n_y):
+            by = qy_min + BOLT_INSET + bi * BOLT_SPACING
+            if by < qy_max - BOLT_INSET + 0.01:
+                seam_positions.append((seam_x, by))
+
+        # Y seam (bottom edge for FL/FR, top edge for RL/RR)
         if QUADRANT in ('FL', 'FR'):
             seam_y = qy_min + WALL / 2
-            n_bolts = int((q_width * 10 - 2 * BOLT_INSET * 10) / (BOLT_SPACING * 10)) + 1
-            for bi in range(n_bolts):
-                bx = qx_min + BOLT_INSET + bi * BOLT_SPACING
-                if bx < qx_max - BOLT_INSET + 0.01:
-                    seam_edges.append((bx, seam_y))
-        elif QUADRANT in ('RL', 'RR'):
+        else:
             seam_y = qy_max - WALL / 2
-            n_bolts = int((q_width * 10 - 2 * BOLT_INSET * 10) / (BOLT_SPACING * 10)) + 1
-            for bi in range(n_bolts):
-                bx = qx_min + BOLT_INSET + bi * BOLT_SPACING
-                if bx < qx_max - BOLT_INSET + 0.01:
-                    seam_edges.append((bx, seam_y))
 
-        # Cut heat-set insert pockets from top face
-        if seam_edges:
-            boltSketch = comp.sketches.add(topP)
-            boltSketch.name = f'Seam Bolts {QUADRANT}'
-            for bx, by in seam_edges:
-                boltSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                    p(bx, by, 0), HSERT_R
-                )
+        n_x = int((q_width * 10 - 2 * BOLT_INSET * 10) / (BOLT_SPACING * 10)) + 1
+        for bi in range(n_x):
+            bx = qx_min + BOLT_INSET + bi * BOLT_SPACING
+            if bx < qx_max - BOLT_INSET + 0.01:
+                seam_positions.append((bx, seam_y))
 
-            for pi in range(boltSketch.profiles.count):
-                pr = boltSketch.profiles.item(pi)
-                a = pr.areaProperties().area
-                if a < 0.5:  # small hole profiles
-                    boltCut = extrudes.createInput(
-                        pr, adsk.fusion.FeatureOperations.CutFeatureOperation
-                    )
-                    boltCut.setDistanceExtent(
-                        True, adsk.core.ValueInput.createByReal(HSERT_DEPTH)
-                    )
-                    try:
-                        extrudes.add(boltCut)
-                    except:
-                        pass
+        # Cut inserts from top face
+        for sx, sy in seam_positions:
+            make_heat_set_pocket(comp, top_plane, sx, sy)
 
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
         # Step 9: Cable exit holes through side walls
-        # 12×8mm rectangular slots for motor/servo wires + JST-XH connectors
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
 
-        CABLE_EXIT_W = 1.2   # 12mm wide (enlarged for JST-XH connectors)
-        CABLE_EXIT_H = 0.8   # 8mm tall (enlarged for JST-XH 2/3-pin housings)
-        CABLE_EXIT_Z = BODY_H * 0.25  # 25% up from base
-
-        # Cable exits on outer side wall near rocker pivot locations
+        cable_exit_z = BODY_H * 0.25
         cable_exits = []
         if QUADRANT in ('RL', 'RR'):
-            # Near rocker pivot Y=0: exit at Y=-2cm and Y=+0 area
-            cable_exits.append((qy_min + q_length * 0.8, CABLE_EXIT_Z))
-            cable_exits.append((qy_min + q_length * 0.4, CABLE_EXIT_Z))
+            cable_exits.append((qy_min + q_length * 0.8, cable_exit_z))
+            cable_exits.append((qy_min + q_length * 0.4, cable_exit_z))
         else:
-            # Front quadrants: exit near front wheels
-            cable_exits.append((qy_max - 3.0, CABLE_EXIT_Z))
+            cable_exits.append((qy_max - 3.0, cable_exit_z))
 
         if cable_exits:
-            cExitPlaneInput = comp.constructionPlanes.createInput()
             ce_x = qx_min if QUADRANT in ('FL', 'RL') else qx_max
-            cExitPlaneInput.setByOffset(
-                comp.yZConstructionPlane,
-                adsk.core.ValueInput.createByReal(ce_x)
-            )
-            cExitPlane = comp.constructionPlanes.add(cExitPlaneInput)
-            ceSketch = comp.sketches.add(cExitPlane)
-            ceSketch.name = f'Cable Exits {QUADRANT}'
+            ce_plane = make_offset_plane(comp, comp.yZConstructionPlane, ce_x)
+            ce_sk = comp.sketches.add(ce_plane)
+            ce_sk.name = f'Cable Exits {QUADRANT}'
 
             for ce_y, ce_z in cable_exits:
-                # On YZ plane: sketch coords are (-Z, Y)
-                ceSketch.sketchCurves.sketchLines.addTwoPointRectangle(
-                    p(ce_y - CABLE_EXIT_W / 2, ce_z, 0),
-                    p(ce_y + CABLE_EXIT_W / 2, ce_z + CABLE_EXIT_H, 0)
+                draw_rounded_rect(
+                    ce_sk, ce_y, ce_z + CABLE_EXIT_H / 2,
+                    CABLE_EXIT_W, CABLE_EXIT_H, r=0.1
                 )
 
-            for pi in range(ceSketch.profiles.count):
-                pr = ceSketch.profiles.item(pi)
+            for pi in range(ce_sk.profiles.count):
+                pr = ce_sk.profiles.item(pi)
                 a = pr.areaProperties().area
-                if a < 1.0:
-                    ceCut = extrudes.createInput(
+                if a < 1.5 and a > 0.01:
+                    ce_in = extrudes.createInput(
                         pr, adsk.fusion.FeatureOperations.CutFeatureOperation
                     )
-                    ceCut.setDistanceExtent(
-                        True, adsk.core.ValueInput.createByReal(WALL + 0.02)
-                    )
+                    ce_in.setDistanceExtent(True, val(WALL + 0.02))
                     try:
-                        extrudes.add(ceCut)
+                        extrudes.add(ce_in)
                     except:
                         pass
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 10: Alignment dowel pin holes at seam corners (3mm dia)
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
+        # Step 10: Alignment dowel pin holes at seam corners
+        # ══════════════════════════════════════════════════════════
 
-        DOWEL_R = 0.155      # 3.1mm dia (slight clearance for 3mm pin)
-        DOWEL_DEPTH = 0.8    # 8mm deep
-
-        dowel_positions = []
-
-        # Corner dowels at intersection of X and Y seams
+        dowel_pos = []
         if QUADRANT == 'FL':
-            dowel_positions.append((qx_max - 0.5, qy_min + 0.5))
+            dowel_pos.append((qx_max - 0.5, qy_min + 0.5))
         elif QUADRANT == 'FR':
-            dowel_positions.append((qx_min + 0.5, qy_min + 0.5))
+            dowel_pos.append((qx_min + 0.5, qy_min + 0.5))
         elif QUADRANT == 'RL':
-            dowel_positions.append((qx_max - 0.5, qy_max - 0.5))
+            dowel_pos.append((qx_max - 0.5, qy_max - 0.5))
         elif QUADRANT == 'RR':
-            dowel_positions.append((qx_min + 0.5, qy_max - 0.5))
+            dowel_pos.append((qx_min + 0.5, qy_max - 0.5))
 
-        if dowel_positions:
-            dowelSketch = comp.sketches.add(topP)
-            dowelSketch.name = f'Dowel Pins {QUADRANT}'
-            for dx, dy in dowel_positions:
-                dowelSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                    p(dx, dy, 0), DOWEL_R
+        if dowel_pos:
+            dowel_sk = comp.sketches.add(top_plane)
+            dowel_sk.name = f'Dowel Pins {QUADRANT}'
+            for dx, dy in dowel_pos:
+                dowel_sk.sketchCurves.sketchCircles.addByCenterRadius(
+                    p(dx, dy), DOWEL_R
                 )
-
-            for pi in range(dowelSketch.profiles.count):
-                pr = dowelSketch.profiles.item(pi)
+            for pi in range(dowel_sk.profiles.count):
+                pr = dowel_sk.profiles.item(pi)
                 a = pr.areaProperties().area
                 if a < 0.2:
-                    dowelCut = extrudes.createInput(
-                        pr, adsk.fusion.FeatureOperations.CutFeatureOperation
-                    )
-                    dowelCut.setDistanceExtent(
-                        True, adsk.core.ValueInput.createByReal(DOWEL_DEPTH)
-                    )
-                    try:
-                        extrudes.add(dowelCut)
-                    except:
-                        pass
+                    cut_profile(comp, pr, DOWEL_DEPTH, flip=True)
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 11: LED underglow pass-through holes (floor)
-        # 4 holes per quadrant through the floor near the perimeter
-        # for routing WS2812B LED strip wiring
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
+        # Step 11: LED underglow holes (floor)
+        # ══════════════════════════════════════════════════════════
 
-        led_holes = []
-        # 2 holes along the side wall (front and rear of quadrant)
         side_x = qx_min + LED_HOLE_INSET if QUADRANT in ('FL', 'RL') else qx_max - LED_HOLE_INSET
-        led_holes.append((side_x, qy_min + q_length * 0.25))
-        led_holes.append((side_x, qy_min + q_length * 0.75))
-        # 2 holes along the front/rear wall
         end_y = qy_max - LED_HOLE_INSET if QUADRANT in ('FL', 'FR') else qy_min + LED_HOLE_INSET
-        led_holes.append((qx_min + q_width * 0.3 if QUADRANT in ('FL', 'RL') else qx_max - q_width * 0.3, end_y))
-        led_holes.append((qx_min + q_width * 0.7 if QUADRANT in ('FL', 'RL') else qx_max - q_width * 0.7, end_y))
 
-        ledSketch = comp.sketches.add(comp.xYConstructionPlane)
-        ledSketch.name = f'LED Underglow {QUADRANT}'
+        led_holes = [
+            (side_x, qy_min + q_length * 0.25),
+            (side_x, qy_min + q_length * 0.75),
+            (q_cx - q_width * 0.2 if QUADRANT in ('FL', 'RL') else q_cx + q_width * 0.2, end_y),
+            (q_cx + q_width * 0.2 if QUADRANT in ('FL', 'RL') else q_cx - q_width * 0.2, end_y),
+        ]
+
+        led_sk = comp.sketches.add(comp.xYConstructionPlane)
+        led_sk.name = f'LED Underglow {QUADRANT}'
         for lx, ly in led_holes:
-            ledSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                p(lx, ly, 0), LED_HOLE_R
-            )
+            led_sk.sketchCurves.sketchCircles.addByCenterRadius(p(lx, ly), LED_HOLE_R)
 
-        for pi in range(ledSketch.profiles.count):
-            pr = ledSketch.profiles.item(pi)
+        for pi in range(led_sk.profiles.count):
+            pr = led_sk.profiles.item(pi)
             a = pr.areaProperties().area
-            if a < 0.3:  # small LED hole profiles
-                ledCut = extrudes.createInput(
+            if a < 0.3:
+                cut_profile(comp, pr, WALL + 0.01, flip=False)
+
+        # ══════════════════════════════════════════════════════════
+        # Step 12: Headlight / taillight holes
+        # ══════════════════════════════════════════════════════════
+
+        light_holes = []
+        if QUADRANT in ('FL', 'FR'):
+            light_wall_y = qy_max
+        else:
+            light_wall_y = qy_min
+
+        light_plane = make_offset_plane(comp, comp.xZConstructionPlane, light_wall_y)
+        light_sk = comp.sketches.add(light_plane)
+        light_type = 'Headlights' if QUADRANT in ('FL', 'FR') else 'Taillights'
+        light_sk.name = f'{light_type} {QUADRANT}'
+
+        for sign in [-1, 1]:
+            lx = q_cx + sign * LIGHT_SPACING / 2
+            lz = BODY_H * LIGHT_Z_FRAC
+            light_sk.sketchCurves.sketchCircles.addByCenterRadius(
+                p(lx, lz), LIGHT_HOLE_R
+            )
+            light_holes.append((lx, lz))
+
+        for pi in range(light_sk.profiles.count):
+            pr = light_sk.profiles.item(pi)
+            a = pr.areaProperties().area
+            if a < 0.3:
+                l_in = extrudes.createInput(
                     pr, adsk.fusion.FeatureOperations.CutFeatureOperation
                 )
-                ledCut.setDistanceExtent(
-                    True, adsk.core.ValueInput.createByReal(WALL + 0.01)
-                )
+                l_in.setDistanceExtent(True, val(WALL + 0.01))
                 try:
-                    extrudes.add(ledCut)
+                    extrudes.add(l_in)
                 except:
                     pass
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 12: Headlight holes (FL/FR front wall) and
-        #          Taillight holes (RL/RR rear wall)
-        # 2× 5mm diameter through-holes for 5mm LEDs
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
+        # Step 13: Cosmetic — panel line grooves
+        # ══════════════════════════════════════════════════════════
 
-        light_holes = []  # list of (y_pos, z_pos) on the wall plane
-
-        if QUADRANT in ('FL', 'FR'):
-            # Headlights on front wall (Y = qy_max)
-            light_wall_y = qy_max
-            light_wall_plane_offset = light_wall_y
-            light_plane_ref = comp.xZConstructionPlane
-            mid_x_q = (qx_min + qx_max) / 2
-            light_holes = [
-                (mid_x_q - LIGHT_SPACING / 2, BODY_H * LIGHT_Z),
-                (mid_x_q + LIGHT_SPACING / 2, BODY_H * LIGHT_Z),
-            ]
-        elif QUADRANT in ('RL', 'RR'):
-            # Taillights on rear wall (Y = qy_min)
-            light_wall_y = qy_min
-            light_wall_plane_offset = light_wall_y
-            light_plane_ref = comp.xZConstructionPlane
-            mid_x_q = (qx_min + qx_max) / 2
-            light_holes = [
-                (mid_x_q - LIGHT_SPACING / 2, BODY_H * LIGHT_Z),
-                (mid_x_q + LIGHT_SPACING / 2, BODY_H * LIGHT_Z),
-            ]
-
-        if light_holes:
-            lightPlaneInput = comp.constructionPlanes.createInput()
-            lightPlaneInput.setByOffset(
-                light_plane_ref,
-                adsk.core.ValueInput.createByReal(light_wall_plane_offset)
-            )
-            lightPlane = comp.constructionPlanes.add(lightPlaneInput)
-            lightSketch = comp.sketches.add(lightPlane)
-            light_type = 'Headlights' if QUADRANT in ('FL', 'FR') else 'Taillights'
-            lightSketch.name = f'{light_type} {QUADRANT}'
-
-            for lx, lz in light_holes:
-                lightSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                    p(lx, lz, 0), LIGHT_HOLE_R
-                )
-
-            for pi in range(lightSketch.profiles.count):
-                pr = lightSketch.profiles.item(pi)
-                a = pr.areaProperties().area
-                if a < 0.3:
-                    lightCut = extrudes.createInput(
-                        pr, adsk.fusion.FeatureOperations.CutFeatureOperation
-                    )
-                    lightCut.setDistanceExtent(
-                        True, adsk.core.ValueInput.createByReal(WALL + 0.01)
-                    )
-                    try:
-                        extrudes.add(lightCut)
-                    except:
-                        pass
-
-        # ══════════════════════════════════════════════════════════════
-        # Step 13: Panel line grooves on outer walls (cosmetic)
-        # 2 horizontal grooves at 25% and 75% height
-        # 1mm wide × 0.5mm deep — evokes spacecraft panelling
-        # ══════════════════════════════════════════════════════════════
-
-        PANEL_LINE_W = 0.1     # 1mm wide
-        PANEL_LINE_D = 0.05    # 0.5mm deep
-
-        # Create grooves on the outer side wall (left for FL/RL, right for FR/RR)
         panel_wall_x = qx_min if QUADRANT in ('FL', 'RL') else qx_max
 
         for groove_frac in [0.25, 0.75]:
-            groove_z = BODY_H * groove_frac
-            plSketch = comp.sketches.add(comp.xYConstructionPlane)
-            plSketch.name = f'Panel Line {groove_frac:.0%}'
-
-            # Groove rectangle on XY plane at groove_z height?
-            # Actually need to cut into the side wall face.
-            # Create on a YZ offset plane at the wall position
-            plPlaneInput = comp.constructionPlanes.createInput()
-            plPlaneInput.setByOffset(
-                comp.yZConstructionPlane,
-                adsk.core.ValueInput.createByReal(panel_wall_x)
+            gz = BODY_H * groove_frac
+            pl_plane = make_offset_plane(comp, comp.yZConstructionPlane, panel_wall_x)
+            pl_sk = comp.sketches.add(pl_plane)
+            pl_sk.name = f'Panel Line {groove_frac:.0%}'
+            pl_sk.sketchCurves.sketchLines.addTwoPointRectangle(
+                p(qy_min + WALL, gz - PANEL_LINE_W / 2),
+                p(qy_max - WALL, gz + PANEL_LINE_W / 2)
             )
-            plPlane = comp.constructionPlanes.add(plPlaneInput)
-
-            plSketch2 = comp.sketches.add(plPlane)
-            plSketch2.name = f'Panel Line {groove_frac:.0%}'
-
-            # On YZ plane: Y is horizontal (along body), Z is vertical
-            plSketch2.sketchCurves.sketchLines.addTwoPointRectangle(
-                p(qy_min + WALL, groove_z - PANEL_LINE_W / 2, 0),
-                p(qy_max - WALL, groove_z + PANEL_LINE_W / 2, 0)
-            )
-
-            for pi in range(plSketch2.profiles.count):
-                pr = plSketch2.profiles.item(pi)
+            for pi in range(pl_sk.profiles.count):
+                pr = pl_sk.profiles.item(pi)
                 a = pr.areaProperties().area
                 if a < 2.0:
-                    plCut = extrudes.createInput(
+                    pl_in = extrudes.createInput(
                         pr, adsk.fusion.FeatureOperations.CutFeatureOperation
                     )
-                    plCut.setDistanceExtent(
-                        True, adsk.core.ValueInput.createByReal(PANEL_LINE_D)
-                    )
+                    pl_in.setDistanceExtent(True, val(PANEL_LINE_D))
                     try:
-                        extrudes.add(plCut)
+                        extrudes.add(pl_in)
                     except:
                         pass
 
-        # Also add panel lines on the front/rear outer wall
+        # Front/rear wall panel lines
         panel_wall_y = qy_max if QUADRANT in ('FL', 'FR') else qy_min
 
         for groove_frac in [0.25, 0.75]:
-            groove_z = BODY_H * groove_frac
-
-            plFRPlaneInput = comp.constructionPlanes.createInput()
-            plFRPlaneInput.setByOffset(
-                comp.xZConstructionPlane,
-                adsk.core.ValueInput.createByReal(panel_wall_y)
+            gz = BODY_H * groove_frac
+            pl2_plane = make_offset_plane(comp, comp.xZConstructionPlane, panel_wall_y)
+            pl2_sk = comp.sketches.add(pl2_plane)
+            pl2_sk.name = f'Panel Line FR {groove_frac:.0%}'
+            pl2_sk.sketchCurves.sketchLines.addTwoPointRectangle(
+                p(qx_min + WALL, gz - PANEL_LINE_W / 2),
+                p(qx_max - WALL, gz + PANEL_LINE_W / 2)
             )
-            plFRPlane = comp.constructionPlanes.add(plFRPlaneInput)
-
-            plFRSketch = comp.sketches.add(plFRPlane)
-            plFRSketch.name = f'Panel Line FR {groove_frac:.0%}'
-
-            plFRSketch.sketchCurves.sketchLines.addTwoPointRectangle(
-                p(qx_min + WALL, groove_z - PANEL_LINE_W / 2, 0),
-                p(qx_max - WALL, groove_z + PANEL_LINE_W / 2, 0)
-            )
-
-            for pi in range(plFRSketch.profiles.count):
-                pr = plFRSketch.profiles.item(pi)
+            for pi in range(pl2_sk.profiles.count):
+                pr = pl2_sk.profiles.item(pi)
                 a = pr.areaProperties().area
                 if a < 2.0:
-                    plFRCut = extrudes.createInput(
+                    pl2_in = extrudes.createInput(
                         pr, adsk.fusion.FeatureOperations.CutFeatureOperation
                     )
-                    plFRCut.setDistanceExtent(
-                        True, adsk.core.ValueInput.createByReal(PANEL_LINE_D)
-                    )
+                    pl2_in.setDistanceExtent(True, val(PANEL_LINE_D))
                     try:
-                        extrudes.add(plFRCut)
+                        extrudes.add(pl2_in)
                     except:
                         pass
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 5d: Front panel arm mount pattern (FL quadrant only)
-        # 4× M3 heat-set insert bosses in a 40×40mm square pattern,
-        # centred on the front wall at 60% wall height.
-        # For Phase 2 robotic arm mount point (EA-24).
-        # ══════════════════════════════════════════════════════════════
-
-        ARM_MOUNT_BOSS_OD_R = 0.4   # 8mm OD / 2 = 4mm radius
-        ARM_MOUNT_BOSS_H = 0.55     # 5.5mm tall (matches heat-set depth)
-        ARM_MOUNT_HSERT_R = 0.24    # 4.8mm / 2 = 2.4mm (M3 heat-set)
-        ARM_MOUNT_HSERT_DEPTH = 0.55  # 5.5mm deep
-        ARM_MOUNT_PATTERN = 4.0     # 40mm square pattern (4.0cm)
+        # ══════════════════════════════════════════════════════════
+        # Step 14: Arm mount bosses (FL only, Phase 2)
+        # ══════════════════════════════════════════════════════════
 
         arm_mount_count = 0
         if QUADRANT == 'FL':
-            # Front wall is at Y = qy_max
-            # Centre the 40×40mm pattern on the front wall, 60% up
-            arm_cx = (qx_min + qx_max) / 2  # centre of quadrant X
-            arm_cz = BODY_H * 0.6            # 60% up wall height
+            arm_cx = q_cx
+            arm_cz = BODY_H * 0.6
 
-            # 4 bosses at corners of 40×40mm square
-            arm_mounts = [
-                (arm_cx - ARM_MOUNT_PATTERN / 2, arm_cz - ARM_MOUNT_PATTERN / 2),
-                (arm_cx + ARM_MOUNT_PATTERN / 2, arm_cz - ARM_MOUNT_PATTERN / 2),
-                (arm_cx - ARM_MOUNT_PATTERN / 2, arm_cz + ARM_MOUNT_PATTERN / 2),
-                (arm_cx + ARM_MOUNT_PATTERN / 2, arm_cz + ARM_MOUNT_PATTERN / 2),
-            ]
+            arm_plane = make_offset_plane(comp, comp.xZConstructionPlane, qy_max)
+            arm_sk = comp.sketches.add(arm_plane)
+            arm_sk.name = 'Arm Mount Bosses FL'
 
-            # Construction plane on front wall (XZ plane at Y = qy_max)
-            armPlaneInput = comp.constructionPlanes.createInput()
-            armPlaneInput.setByOffset(
-                comp.xZConstructionPlane,
-                adsk.core.ValueInput.createByReal(qy_max)
-            )
-            armPlane = comp.constructionPlanes.add(armPlaneInput)
+            for sx in [-1, 1]:
+                for sz in [-1, 1]:
+                    arm_sk.sketchCurves.sketchCircles.addByCenterRadius(
+                        p(arm_cx + sx * ARM_PATTERN / 2,
+                          arm_cz + sz * ARM_PATTERN / 2),
+                        ARM_BOSS_R
+                    )
 
-            # Boss cylinders on front wall exterior
-            armBossSketch = comp.sketches.add(armPlane)
-            armBossSketch.name = 'Arm Mount Bosses FL'
-            for ax, az in arm_mounts:
-                armBossSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                    p(ax, az, 0), ARM_MOUNT_BOSS_OD_R
-                )
-
-            for pi in range(armBossSketch.profiles.count):
-                pr = armBossSketch.profiles.item(pi)
+            for pi in range(arm_sk.profiles.count):
+                pr = arm_sk.profiles.item(pi)
                 a = pr.areaProperties().area
-                if a < 1.0:  # boss circle profiles
-                    armBossInput = extrudes.createInput(
-                        pr, adsk.fusion.FeatureOperations.JoinFeatureOperation
+                if a < 1.0:
+                    extrude_profile(
+                        comp, pr, ARM_BOSS_H,
+                        adsk.fusion.FeatureOperations.JoinFeatureOperation
                     )
-                    # Extrude outward from front wall (positive Y direction)
-                    armBossInput.setDistanceExtent(
-                        False, adsk.core.ValueInput.createByReal(ARM_MOUNT_BOSS_H)
-                    )
-                    try:
-                        extrudes.add(armBossInput)
-                    except:
-                        pass
+                    arm_mount_count += 1
 
-            # Heat-set insert holes (cut inward from boss top surface)
-            armBossTopOffset = qy_max + ARM_MOUNT_BOSS_H
-            armHsertPlaneInput = comp.constructionPlanes.createInput()
-            armHsertPlaneInput.setByOffset(
-                comp.xZConstructionPlane,
-                adsk.core.ValueInput.createByReal(armBossTopOffset)
+            # Heat-set insert holes in arm bosses
+            arm_top = make_offset_plane(
+                comp, comp.xZConstructionPlane, qy_max + ARM_BOSS_H
             )
-            armHsertPlane = comp.constructionPlanes.add(armHsertPlaneInput)
-
-            armHsertSketch = comp.sketches.add(armHsertPlane)
-            armHsertSketch.name = 'Arm Mount Inserts FL'
-            for ax, az in arm_mounts:
-                armHsertSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                    p(ax, az, 0), ARM_MOUNT_HSERT_R
-                )
-
-            for pi in range(armHsertSketch.profiles.count):
-                pr = armHsertSketch.profiles.item(pi)
-                a = pr.areaProperties().area
-                if a < 0.5:
-                    armHsertCut = extrudes.createInput(
-                        pr, adsk.fusion.FeatureOperations.CutFeatureOperation
+            for sx in [-1, 1]:
+                for sz in [-1, 1]:
+                    make_heat_set_pocket(
+                        comp, arm_top,
+                        arm_cx + sx * ARM_PATTERN / 2,
+                        arm_cz + sz * ARM_PATTERN / 2
                     )
-                    armHsertCut.setDistanceExtent(
-                        True, adsk.core.ValueInput.createByReal(ARM_MOUNT_HSERT_DEPTH)
-                    )
-                    try:
-                        extrudes.add(armHsertCut)
-                    except:
-                        pass
 
-            arm_mount_count = len(arm_mounts)
-
-        # ══════════════════════════════════════════════════════════════
-        # Step 6c: RTG-style rear detail (RL/RR rear wall, cosmetic)
-        # 2 small raised rectangular pads (10×5×1mm) on the rear outer
-        # wall, at 70% and 80% of wall height, evoking radiator fins.
-        # ══════════════════════════════════════════════════════════════
-
-        RTG_PAD_W = 1.0    # 10mm wide
-        RTG_PAD_H = 0.5    # 5mm tall
-        RTG_PAD_D = 0.1    # 1mm raised (protrusion depth)
+        # ══════════════════════════════════════════════════════════
+        # Step 15: RTG detail (RL/RR rear wall, cosmetic)
+        # ══════════════════════════════════════════════════════════
 
         rtg_count = 0
         if QUADRANT in ('RL', 'RR'):
-            # Rear wall is at Y = qy_min
-            rtg_cx = (qx_min + qx_max) / 2  # centred horizontally
+            rtg_plane = make_offset_plane(comp, comp.xZConstructionPlane, qy_min)
+            rtg_sk = comp.sketches.add(rtg_plane)
+            rtg_sk.name = f'RTG Detail {QUADRANT}'
 
-            rtg_pads = [
-                (rtg_cx, BODY_H * 0.70),  # 70% up wall height
-                (rtg_cx, BODY_H * 0.80),  # 80% up wall height
-            ]
-
-            # Construction plane on rear wall (XZ plane at Y = qy_min)
-            rtgPlaneInput = comp.constructionPlanes.createInput()
-            rtgPlaneInput.setByOffset(
-                comp.xZConstructionPlane,
-                adsk.core.ValueInput.createByReal(qy_min)
-            )
-            rtgPlane = comp.constructionPlanes.add(rtgPlaneInput)
-
-            rtgSketch = comp.sketches.add(rtgPlane)
-            rtgSketch.name = f'RTG Detail {QUADRANT}'
-
-            for rx, rz in rtg_pads:
-                rtgSketch.sketchCurves.sketchLines.addTwoPointRectangle(
-                    p(rx - RTG_PAD_W / 2, rz - RTG_PAD_H / 2, 0),
-                    p(rx + RTG_PAD_W / 2, rz + RTG_PAD_H / 2, 0)
+            for frac in [0.70, 0.80]:
+                draw_rounded_rect(
+                    rtg_sk, q_cx, BODY_H * frac,
+                    RTG_PAD_W, RTG_PAD_H, r=0.05
                 )
+                rtg_count += 1
 
-            for pi in range(rtgSketch.profiles.count):
-                pr = rtgSketch.profiles.item(pi)
+            for pi in range(rtg_sk.profiles.count):
+                pr = rtg_sk.profiles.item(pi)
                 a = pr.areaProperties().area
-                if a < 1.0:  # small pad profiles
-                    rtgInput = extrudes.createInput(
+                if a < 1.0 and a > 0.01:
+                    r_in = extrudes.createInput(
                         pr, adsk.fusion.FeatureOperations.JoinFeatureOperation
                     )
-                    # Extrude outward from rear wall (negative Y direction)
-                    rtgInput.setDistanceExtent(
-                        True, adsk.core.ValueInput.createByReal(RTG_PAD_D)
-                    )
+                    r_in.setDistanceExtent(True, val(RTG_PAD_D))
                     try:
-                        extrudes.add(rtgInput)
+                        extrudes.add(r_in)
                     except:
                         pass
 
-            rtg_count = len(rtg_pads)
+        # ══════════════════════════════════════════════════════════
+        # Step 16: MLI blanket edge ridges (cosmetic)
+        # ══════════════════════════════════════════════════════════
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 6d: Faux MLI blanket edge ridges (all quadrants)
-        # 0.5mm raised ridge along the top edge of each outer wall,
-        # running the full wall length, 2mm below the top edge.
-        # Evokes multi-layer insulation blanket seam detailing.
-        # ══════════════════════════════════════════════════════════════
+        mli_z = BODY_H - MLI_INSET
 
-        MLI_RIDGE_H = 0.05   # 0.5mm raised ridge height
-        MLI_RIDGE_W = 0.1    # 1mm ridge width
-        MLI_INSET = 0.2      # 2mm below top edge (Z position)
-
-        mli_ridge_z = BODY_H - MLI_INSET  # Z position of ridge centre
-
-        # Side wall ridge (left for FL/RL, right for FR/RR)
-        mli_side_x = qx_min if QUADRANT in ('FL', 'RL') else qx_max
-
-        mliSidePlaneInput = comp.constructionPlanes.createInput()
-        mliSidePlaneInput.setByOffset(
-            comp.yZConstructionPlane,
-            adsk.core.ValueInput.createByReal(mli_side_x)
+        # Side wall ridge
+        mli_side_plane = make_offset_plane(
+            comp, comp.yZConstructionPlane,
+            qx_min if QUADRANT in ('FL', 'RL') else qx_max
         )
-        mliSidePlane = comp.constructionPlanes.add(mliSidePlaneInput)
-
-        mliSideSketch = comp.sketches.add(mliSidePlane)
-        mliSideSketch.name = f'MLI Ridge Side {QUADRANT}'
-        mliSideSketch.sketchCurves.sketchLines.addTwoPointRectangle(
-            p(qy_min + WALL, mli_ridge_z - MLI_RIDGE_W / 2, 0),
-            p(qy_max - WALL, mli_ridge_z + MLI_RIDGE_W / 2, 0)
+        mli_sk = comp.sketches.add(mli_side_plane)
+        mli_sk.name = f'MLI Side {QUADRANT}'
+        mli_sk.sketchCurves.sketchLines.addTwoPointRectangle(
+            p(qy_min + WALL, mli_z - MLI_RIDGE_W / 2),
+            p(qy_max - WALL, mli_z + MLI_RIDGE_W / 2)
         )
-
-        for pi in range(mliSideSketch.profiles.count):
-            pr = mliSideSketch.profiles.item(pi)
+        for pi in range(mli_sk.profiles.count):
+            pr = mli_sk.profiles.item(pi)
             a = pr.areaProperties().area
             if a < 3.0:
-                mliSideInput = extrudes.createInput(
+                flip = QUADRANT in ('FL', 'RL')
+                m_in = extrudes.createInput(
                     pr, adsk.fusion.FeatureOperations.JoinFeatureOperation
                 )
-                # Extrude outward from side wall
-                if QUADRANT in ('FL', 'RL'):
-                    mliSideInput.setDistanceExtent(
-                        True, adsk.core.ValueInput.createByReal(MLI_RIDGE_H)
-                    )
-                else:
-                    mliSideInput.setDistanceExtent(
-                        False, adsk.core.ValueInput.createByReal(MLI_RIDGE_H)
-                    )
+                m_in.setDistanceExtent(flip, val(MLI_RIDGE_H))
                 try:
-                    extrudes.add(mliSideInput)
+                    extrudes.add(m_in)
                 except:
                     pass
 
-        # Front/rear wall ridge
-        mli_end_y = qy_max if QUADRANT in ('FL', 'FR') else qy_min
-
-        mliEndPlaneInput = comp.constructionPlanes.createInput()
-        mliEndPlaneInput.setByOffset(
-            comp.xZConstructionPlane,
-            adsk.core.ValueInput.createByReal(mli_end_y)
+        # End wall ridge
+        mli_end_plane = make_offset_plane(
+            comp, comp.xZConstructionPlane,
+            qy_max if QUADRANT in ('FL', 'FR') else qy_min
         )
-        mliEndPlane = comp.constructionPlanes.add(mliEndPlaneInput)
-
-        mliEndSketch = comp.sketches.add(mliEndPlane)
-        mliEndSketch.name = f'MLI Ridge End {QUADRANT}'
-        mliEndSketch.sketchCurves.sketchLines.addTwoPointRectangle(
-            p(qx_min + WALL, mli_ridge_z - MLI_RIDGE_W / 2, 0),
-            p(qx_max - WALL, mli_ridge_z + MLI_RIDGE_W / 2, 0)
+        mli_end_sk = comp.sketches.add(mli_end_plane)
+        mli_end_sk.name = f'MLI End {QUADRANT}'
+        mli_end_sk.sketchCurves.sketchLines.addTwoPointRectangle(
+            p(qx_min + WALL, mli_z - MLI_RIDGE_W / 2),
+            p(qx_max - WALL, mli_z + MLI_RIDGE_W / 2)
         )
-
-        for pi in range(mliEndSketch.profiles.count):
-            pr = mliEndSketch.profiles.item(pi)
+        for pi in range(mli_end_sk.profiles.count):
+            pr = mli_end_sk.profiles.item(pi)
             a = pr.areaProperties().area
             if a < 2.0:
-                mliEndInput = extrudes.createInput(
+                flip = QUADRANT not in ('FL', 'FR')
+                me_in = extrudes.createInput(
                     pr, adsk.fusion.FeatureOperations.JoinFeatureOperation
                 )
-                # Extrude outward from front/rear wall
-                if QUADRANT in ('FL', 'FR'):
-                    mliEndInput.setDistanceExtent(
-                        False, adsk.core.ValueInput.createByReal(MLI_RIDGE_H)
-                    )
-                else:
-                    mliEndInput.setDistanceExtent(
-                        True, adsk.core.ValueInput.createByReal(MLI_RIDGE_H)
-                    )
+                me_in.setDistanceExtent(not flip, val(MLI_RIDGE_H))
                 try:
-                    extrudes.add(mliEndInput)
+                    extrudes.add(me_in)
                 except:
                     pass
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 14: Corner fillets on outer vertical edges
-        # 3mm radius fillet — softens appearance, safer to handle
-        # Note: Fusion API fillet requires selecting edge objects.
-        # We approximate by cutting chamfers with a diagonal sketch.
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
+        # Step 17: External fillets
+        # ══════════════════════════════════════════════════════════
 
-        FILLET_R = 0.3  # 3mm radius (approximated as 45° chamfer)
+        if body:
+            fillet_count = add_edge_fillets(comp, body, FILLET_STD)
+        else:
+            fillet_count = 0
 
-        # Try to apply chamfer on all vertical edges of the body
-        try:
-            chamfers = comp.features.chamferFeatures
-            # Find the body
-            target_body = None
-            for bi in range(comp.bRepBodies.count):
-                b = comp.bRepBodies.item(bi)
-                if f'Body {QUADRANT}' in b.name:
-                    target_body = b
-                    break
+        # ══════════════════════════════════════════════════════════
+        # Step 18: Zoom and report
+        # ══════════════════════════════════════════════════════════
 
-            if target_body:
-                # Collect vertical edges (edges parallel to Z-axis at outer corners)
-                edgeCollection = adsk.core.ObjectCollection.create()
-                for ei in range(target_body.edges.count):
-                    edge = target_body.edges.item(ei)
-                    # Check if edge is approximately vertical (Z-aligned)
-                    sp = edge.startVertex.geometry
-                    ep = edge.endVertex.geometry
-                    dx = abs(sp.x - ep.x)
-                    dy = abs(sp.y - ep.y)
-                    dz = abs(sp.z - ep.z)
-                    # Vertical edge: small dx and dy, large dz
-                    if dz > 0.5 and dx < 0.01 and dy < 0.01:
-                        # Check if it's an outer corner (at quadrant boundary)
-                        avg_x = (sp.x + ep.x) / 2
-                        avg_y = (sp.y + ep.y) / 2
-                        is_outer_x = abs(avg_x - qx_min) < 0.05 or abs(avg_x - qx_max) < 0.05
-                        is_outer_y = abs(avg_y - qy_min) < 0.05 or abs(avg_y - qy_max) < 0.05
-                        if is_outer_x and is_outer_y:
-                            edgeCollection.add(edge)
+        zoom_fit(app)
 
-                if edgeCollection.count > 0:
-                    chamInput = chamfers.createInput2()
-                    chamInput.chamferEdgeSets.addEqualDistanceChamferEdgeSet(
-                        edgeCollection,
-                        adsk.core.ValueInput.createByReal(FILLET_R),
-                        True  # tangent chain
-                    )
-                    chamfers.add(chamInput)
-        except:
-            pass  # Chamfer may fail on complex geometry — cosmetic only
-
-        # ── Zoom and report ──
-        app.activeViewport.fit()
-
-        bolt_count = len(seam_edges)
-        has_switch = (QUADRANT == 'RR')
         ui.messageBox(
             f'Body Quadrant {QUADRANT} created!\n\n'
-            f'Size: {q_width * 10:.0f} × {q_length * 10:.0f} × '
-            f'{BODY_H * 10:.0f}mm\n'
-            f'Walls: {WALL * 10:.0f}mm\n'
-            f'Internal ribs: 2 (cross pattern)\n'
-            f'Pivot boss: {"Yes (608ZZ seat + 8mm bore, trimmed to bounds)" if has_pivot else "No (not in this quadrant)"}\n'
-            f'Vent slots: {VENT_COUNT}x on side wall\n'
-            f'Cable channels: 2 (front-to-back + left-to-right)\n'
-            f'Cable exit holes: {len(cable_exits)}x (12×8mm, JST-XH compatible)\n'
-            f'Seam bolt holes: {bolt_count}x M3 heat-set insert pockets\n'
-            f'Alignment dowels: {len(dowel_positions)}x 3mm pin holes\n'
-            f'Kill switch hole: {"Yes (15mm dia)" if has_switch else "No (RR only)"}\n'
-            f'LED underglow holes: {len(led_holes)}x (5mm dia, floor)\n'
-            f'Light holes: {len(light_holes)}x 5mm ({"headlights" if QUADRANT in ("FL", "FR") else "taillights"})\n'
-            f'Panel line grooves: 4 (cosmetic, 1mm × 0.5mm)\n'
-            f'Arm mount bosses: {arm_mount_count}x (FL only, Phase 2 robotic arm)\n'
-            f'RTG detail pads: {rtg_count}x (RL/RR rear wall, cosmetic)\n'
-            f'MLI blanket ridges: 2 (side + end walls, cosmetic)\n'
-            f'Corner chamfers: 3mm on outer vertical edges\n\n'
-            f'To create other quadrants, change QUADRANT variable.\n\n'
-            'Qty needed: 4 quadrants total\n'
-            'Print open face up, 20% infill, 8mm brim recommended.',
+            f'Size: {q_width*10:.0f} × {q_length*10:.0f} × '
+            f'{BODY_H*10:.0f}mm (rounded corners)\n'
+            f'Walls: {WALL*10:.0f}mm\n\n'
+            f'Pivot boss: {"608ZZ + chamfer" if has_pivot else "N/A"}\n'
+            f'Ribs: 2 (cross pattern)\n'
+            f'Vents: {VENT_COUNT}× (stadium-shaped)\n'
+            f'Cable channels: 2\n'
+            f'Cable exits: {len(cable_exits)}× (rounded, 12×8mm)\n'
+            f'Seam inserts: {len(seam_positions)}× M3 heat-set\n'
+            f'Dowel pins: {len(dowel_pos)}× 3mm\n'
+            f'LED holes: {len(led_holes)}×\n'
+            f'Light holes: {len(light_holes)}×\n'
+            f'Kill switch: {"Yes" if QUADRANT == "RR" else "No"}\n'
+            f'Arm mount: {arm_mount_count}× (FL only)\n'
+            f'RTG detail: {rtg_count}× (RL/RR)\n'
+            f'Fillets: {fillet_count} edges @ {FILLET_STD*10:.1f}mm\n\n'
+            'Change QUADRANT variable for other quadrants.\n'
+            'Print open face up, 20% infill, 8mm brim.',
             f'Mars Rover - Body {QUADRANT}'
         )
 

@@ -1,28 +1,43 @@
 """
-Mars Rover Fuse Holder Bracket — Phase 1 (0.4 Scale)
-======================================================
+Mars Rover Fuse Holder Bracket — Phase 1
+==========================================
 
-Mounting bracket for an inline ATC/ATO blade fuse holder.
-Clips onto the electronics tray or body wall.
+Mounting bracket for inline ATC/ATO blade fuse holder.
+Bolts to electronics tray or body wall.
 
-Dimensions: 40 × 15 × 12mm
-  - Clip channel: 8mm wide × 6mm deep (holds standard inline fuse holder body)
-  - 4× M3 bolt holes for tray/wall mounting (2 per side of channel)
-  - End walls retain fuse holder from sliding out
+Redesigned with:
+  - Rounded-rect body (2mm corner radius)
+  - Clip channel with rounded ends
+  - Retention lips at channel openings (prevents fuse holder slide-out)
+  - Entry chamfers on lip edges
+  - 0.5mm fillets on external edges
 
+Dimensions:
+  - Body: 40 × 15 × 12mm
+  - Clip channel: 8mm wide × 6mm deep (inline fuse holder body)
+  - End retention lips: 1mm overhang × 1.5mm thick
+  - 4× M3 bolt holes (2 per side of channel)
+
+Print: Flat (bottom down), 40% infill, 3 perimeters
 Qty: 1
 
-Print orientation: Flat (bottom down)
-Supports: None
-Perimeters: 3
-Infill: 40%
-
-Reference: EA-15 (safety), EA-19 (wiring)
+Reference: EA-15, EA-19
 """
 
 import adsk.core
 import adsk.fusion
 import traceback
+import math
+import sys
+
+sys.path.insert(0, r"D:\Mars Rover Project\cad\scripts")
+from rover_cad_helpers import (
+    p, val, FILLET_STD, CHAMFER_STD, CORNER_R,
+    draw_rounded_rect,
+    find_profile_by_area, find_smallest_profile, find_largest_profile,
+    extrude_profile, cut_profile, join_profile,
+    make_offset_plane, add_edge_fillets, zoom_fit,
+)
 
 
 def run(context):
@@ -37,7 +52,7 @@ def run(context):
             return
 
         # ── Dimensions (cm) ──
-        BRKT_L = 4.0        # 40mm length (Y)
+        BRKT_L = 4.0        # 40mm length (Y — along fuse holder)
         BRKT_W = 1.5        # 15mm width (X)
         BRKT_H = 1.2        # 12mm height (Z)
         BASE_H = 0.3        # 3mm base thickness
@@ -45,117 +60,129 @@ def run(context):
         CLIP_D = 0.6        # 6mm channel depth (from top)
         WALL_T = 0.2        # 2mm side wall thickness
         END_WALL = 0.3      # 3mm end wall thickness
-        HOLE_R = 0.165      # M3 clearance
-        HOLE_Y1 = -1.2      # Hole 1 Y position
-        HOLE_Y2 = 1.2       # Hole 2 Y position
+        LIP_OVERHANG = 0.1  # 1mm retention lip overhang
+        LIP_T = 0.15        # 1.5mm lip thickness
+        HOLE_R = 0.165      # M3 clearance (3.3mm dia)
+        HOLE_Y1 = -1.2      # Hole Y positions
+        HOLE_Y2 = 1.2
+        CR = min(CORNER_R, BRKT_W / 4)
 
         comp = design.rootComponent
-        p = adsk.core.Point3D.create
-        extrudes = comp.features.extrudeFeatures
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 1: Solid block
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
+        # STEP 1: Rounded-rect body
+        # ══════════════════════════════════════════════════════════
 
-        sketch1 = comp.sketches.add(comp.xYConstructionPlane)
-        sketch1.name = 'Fuse Bracket Base'
-        sketch1.sketchCurves.sketchLines.addTwoPointRectangle(
-            p(-BRKT_W / 2, -BRKT_L / 2, 0),
-            p(BRKT_W / 2, BRKT_L / 2, 0)
+        sk1 = comp.sketches.add(comp.xYConstructionPlane)
+        sk1.name = 'Bracket Body'
+        draw_rounded_rect(sk1, 0, 0, BRKT_W, BRKT_L, r=CR)
+
+        body_prof = find_largest_profile(sk1)
+        ext = extrude_profile(comp, body_prof, BRKT_H)
+        body = ext.bodies.item(0) if ext else None
+        if body:
+            body.name = 'Fuse Holder Bracket'
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 2: Clip channel cut (from top, leaving base + end walls)
+        # ══════════════════════════════════════════════════════════
+
+        topP = make_offset_plane(comp, comp.xYConstructionPlane, BRKT_H)
+        ch_sk = comp.sketches.add(topP)
+        ch_sk.name = 'Fuse Channel'
+
+        # Channel interior with rounded ends
+        ch_len = BRKT_L - 2 * END_WALL
+        ch_r = min(CR * 0.5, CLIP_W / 4)
+        draw_rounded_rect(ch_sk, 0, 0, CLIP_W, ch_len, r=ch_r)
+
+        ch_target = CLIP_W * ch_len
+        ch_prof = find_profile_by_area(ch_sk, ch_target, tolerance=0.5)
+        if ch_prof is None:
+            ch_prof = find_smallest_profile(ch_sk)
+
+        if ch_prof:
+            cut_profile(comp, ch_prof, CLIP_D, flip=True)
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 3: Retention lips at channel ends
+        # ══════════════════════════════════════════════════════════
+
+        lip_sk = comp.sketches.add(topP)
+        lip_sk.name = 'Retention Lips'
+        sl = lip_sk.sketchCurves.sketchLines
+
+        # Front lip (negative Y end of channel)
+        lip_y_front = -ch_len / 2
+        sl.addTwoPointRectangle(
+            p(-CLIP_W / 2, lip_y_front - LIP_OVERHANG, 0),
+            p(CLIP_W / 2, lip_y_front, 0)
         )
 
-        prof = sketch1.profiles.item(0)
-        extInput = extrudes.createInput(
-            prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation
-        )
-        extInput.setDistanceExtent(
-            False, adsk.core.ValueInput.createByReal(BRKT_H)
-        )
-        ext = extrudes.add(extInput)
-        body = ext.bodies.item(0)
-        body.name = 'Fuse Holder Bracket'
-
-        # ══════════════════════════════════════════════════════════════
-        # Step 2: Clip channel (cut from top, leaving base + end walls)
-        # ══════════════════════════════════════════════════════════════
-
-        topPlane = comp.constructionPlanes
-        tpInput = topPlane.createInput()
-        tpInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(BRKT_H)
-        )
-        topP = topPlane.add(tpInput)
-
-        chSketch = comp.sketches.add(topP)
-        chSketch.name = 'Fuse Channel'
-        chSketch.sketchCurves.sketchLines.addTwoPointRectangle(
-            p(-CLIP_W / 2, -BRKT_L / 2 + END_WALL, 0),
-            p(CLIP_W / 2, BRKT_L / 2 - END_WALL, 0)
+        # Rear lip (positive Y end of channel)
+        lip_y_rear = ch_len / 2
+        sl.addTwoPointRectangle(
+            p(-CLIP_W / 2, lip_y_rear, 0),
+            p(CLIP_W / 2, lip_y_rear + LIP_OVERHANG, 0)
         )
 
-        chProf = None
-        minArea = float('inf')
-        for pi in range(chSketch.profiles.count):
-            pr = chSketch.profiles.item(pi)
+        lip_target = CLIP_W * LIP_OVERHANG
+        for pi_idx in range(lip_sk.profiles.count):
+            pr = lip_sk.profiles.item(pi_idx)
             a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                chProf = pr
-
-        if chProf:
-            chInput = extrudes.createInput(
-                chProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-            )
-            chInput.setDistanceExtent(
-                True, adsk.core.ValueInput.createByReal(CLIP_D)
-            )
-            extrudes.add(chInput)
-
-        # ══════════════════════════════════════════════════════════════
-        # Step 3: M3 mounting holes through base
-        # ══════════════════════════════════════════════════════════════
-
-        holeSketch = comp.sketches.add(topP)
-        holeSketch.name = 'Mount Holes'
-        # Holes in the side walls on BOTH sides of the channel
-        hole_x_pos = (CLIP_W / 2 + BRKT_W / 2) / 2   # right side midpoint
-        hole_x_neg = -hole_x_pos                       # left side midpoint
-        for hx in [hole_x_pos, hole_x_neg]:
-            holeSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                p(hx, HOLE_Y1, 0), HOLE_R
-            )
-            holeSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                p(hx, HOLE_Y2, 0), HOLE_R
-            )
-
-        for pi in range(holeSketch.profiles.count):
-            pr = holeSketch.profiles.item(pi)
-            a = pr.areaProperties().area
-            if a < 0.2:
-                hInput = extrudes.createInput(
-                    pr, adsk.fusion.FeatureOperations.CutFeatureOperation
-                )
-                hInput.setDistanceExtent(
-                    True, adsk.core.ValueInput.createByReal(BRKT_H + 0.1)
-                )
+            if abs(a - lip_target) < lip_target * 0.8:
                 try:
-                    extrudes.add(hInput)
+                    join_profile(comp, pr, LIP_T)
                 except:
                     pass
 
-        # ── Report ──
-        app.activeViewport.fit()
+        # ══════════════════════════════════════════════════════════
+        # STEP 4: M3 mounting holes (2 per side of channel)
+        # ══════════════════════════════════════════════════════════
+
+        hole_sk = comp.sketches.add(topP)
+        hole_sk.name = 'Mount Holes'
+        circles = hole_sk.sketchCurves.sketchCircles
+
+        hole_x_pos = (CLIP_W / 2 + BRKT_W / 2) / 2  # midpoint of side wall
+        for hx in [hole_x_pos, -hole_x_pos]:
+            circles.addByCenterRadius(p(hx, HOLE_Y1, 0), HOLE_R)
+            circles.addByCenterRadius(p(hx, HOLE_Y2, 0), HOLE_R)
+
+        hole_area = math.pi * HOLE_R**2
+        for pi_idx in range(hole_sk.profiles.count):
+            pr = hole_sk.profiles.item(pi_idx)
+            a = pr.areaProperties().area
+            if a < hole_area * 1.5:
+                try:
+                    cut_profile(comp, pr, BRKT_H + 0.02, flip=True)
+                except:
+                    pass
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 5: Fillets
+        # ══════════════════════════════════════════════════════════
+
+        fillet_count = 0
+        if body:
+            fillet_count = add_edge_fillets(comp, body, FILLET_STD)
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 6: Zoom and report
+        # ══════════════════════════════════════════════════════════
+
+        zoom_fit(app)
+
         ui.messageBox(
             'Fuse Holder Bracket created!\n\n'
-            f'Size: {BRKT_L * 10:.0f} × {BRKT_W * 10:.0f} × '
-            f'{BRKT_H * 10:.0f}mm\n'
-            f'Channel: {CLIP_W * 10:.0f}mm wide × '
-            f'{CLIP_D * 10:.0f}mm deep\n'
-            f'End walls: {END_WALL * 10:.0f}mm thick\n'
-            f'Mounting: 4× M3 holes (both sides of channel)\n\n'
-            'Qty needed: 1\n'
-            'Print flat, 40% infill.',
+            f'Size: {BRKT_L*10:.0f} × {BRKT_W*10:.0f} × {BRKT_H*10:.0f}mm\n'
+            f'Corner radius: {CR*10:.1f}mm\n\n'
+            f'Channel: {CLIP_W*10:.0f}mm wide × {CLIP_D*10:.0f}mm deep\n'
+            f'End walls: {END_WALL*10:.0f}mm thick\n'
+            f'Retention lips: {LIP_OVERHANG*10:.0f}mm × {LIP_T*10:.1f}mm\n\n'
+            f'Mounting: 4× M3 holes (2 per side)\n'
+            f'Fillets: {fillet_count} edges @ {FILLET_STD*10:.1f}mm\n\n'
+            'Print flat, 40% infill.\nQty: 1',
             'Mars Rover - Fuse Holder Bracket'
         )
 

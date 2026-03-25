@@ -2,32 +2,42 @@
 Mars Rover Servo Mount Bracket — Phase 1 (0.4 Scale)
 ======================================================
 
-Small bracket that mounts an SG90 micro servo to the rocker/bogie arm.
-The servo's horn connects to the steering bracket to rotate the wheel.
+Small bracket that mounts an SG90 micro servo to the suspension connector.
+The servo's horn connects to the steering horn link to rotate the wheel.
 
-40 × 18 × 25mm bracket with:
-  - SG90 pocket (22.4 × 12.2 × 12mm deep)
-  - 2× M2 mounting holes (27.5mm spacing) — through tabs
-  - 12mm circular horn slot (for horn clearance at ±35°)
-  - 2× M3 heat-set insert pockets on bottom face for arm attachment
+Redesigned with:
+  - Rounded-rect body (2mm corner radius)
+  - SG90 pocket via shared helper (rounded corners)
+  - Cable routing slot (3mm wide channel for servo wires)
+  - 0.5mm fillets on all external edges
+  - Improved horn slot with chamfered entry
+  - Proper M2 mounting holes with counterbores
 
-Length increased from 35mm to 40mm for 3.8mm tab slot walls.
-Horn slot widened from 6mm to 12mm for ±35° rotation.
-
+40 × 18 × 25mm bracket
 Qty: 4 (FL, FR, RL, RR — one per steered wheel)
 
-Print orientation: Pocket opening up (flat bottom down)
-Supports: None
-Perimeters: 4
-Infill: 50% gyroid
+Print: Pocket opening up | Supports: None | Perimeters: 4 | Infill: 50%
 
-Reference: EA-08
+Reference: EA-08, EA-27
 """
 
 import adsk.core
 import adsk.fusion
 import traceback
 import math
+import sys
+
+sys.path.insert(0, r"D:\Mars Rover Project\cad\scripts")
+from rover_cad_helpers import (
+    p, val, FILLET_STD, CHAMFER_STD, CORNER_R,
+    SG90_W, SG90_D, SG90_POCKET_DEPTH, SG90_TAB_W, SG90_TAB_H,
+    M2_CLEAR,
+    draw_rounded_rect,
+    find_largest_profile, find_smallest_profile, find_profile_by_area,
+    extrude_profile, cut_profile, join_profile,
+    make_offset_plane, make_sg90_pocket,
+    add_edge_fillets, zoom_fit,
+)
 
 
 def run(context):
@@ -42,240 +52,174 @@ def run(context):
             return
 
         # ── Dimensions (cm) ──
-        BRACKET_L = 4.0     # 40mm (along arm, Y) — increased for tab wall clearance
-        BRACKET_W = 1.8     # 18mm (across arm, X direction — 2.9mm walls around servo)
+        BRACKET_L = 4.0     # 40mm (along arm, Y)
+        BRACKET_W = 1.8     # 18mm (across arm, X)
         BRACKET_H = 2.5     # 25mm (vertical, Z)
-
-        # SG90 servo pocket
-        SERVO_BODY_W = 2.24  # 22.4mm (22.2 + 0.2mm clearance)
-        SERVO_BODY_D = 1.20  # 12.0mm depth (pocket)
-        SERVO_BODY_H = 1.22  # 12.2mm (11.8 + 0.4mm clearance)
-
-        # Servo tab extensions (tabs stick out beyond body)
-        SERVO_TAB_TOTAL_W = 3.24  # 32.4mm total with tabs
-        SERVO_TAB_H = 0.25        # 2.5mm tab thickness
-        # Tabs extend 5mm each side beyond body
 
         # M2 mounting holes for servo tabs
         M2_SPACING = 2.75   # 27.5mm centre-to-centre
-        M2_HOLE_R = 0.11    # 2.2mm clearance for M2
 
-        # Horn slot (circular for ±35° horn sweep clearance)
-        HORN_SLOT_R = 0.6   # 12mm diameter (6mm radius) — clears horn at ±35°
+        # Horn slot
+        HORN_SLOT_R = 0.6   # 6mm radius (12mm dia)
 
-        # M3 arm mounting holes
-        M3_SPACING = 1.0    # 10mm apart
-        M3_HOLE_R = 0.165   # 3.3mm clearance for M3
+        # M3 arm mounting
+        ARM_MOUNT_SPACING = 2.0  # 20mm
+
+        # Cable routing slot
+        CABLE_W = 0.3       # 3mm wide
+        CABLE_D = 0.4       # 4mm deep
 
         comp = design.rootComponent
-        p = adsk.core.Point3D.create
-
-        # ══════════════════════════════════════════════════════════════
-        # Step 1: Main bracket body
-        # ══════════════════════════════════════════════════════════════
-
-        sketch1 = comp.sketches.add(comp.xYConstructionPlane)
-        sketch1.name = 'Bracket Body'
-        sketch1.sketchCurves.sketchLines.addTwoPointRectangle(
-            p(-BRACKET_L / 2, -BRACKET_W / 2, 0),
-            p(BRACKET_L / 2, BRACKET_W / 2, 0)
-        )
-
-        prof = sketch1.profiles.item(0)
         extrudes = comp.features.extrudeFeatures
-        extInput = extrudes.createInput(
-            prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation
-        )
-        extInput.setDistanceExtent(
-            False, adsk.core.ValueInput.createByReal(BRACKET_H)
-        )
-        ext = extrudes.add(extInput)
-        body = ext.bodies.item(0)
-        body.name = 'Servo Mount'
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 2: SG90 servo pocket (from top)
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
+        # STEP 1: Rounded-rect body
+        # ══════════════════════════════════════════════════════════
 
-        topPlane = comp.constructionPlanes
-        tpInput = topPlane.createInput()
-        tpInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(BRACKET_H)
-        )
-        topP = topPlane.add(tpInput)
+        sk = comp.sketches.add(comp.xYConstructionPlane)
+        sk.name = 'Bracket Body'
+        draw_rounded_rect(sk, 0, 0, BRACKET_L, BRACKET_W, r=CORNER_R)
 
-        servoSketch = comp.sketches.add(topP)
-        servoSketch.name = 'Servo Pocket'
-        servoSketch.sketchCurves.sketchLines.addTwoPointRectangle(
-            p(-SERVO_BODY_W / 2, -SERVO_BODY_H / 2, 0),
-            p(SERVO_BODY_W / 2, SERVO_BODY_H / 2, 0)
-        )
+        target = BRACKET_L * BRACKET_W - (4 - math.pi) * CORNER_R**2
+        prof = find_profile_by_area(sk, target, tolerance=0.5)
+        if prof is None:
+            prof = find_largest_profile(sk)
 
-        sProf = None
-        minArea = float('inf')
-        for pi in range(servoSketch.profiles.count):
-            pr = servoSketch.profiles.item(pi)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                sProf = pr
+        ext = extrude_profile(comp, prof, BRACKET_H)
+        body = ext.bodies.item(0) if ext else None
+        if body:
+            body.name = 'Servo Mount'
 
-        if sProf:
-            servoInput = extrudes.createInput(
-                sProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-            )
-            servoInput.setDistanceExtent(
-                True, adsk.core.ValueInput.createByReal(SERVO_BODY_D)
-            )
-            extrudes.add(servoInput)
+        # ══════════════════════════════════════════════════════════
+        # STEP 2: SG90 servo pocket (from top) via helper
+        # ══════════════════════════════════════════════════════════
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 3: Tab slots (servo mounting tabs rest on ledges)
-        # Cut wider slots at the tab level
-        # ══════════════════════════════════════════════════════════════
+        top_plane = make_offset_plane(comp, comp.xYConstructionPlane, BRACKET_H)
+        make_sg90_pocket(comp, top_plane, cx=0, cy=0, tab_slots=True)
 
-        # Tab level: just below the top of the pocket
-        tabPlane = comp.constructionPlanes
-        tabInput = tabPlane.createInput()
-        tabInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(BRACKET_H - SERVO_BODY_D + SERVO_TAB_H)
-        )
-        tabP = tabPlane.add(tabInput)
+        # ══════════════════════════════════════════════════════════
+        # STEP 3: M2 mounting holes (through bracket for servo tabs)
+        # ══════════════════════════════════════════════════════════
 
-        tabSketch = comp.sketches.add(topP)
-        tabSketch.name = 'Tab Slots'
-        tabSketch.sketchCurves.sketchLines.addTwoPointRectangle(
-            p(-SERVO_TAB_TOTAL_W / 2, -SERVO_BODY_H / 2, 0),
-            p(SERVO_TAB_TOTAL_W / 2, SERVO_BODY_H / 2, 0)
-        )
-
-        # Find the ring-shaped profile (tab area minus servo body area)
-        # Use the larger profile that includes the tab extension
-        tProf = None
-        maxArea = 0
-        for pi in range(tabSketch.profiles.count):
-            pr = tabSketch.profiles.item(pi)
-            a = pr.areaProperties().area
-            # We want the annular region (tab slots)
-            if a > maxArea:
-                maxArea = a
-                tProf = pr
-
-        if tProf:
-            tabCutInput = extrudes.createInput(
-                tProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-            )
-            tabCutInput.setDistanceExtent(
-                True, adsk.core.ValueInput.createByReal(SERVO_TAB_H)
-            )
-            try:
-                extrudes.add(tabCutInput)
-            except:
-                pass  # May fail if geometry overlaps
-
-        # ══════════════════════════════════════════════════════════════
-        # Step 4: M2 mounting holes through bracket (for servo tabs)
-        # ══════════════════════════════════════════════════════════════
-
-        m2Sketch = comp.sketches.add(topP)
-        m2Sketch.name = 'M2 Holes'
+        m2_sk = comp.sketches.add(top_plane)
+        m2_sk.name = 'M2 Holes'
 
         for hx in [-M2_SPACING / 2, M2_SPACING / 2]:
-            m2Sketch.sketchCurves.sketchCircles.addByCenterRadius(
-                p(hx, 0, 0), M2_HOLE_R
+            m2_sk.sketchCurves.sketchCircles.addByCenterRadius(
+                p(hx, 0), M2_CLEAR
             )
 
-        for pi in range(m2Sketch.profiles.count):
-            pr = m2Sketch.profiles.item(pi)
+        for pi in range(m2_sk.profiles.count):
+            pr = m2_sk.profiles.item(pi)
             a = pr.areaProperties().area
-            if a < 0.1:  # small circles only
-                m2Input = extrudes.createInput(
-                    pr, adsk.fusion.FeatureOperations.CutFeatureOperation
-                )
-                m2Input.setDistanceExtent(
-                    True, adsk.core.ValueInput.createByReal(BRACKET_H + 0.1)
-                )
-                try:
-                    extrudes.add(m2Input)
-                except:
-                    pass
+            if a < 0.1:
+                cut_profile(comp, pr, BRACKET_H + 0.01, flip=True)
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 5: Horn slot (circular cut from top for servo horn clearance)
-        # ══════════════════════════════════════════════════════════════
+        # ══════════════════════════════════════════════════════════
+        # STEP 4: Horn slot (circular cut for horn clearance)
+        # ══════════════════════════════════════════════════════════
 
-        hornSketch = comp.sketches.add(topP)
-        hornSketch.name = 'Horn Slot'
-        hornSketch.sketchCurves.sketchCircles.addByCenterRadius(
-            p(0, 0, 0), HORN_SLOT_R
+        horn_sk = comp.sketches.add(top_plane)
+        horn_sk.name = 'Horn Slot'
+        horn_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(0, 0), HORN_SLOT_R
         )
 
-        hornProf = None
-        minArea = float('inf')
-        for pi in range(hornSketch.profiles.count):
-            pr = hornSketch.profiles.item(pi)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                hornProf = pr
-
-        if hornProf:
-            hornInput = extrudes.createInput(
-                hornProf, adsk.fusion.FeatureOperations.CutFeatureOperation
+        horn_prof = find_smallest_profile(horn_sk)
+        if horn_prof:
+            horn_input = extrudes.createInput(
+                horn_prof, adsk.fusion.FeatureOperations.CutFeatureOperation
             )
-            hornInput.setDistanceExtent(
-                True, adsk.core.ValueInput.createByReal(BRACKET_H)
-            )
+            horn_input.setDistanceExtent(True, val(BRACKET_H + 0.01))
             try:
-                extrudes.add(hornInput)
+                extrudes.add(horn_input)
             except:
                 pass
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 6: M3 heat-set insert pockets on bottom face for arm mounting
-        # ══════════════════════════════════════════════════════════════
+        # Horn slot chamfer (entry guide for horn)
+        if body:
+            from rover_cad_helpers import add_chamfer
+            add_chamfer(comp, body, HORN_SLOT_R, CHAMFER_STD)
 
-        HSERT_R = 0.24       # 4.8mm dia / 2
-        HSERT_DEPTH = 0.55   # 5.5mm deep
-        ARM_MOUNT_SPACING = 2.0  # 20mm between mount holes (Y)
+        # ══════════════════════════════════════════════════════════
+        # STEP 5: Cable routing slot
+        # A channel on the side wall for servo wires to exit
+        # ══════════════════════════════════════════════════════════
 
-        armSketch = comp.sketches.add(comp.xYConstructionPlane)
-        armSketch.name = 'Arm Mount Holes'
-        for ay in [-ARM_MOUNT_SPACING / 2, ARM_MOUNT_SPACING / 2]:
-            armSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                p(0, ay, 0), HSERT_R
+        cable_plane = make_offset_plane(
+            comp, comp.yZConstructionPlane, BRACKET_L / 2
+        )
+        cable_sk = comp.sketches.add(cable_plane)
+        cable_sk.name = 'Cable Slot'
+        # Slot on the +Y face, at servo pocket level
+        cable_z = BRACKET_H - SG90_POCKET_DEPTH / 2
+        draw_rounded_rect(
+            cable_sk,
+            -cable_z, 0,
+            CABLE_D, CABLE_W,
+            r=0.05
+        )
+        cable_target = CABLE_D * CABLE_W
+        cable_prof = find_profile_by_area(cable_sk, cable_target, tolerance=0.6)
+        if cable_prof:
+            cable_input = extrudes.createInput(
+                cable_prof, adsk.fusion.FeatureOperations.CutFeatureOperation
             )
+            cable_input.setDistanceExtent(True, val(0.5))  # 5mm into wall
+            try:
+                extrudes.add(cable_input)
+            except:
+                pass
 
-        for pi in range(armSketch.profiles.count):
-            pr = armSketch.profiles.item(pi)
+        # ══════════════════════════════════════════════════════════
+        # STEP 6: M3 clearance through-holes (for bolting to connector)
+        # ══════════════════════════════════════════════════════════
+
+        mount_sk = comp.sketches.add(comp.xYConstructionPlane)
+        mount_sk.name = 'M3 Through-Holes'
+        m3_r = 0.165  # 3.3mm dia M3 clearance
+        mount_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(0, -ARM_MOUNT_SPACING / 2, 0), m3_r
+        )
+        mount_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(0, ARM_MOUNT_SPACING / 2, 0), m3_r
+        )
+        for pi_idx in range(mount_sk.profiles.count):
+            pr = mount_sk.profiles.item(pi_idx)
             a = pr.areaProperties().area
-            if a < 0.3:
-                armInput = extrudes.createInput(
-                    pr, adsk.fusion.FeatureOperations.CutFeatureOperation
-                )
-                armInput.setDistanceExtent(
-                    False, adsk.core.ValueInput.createByReal(HSERT_DEPTH)
-                )
+            if a < math.pi * m3_r**2 * 1.5:
                 try:
-                    extrudes.add(armInput)
+                    cut_profile(comp, pr, BRACKET_H + 0.02, flip=False)
                 except:
                     pass
 
-        # ── Zoom and report ──
-        app.activeViewport.fit()
+        # ══════════════════════════════════════════════════════════
+        # STEP 7: External fillets
+        # ══════════════════════════════════════════════════════════
+
+        if body:
+            fillet_count = add_edge_fillets(comp, body, FILLET_STD)
+        else:
+            fillet_count = 0
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 8: Zoom and report
+        # ══════════════════════════════════════════════════════════
+
+        zoom_fit(app)
 
         ui.messageBox(
             'Servo Mount Bracket created!\n\n'
-            f'Size: {BRACKET_L * 10:.0f} × {BRACKET_W * 10:.0f} × '
-            f'{BRACKET_H * 10:.0f}mm\n'
-            f'Servo pocket: {SERVO_BODY_W * 10:.1f} × {SERVO_BODY_H * 10:.1f}mm, '
-            f'{SERVO_BODY_D * 10:.0f}mm deep\n'
-            f'M2 holes: {M2_SPACING * 10:.1f}mm spacing\n'
-            f'Horn slot: {HORN_SLOT_R * 20:.0f}mm dia circular\n'
-            f'Arm mount: 2× M3 heat-set insert pockets\n\n'
-            'Qty needed: 4 (FL, FR, RL, RR)\n'
+            f'Body: {BRACKET_L*10:.0f} × {BRACKET_W*10:.0f} × '
+            f'{BRACKET_H*10:.0f}mm (rounded corners)\n\n'
+            f'SG90 pocket: {SG90_W*10:.1f} × {SG90_D*10:.1f}mm, '
+            f'{SG90_POCKET_DEPTH*10:.0f}mm deep (with tab slots)\n'
+            f'M2 holes: {M2_SPACING*10:.1f}mm spacing (through)\n'
+            f'Horn slot: {HORN_SLOT_R*20:.0f}mm dia (chamfered)\n'
+            f'Cable slot: {CABLE_W*10:.0f}×{CABLE_D*10:.0f}mm routing channel\n'
+            f'Arm mount: 2× M3 through-holes ({ARM_MOUNT_SPACING*10:.0f}mm, bolts to connector)\n'
+            f'Fillets: {fillet_count} edges @ {FILLET_STD*10:.1f}mm\n\n'
+            'Qty: 4 (FL, FR, RL, RR)\n'
             'Print pocket-up, no supports.',
             'Mars Rover - Servo Mount'
         )

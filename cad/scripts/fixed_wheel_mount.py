@@ -2,21 +2,22 @@
 Mars Rover Fixed Wheel Mount — Phase 1 (0.4 Scale)
 =====================================================
 
-Simple bracket that bolts to the bogie arm and holds an N20 motor
-for the non-steered middle wheels. No steering pivot needed.
+Simple bracket that bolts to the middle wheel connector and holds an
+N20 motor for the non-steered middle wheels. No steering pivot needed.
 
-25 × 25 × 30mm rectangular block with:
-  - N20 motor clip pocket (from bottom, motor hangs below)
-  - 4mm horizontal shaft exit hole (through side wall toward wheel)
-  - 2× M3 heat-set insert pockets (top, for arm bolting from one side)
-  - Zip-tie slot across motor pocket opening for motor retention
+Redesigned with:
+  - Rounded-rect body (2mm corner radius)
+  - N20 motor clip via shared helper (rounded pocket)
+  - Reinforcement ribs between mount face and motor pocket
+  - 0.5mm fillets on all external edges
+  - Chamfered shaft exit hole
+  - Improved zip-tie retention slot geometry
 
+25 × 25 × 30mm body
 Qty: 2 (ML, MR — middle left, middle right)
 
 Print orientation: Large flat face down (25×25mm face)
-Supports: None
-Perimeters: 4
-Infill: 50% gyroid
+Supports: None | Perimeters: 4 | Infill: 50% gyroid
 
 Reference: EA-08
 """
@@ -25,6 +26,18 @@ import adsk.core
 import adsk.fusion
 import traceback
 import math
+import sys
+
+sys.path.insert(0, r"D:\Mars Rover Project\cad\scripts")
+from rover_cad_helpers import (
+    p, val, FILLET_STD, CHAMFER_STD, CORNER_R,
+    N20_W, N20_H, N20_D, N20_SHAFT_EXIT,
+    draw_rounded_rect,
+    find_largest_profile, find_smallest_profile, find_profile_by_area,
+    extrude_profile, cut_profile, join_profile,
+    make_offset_plane, make_n20_clip,
+    add_edge_fillets, add_triangular_gusset, zoom_fit,
+)
 
 
 def run(context):
@@ -43,205 +56,178 @@ def run(context):
         MOUNT_W = 2.5       # 25mm (across arm, X)
         MOUNT_H = 3.0       # 30mm (vertical, Z)
 
-        # N20 motor clip pocket
-        MOTOR_W = 1.22      # 12.2mm clip inner width
-        MOTOR_H = 1.02      # 10.2mm clip inner height
-        MOTOR_DEPTH = 2.5   # 25mm clip depth (holds 24mm motor+gearbox + 1mm clearance)
-        SHAFT_HOLE_R = 0.2  # 4mm shaft exit
+        # Shaft exit
+        SHAFT_HOLE_R = N20_SHAFT_EXIT  # 2mm radius (4mm hole)
 
-        # M3 bolt holes for arm mounting
-        BOLT_SPACING = 1.5  # 15mm between bolt centres
-        BOLT_R = 0.165      # 3.3mm clearance hole for M3
+        # M3 heat-set insert spacing
+        BOLT_SPACING = 1.6  # 16mm between bolt centres (matches middle_wheel_connector)
 
-        # Heat-set insert holes
-        INSERT_HOLE_R = 0.24  # 4.8mm dia for M3 heat-set insert
+        # Zip-tie slot
+        ZIPTIE_W = 0.35     # 3.5mm slot width
+        ZIPTIE_DEPTH = 0.2  # 2mm deep
+        ZIPTIE_Z = N20_D * 0.3  # 30% up from bottom
+
+        # Ribs
+        RIB_THICK = 0.15    # 1.5mm rib thickness
 
         comp = design.rootComponent
-        p = adsk.core.Point3D.create
-
-        # ══════════════════════════════════════════════════════════════
-        # Step 1: Main body block
-        # ══════════════════════════════════════════════════════════════
-
-        sketch1 = comp.sketches.add(comp.xYConstructionPlane)
-        sketch1.name = 'Mount Body'
-        sketch1.sketchCurves.sketchLines.addTwoPointRectangle(
-            p(-MOUNT_W / 2, -MOUNT_L / 2, 0),
-            p(MOUNT_W / 2, MOUNT_L / 2, 0)
-        )
-
-        prof = sketch1.profiles.item(0)
         extrudes = comp.features.extrudeFeatures
-        extInput = extrudes.createInput(
-            prof, adsk.fusion.FeatureOperations.NewBodyFeatureOperation
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 1: Rounded-rect body
+        # ══════════════════════════════════════════════════════════
+
+        sk = comp.sketches.add(comp.xYConstructionPlane)
+        sk.name = 'Mount Body'
+        draw_rounded_rect(sk, 0, 0, MOUNT_W, MOUNT_L, r=CORNER_R)
+
+        target = MOUNT_W * MOUNT_L - (4 - math.pi) * CORNER_R**2
+        prof = find_profile_by_area(sk, target, tolerance=0.5)
+        if prof is None:
+            prof = find_largest_profile(sk)
+
+        ext = extrude_profile(comp, prof, MOUNT_H)
+        body = ext.bodies.item(0) if ext else None
+        if body:
+            body.name = 'Fixed Wheel Mount'
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 2: N20 motor clip pocket (from bottom face, motor hangs below)
+        # ══════════════════════════════════════════════════════════
+
+        motor_result = make_n20_clip(comp, comp.xYConstructionPlane, cx=0, cy=0)
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 3: Shaft exit hole (horizontal through side wall)
+        # ══════════════════════════════════════════════════════════
+
+        SHAFT_EXIT_Z = N20_D / 2  # mid-height of motor pocket
+
+        shaft_plane = make_offset_plane(
+            comp, comp.yZConstructionPlane, -MOUNT_W / 2
         )
-        extInput.setDistanceExtent(
-            False, adsk.core.ValueInput.createByReal(MOUNT_H)
-        )
-        ext = extrudes.add(extInput)
-        body = ext.bodies.item(0)
-        body.name = 'Fixed Wheel Mount'
-
-        # ══════════════════════════════════════════════════════════════
-        # Step 2: Motor clip pocket (from bottom, motor hangs below)
-        # Cut rectangular pocket from bottom face upward
-        # ══════════════════════════════════════════════════════════════
-
-        motorSketch = comp.sketches.add(comp.xYConstructionPlane)
-        motorSketch.name = 'Motor Pocket'
-        motorSketch.sketchCurves.sketchLines.addTwoPointRectangle(
-            p(-MOTOR_W / 2, -MOTOR_H / 2, 0),
-            p(MOTOR_W / 2, MOTOR_H / 2, 0)
-        )
-
-        mProf = None
-        minArea = float('inf')
-        for pi in range(motorSketch.profiles.count):
-            pr = motorSketch.profiles.item(pi)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                mProf = pr
-
-        if mProf:
-            motorInput = extrudes.createInput(
-                mProf, adsk.fusion.FeatureOperations.CutFeatureOperation
-            )
-            motorInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(MOTOR_DEPTH)
-            )
-            extrudes.add(motorInput)
-
-        # ══════════════════════════════════════════════════════════════
-        # Step 3: Horizontal shaft exit hole through side wall
-        # Motor shaft exits laterally toward the wheel
-        # Cut from side face (YZ plane) through to motor pocket
-        # ══════════════════════════════════════════════════════════════
-
-        SHAFT_EXIT_Z = MOTOR_DEPTH / 2  # mid-height of motor pocket
-
-        shaftPlaneInput = comp.constructionPlanes.createInput()
-        shaftPlaneInput.setByOffset(
-            comp.yZConstructionPlane,
-            adsk.core.ValueInput.createByReal(-MOUNT_W / 2)
-        )
-        shaftPlane = comp.constructionPlanes.add(shaftPlaneInput)
-
-        shaftSketch = comp.sketches.add(shaftPlane)
-        shaftSketch.name = 'Shaft Exit'
-        # On YZ plane: sketch X -> -Z world, sketch Y -> Y world
-        shaftSketch.sketchCurves.sketchCircles.addByCenterRadius(
+        shaft_sk = comp.sketches.add(shaft_plane)
+        shaft_sk.name = 'Shaft Exit'
+        shaft_sk.sketchCurves.sketchCircles.addByCenterRadius(
             p(-SHAFT_EXIT_Z, 0, 0), SHAFT_HOLE_R
         )
 
-        sProf = None
-        minArea = float('inf')
-        for pi in range(shaftSketch.profiles.count):
-            pr = shaftSketch.profiles.item(pi)
-            a = pr.areaProperties().area
-            if a < minArea:
-                minArea = a
-                sProf = pr
-
-        if sProf:
-            shaftInput = extrudes.createInput(
-                sProf, adsk.fusion.FeatureOperations.CutFeatureOperation
+        shaft_prof = find_smallest_profile(shaft_sk)
+        if shaft_prof:
+            shaft_input = extrudes.createInput(
+                shaft_prof, adsk.fusion.FeatureOperations.CutFeatureOperation
             )
-            shaftInput.setDistanceExtent(
-                True, adsk.core.ValueInput.createByReal(MOUNT_W)
-            )
+            shaft_input.setDistanceExtent(True, val(MOUNT_W))
             try:
-                extrudes.add(shaftInput)
+                extrudes.add(shaft_input)
             except:
                 pass
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 4: M3 heat-set insert pockets (from top, for arm bolting)
-        # 4.8mm dia, 5.5mm deep — bolt from one side only
-        # ══════════════════════════════════════════════════════════════
+        # Shaft exit chamfer (entry guide)
+        if body:
+            shaft_edges = adsk.core.ObjectCollection.create()
+            for ei in range(body.edges.count):
+                edge = body.edges.item(ei)
+                geom = edge.geometry
+                if isinstance(geom, adsk.core.Circle3D):
+                    if abs(geom.radius - SHAFT_HOLE_R) < 0.02:
+                        shaft_edges.add(edge)
 
-        topPlane = comp.constructionPlanes
-        tpInput = topPlane.createInput()
-        tpInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(MOUNT_H)
+            if shaft_edges.count > 0:
+                try:
+                    cham = comp.features.chamferFeatures
+                    cham_in = cham.createInput2()
+                    cham_in.chamferEdgeSets.addEqualDistanceChamferEdgeSet(
+                        shaft_edges, val(CHAMFER_STD), True
+                    )
+                    cham.add(cham_in)
+                except:
+                    pass
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 4: M3 clearance through-holes (for bolting to connector)
+        # ══════════════════════════════════════════════════════════
+
+        top_plane = make_offset_plane(comp, comp.xYConstructionPlane, MOUNT_H)
+        mount_sk = comp.sketches.add(top_plane)
+        mount_sk.name = 'M3 Through-Holes'
+        m3_r = 0.165  # 3.3mm dia M3 clearance
+        mount_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(0, -BOLT_SPACING / 2, 0), m3_r
         )
-        topP = topPlane.add(tpInput)
+        mount_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(0, BOLT_SPACING / 2, 0), m3_r
+        )
+        for pi_idx in range(mount_sk.profiles.count):
+            pr = mount_sk.profiles.item(pi_idx)
+            a = pr.areaProperties().area
+            if a < math.pi * m3_r**2 * 1.5:
+                try:
+                    cut_profile(comp, pr, MOUNT_H + 0.02, flip=True)
+                except:
+                    pass
 
-        boltSketch = comp.sketches.add(topP)
-        boltSketch.name = 'Arm Mount Holes'
+        # ══════════════════════════════════════════════════════════
+        # STEP 5: Zip-tie slot across motor pocket for retention
+        # ══════════════════════════════════════════════════════════
 
-        for by in [-BOLT_SPACING / 2, BOLT_SPACING / 2]:
-            boltSketch.sketchCurves.sketchCircles.addByCenterRadius(
-                p(0, by, 0), INSERT_HOLE_R
+        zt_plane = make_offset_plane(comp, comp.xYConstructionPlane, ZIPTIE_Z)
+        zt_sk = comp.sketches.add(zt_plane)
+        zt_sk.name = 'Zip Tie Slot'
+
+        # Rounded slot running across the body in X direction
+        draw_rounded_rect(zt_sk, 0, 0, MOUNT_W + 0.02, ZIPTIE_W, r=0.05)
+
+        zt_target = (MOUNT_W + 0.02) * ZIPTIE_W
+        zt_prof = find_profile_by_area(zt_sk, zt_target, tolerance=0.6)
+        if zt_prof is None:
+            zt_prof = find_largest_profile(zt_sk)
+        cut_profile(comp, zt_prof, ZIPTIE_DEPTH, flip=True)
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 6: Reinforcement ribs (2x diagonal gussets)
+        # Connect top mount face to motor pocket walls
+        # ══════════════════════════════════════════════════════════
+
+        # Side gussets on XZ midplane
+        mid_plane = make_offset_plane(comp, comp.xZConstructionPlane, 0)
+        for sign in [-1, 1]:
+            x_base = sign * (MOUNT_W / 2 - RIB_THICK)
+            add_triangular_gusset(
+                comp, mid_plane,
+                x_base, N20_D,              # motor pocket top, near wall
+                x_base, MOUNT_H,            # mount face top
+                sign * N20_W / 2, N20_D,    # motor pocket corner
+                RIB_THICK,
             )
 
-        for pi in range(boltSketch.profiles.count):
-            pr = boltSketch.profiles.item(pi)
-            a = pr.areaProperties().area
-            if a < 0.3:
-                bInput = extrudes.createInput(
-                    pr, adsk.fusion.FeatureOperations.CutFeatureOperation
-                )
-                bInput.setDistanceExtent(
-                    True, adsk.core.ValueInput.createByReal(0.55)  # 5.5mm
-                )
-                try:
-                    extrudes.add(bInput)
-                except:
-                    pass
+        # ══════════════════════════════════════════════════════════
+        # STEP 7: External fillets
+        # ══════════════════════════════════════════════════════════
 
-        # ══════════════════════════════════════════════════════════════
-        # Step 5: Zip-tie slot across motor pocket opening for retention
-        # 3mm wide × 2mm deep slot on each side of pocket
-        # ══════════════════════════════════════════════════════════════
+        if body:
+            fillet_count = add_edge_fillets(comp, body, FILLET_STD)
+        else:
+            fillet_count = 0
 
-        ZIPTIE_W = 0.35      # 3.5mm slot width
-        ZIPTIE_DEPTH = 0.2   # 2mm deep into wall
-        ZIPTIE_Z = MOTOR_DEPTH * 0.3  # 30% up from bottom
+        # ══════════════════════════════════════════════════════════
+        # STEP 8: Zoom and report
+        # ══════════════════════════════════════════════════════════
 
-        ztPlaneInput = comp.constructionPlanes.createInput()
-        ztPlaneInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(ZIPTIE_Z)
-        )
-        ztPlane = comp.constructionPlanes.add(ztPlaneInput)
-
-        ztSketch = comp.sketches.add(ztPlane)
-        ztSketch.name = 'Zip Tie Slot'
-        # Slot runs across the Y-axis at the motor pocket walls
-        ztSketch.sketchCurves.sketchLines.addTwoPointRectangle(
-            p(-MOUNT_W / 2, -ZIPTIE_W / 2, 0),
-            p(MOUNT_W / 2, ZIPTIE_W / 2, 0)
-        )
-
-        for pi in range(ztSketch.profiles.count):
-            pr = ztSketch.profiles.item(pi)
-            a = pr.areaProperties().area
-            if a < 1.0:
-                ztInput = extrudes.createInput(
-                    pr, adsk.fusion.FeatureOperations.CutFeatureOperation
-                )
-                ztInput.setDistanceExtent(
-                    True, adsk.core.ValueInput.createByReal(ZIPTIE_DEPTH)
-                )
-                try:
-                    extrudes.add(ztInput)
-                except:
-                    pass
-
-        # ── Zoom and report ──
-        app.activeViewport.fit()
+        zoom_fit(app)
 
         ui.messageBox(
             'Fixed Wheel Mount created!\n\n'
-            f'Size: {MOUNT_W * 10:.0f} × {MOUNT_L * 10:.0f} × '
-            f'{MOUNT_H * 10:.0f}mm\n'
-            f'Motor pocket: {MOTOR_W * 10:.1f} × {MOTOR_H * 10:.1f}mm, '
-            f'{MOTOR_DEPTH * 10:.0f}mm deep\n'
-            f'Shaft hole: {SHAFT_HOLE_R * 20:.0f}mm horizontal\n'
-            f'Arm mount: 2× M3 heat-set insert pockets\n'
-            f'Motor retention: zip-tie slot\n\n'
+            f'Body: {MOUNT_W*10:.0f} × {MOUNT_L*10:.0f} × {MOUNT_H*10:.0f}mm '
+            f'(rounded corners, {CORNER_R*10:.0f}mm radius)\n\n'
+            f'N20 motor pocket: {N20_W*10:.1f} × {N20_H*10:.1f}mm, '
+            f'{N20_D*10:.0f}mm deep (rounded corners)\n'
+            f'Shaft hole: {SHAFT_HOLE_R*20:.0f}mm horizontal (chamfered)\n'
+            f'Arm mount: 2× M3 through-holes '
+            f'({BOLT_SPACING*10:.0f}mm, bolts to connector)\n'
+            f'Motor retention: zip-tie slot\n'
+            f'Reinforcement: 2× diagonal gussets\n'
+            f'Fillets: {fillet_count} edges @ {FILLET_STD*10:.1f}mm\n\n'
             'Qty needed: 2 (ML, MR)\n'
             'Print 25×25mm face down, no supports.',
             'Mars Rover - Fixed Wheel Mount'

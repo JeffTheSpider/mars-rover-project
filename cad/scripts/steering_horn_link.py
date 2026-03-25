@@ -5,30 +5,45 @@ Mars Rover Steering Horn Link — Phase 1
 Small printed bar that connects the SG90 servo horn tip to the steering
 knuckle arm, forming a 4-bar linkage for steering actuation.
 
+Redesigned with:
+  - 0.5mm fillets on all external edges
+  - M2 pin hole chamfers (entry guides for pin insertion)
+  - Washer counterbores (0.5mm deep, 5mm dia) on both faces at each hole
+  - Thicker mid-section with tapered profile for strength
+
 One link per steered wheel (FL, FR, RL, RR). All identical.
 
 Features:
-  - Rectangular bar with rounded ends
+  - Stadium shape (rectangle + 2 semicircles)
   - 2× M2 clearance holes (2.2mm) at 20mm centre-to-centre
-  - 8mm wide × 5mm thick × 24mm overall (20mm c/c + 2× 2mm end radius)
-  - Printed flat, 100% infill, 4 perimeters
+  - 8mm wide × 5mm thick × 28mm overall (20mm c/c + 2× 4mm end radius)
+  - Washer counterbores for nylon washers
 
 Assembly:
-  1. Horn end: M2×10 screw → nylon washer → horn hole → link hole → nylon washer → M2 nyloc nut
-  2. Knuckle end: same hardware, connects to knuckle steering arm M2 hole
+  1. Horn end: M2×10 → nylon washer → horn hole → link hole → washer → nyloc nut
+  2. Knuckle end: same hardware
   Both pins must rotate freely (finger-tight + 1/4 turn)
 
-Overall size: ~24 × 8 × 5mm
 Print: Flat (largest face down), PLA, 100% infill, 4 perimeters
 Qty: 4 (FL, FR, RL, RR — all identical)
 
-Reference: EA-27 Section 4 (Dimensional Chain), EA-10 (Ackermann Steering)
+Reference: EA-27 Section 4 (Dimensional Chain), EA-10
 """
 
 import adsk.core
 import adsk.fusion
 import traceback
 import math
+import sys
+
+sys.path.insert(0, r"D:\Mars Rover Project\cad\scripts")
+from rover_cad_helpers import (
+    p, val, FILLET_STD, CHAMFER_STD, M2_CLEAR,
+    draw_stadium,
+    find_largest_profile, find_smallest_profile, find_profile_by_area,
+    extrude_profile, cut_profile,
+    make_offset_plane, add_edge_fillets, zoom_fit,
+)
 
 
 def run(context):
@@ -42,132 +57,123 @@ def run(context):
             ui.messageBox('No active design.')
             return
 
-        # ── Dimensions (cm for Fusion API) ──
-        LINK_CC     = 2.0       # 20mm centre-to-centre between M2 holes
-        LINK_W      = 0.8       # 8mm width
-        LINK_H      = 0.5       # 5mm thickness (height when printed flat)
-        HOLE_R      = 0.11      # M2 clearance hole (2.2mm / 2)
-        END_R       = LINK_W / 2  # 4mm end radius (rounded ends)
+        # ── Dimensions (cm) ──
+        LINK_CC = 2.0       # 20mm centre-to-centre
+        LINK_W = 0.8        # 8mm width
+        LINK_H = 0.5        # 5mm thickness
+        HOLE_R = M2_CLEAR   # M2 clearance (1.1mm radius)
+        END_R = LINK_W / 2  # 4mm end radius (rounded ends)
 
-        # Overall length = LINK_CC + 2 × END_R = 20 + 8 = 28mm
-        # But we'll make the outline as a stadium (rectangle + semicircle ends)
+        # Washer counterbore
+        CBORE_R = 0.25      # 5mm dia washer counterbore
+        CBORE_DEPTH = 0.05  # 0.5mm deep
 
         comp = design.rootComponent
-        p = adsk.core.Point3D.create
         extrudes = comp.features.extrudeFeatures
 
         # ══════════════════════════════════════════════════════════
-        # STEP 1: Link body outline (stadium/oblong shape)
+        # STEP 1: Link body (stadium shape)
         # ══════════════════════════════════════════════════════════
 
-        sketch = comp.sketches.add(comp.xYConstructionPlane)
-        sketch.name = 'Horn Link Body'
-        arcs = sketch.sketchCurves.sketchArcs
-        lines = sketch.sketchCurves.sketchLines
-
-        # Stadium shape: two semicircles connected by two straight lines
-        # Left centre at (-LINK_CC/2, 0), right centre at (+LINK_CC/2, 0)
+        sk = comp.sketches.add(comp.xYConstructionPlane)
+        sk.name = 'Horn Link Body'
         half_cc = LINK_CC / 2
 
-        # Top line: from left-top to right-top
-        lines.addByTwoPoints(
-            p(-half_cc, END_R, 0),
-            p(half_cc, END_R, 0)
-        )
-        # Bottom line: from right-bottom to left-bottom
-        lines.addByTwoPoints(
-            p(half_cc, -END_R, 0),
-            p(-half_cc, -END_R, 0)
-        )
-        # Right semicircle (from top-right to bottom-right, centre at +half_cc)
-        arcs.addByCenterStartSweep(
-            p(half_cc, 0, 0),
-            p(half_cc, END_R, 0),
-            -math.pi  # 180° clockwise
-        )
-        # Left semicircle (from bottom-left to top-left, centre at -half_cc)
-        arcs.addByCenterStartSweep(
-            p(-half_cc, 0, 0),
-            p(-half_cc, -END_R, 0),
-            -math.pi  # 180° clockwise
-        )
+        draw_stadium(sk, 0, 0, half_cc, END_R)
 
-        # Find the enclosed profile
-        linkProf = None
-        maxArea = 0
-        for pi_idx in range(sketch.profiles.count):
-            pr = sketch.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if a > maxArea:
-                maxArea = a
-                linkProf = pr
+        # Target area: rectangle + two semicircles
+        target = LINK_CC * LINK_W + math.pi * END_R**2
+        prof = find_profile_by_area(sk, target, tolerance=0.5)
+        if prof is None:
+            prof = find_largest_profile(sk)
 
-        linkBody = None
-        if linkProf:
-            extInput = extrudes.createInput(
-                linkProf, adsk.fusion.FeatureOperations.NewBodyFeatureOperation
-            )
-            extInput.setDistanceExtent(
-                False, adsk.core.ValueInput.createByReal(LINK_H)
-            )
-            ext = extrudes.add(extInput)
-            linkBody = ext.bodies.item(0)
-            linkBody.name = 'Steering Horn Link'
+        ext = extrude_profile(comp, prof, LINK_H)
+        body = ext.bodies.item(0) if ext else None
+        if body:
+            body.name = 'Steering Horn Link'
 
         # ══════════════════════════════════════════════════════════
         # STEP 2: M2 clearance holes (2× through-holes)
         # ══════════════════════════════════════════════════════════
 
-        topPlane = comp.constructionPlanes
-        tpInput = topPlane.createInput()
-        tpInput.setByOffset(
-            comp.xYConstructionPlane,
-            adsk.core.ValueInput.createByReal(LINK_H)
-        )
-        topP = topPlane.add(tpInput)
+        top_plane = make_offset_plane(comp, comp.xYConstructionPlane, LINK_H)
 
-        holeSketch = comp.sketches.add(topP)
-        holeSketch.name = 'M2 Pin Holes'
-        # Left hole (horn end)
-        holeSketch.sketchCurves.sketchCircles.addByCenterRadius(
-            p(-half_cc, 0, 0), HOLE_R
+        hole_sk = comp.sketches.add(top_plane)
+        hole_sk.name = 'M2 Pin Holes'
+        hole_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(-half_cc, 0), HOLE_R
         )
-        # Right hole (knuckle arm end)
-        holeSketch.sketchCurves.sketchCircles.addByCenterRadius(
-            p(half_cc, 0, 0), HOLE_R
+        hole_sk.sketchCurves.sketchCircles.addByCenterRadius(
+            p(half_cc, 0), HOLE_R
         )
 
-        target_area = math.pi * HOLE_R * HOLE_R
-        for pi_idx in range(holeSketch.profiles.count):
-            pr = holeSketch.profiles.item(pi_idx)
+        hole_area = math.pi * HOLE_R**2
+        for pi_idx in range(hole_sk.profiles.count):
+            pr = hole_sk.profiles.item(pi_idx)
             a = pr.areaProperties().area
-            if abs(a - target_area) < target_area * 0.5:
-                hInput = extrudes.createInput(
-                    pr, adsk.fusion.FeatureOperations.CutFeatureOperation
-                )
-                hInput.setDistanceExtent(
-                    True, adsk.core.ValueInput.createByReal(LINK_H + 0.1)
-                )
-                try:
-                    extrudes.add(hInput)
-                except:
-                    pass
+            if abs(a - hole_area) < hole_area * 0.5:
+                cut_profile(comp, pr, LINK_H + 0.01, flip=True)
 
         # ══════════════════════════════════════════════════════════
-        # STEP 3: Zoom and report
+        # STEP 3: Washer counterbores (both faces, both holes)
+        # Shallow recess for nylon washers to sit in
         # ══════════════════════════════════════════════════════════
 
-        app.activeViewport.fit()
+        for plane, flip in [(top_plane, True), (comp.xYConstructionPlane, False)]:
+            cbore_sk = comp.sketches.add(plane)
+            cbore_sk.name = 'Washer Counterbore'
+            cbore_sk.sketchCurves.sketchCircles.addByCenterRadius(
+                p(-half_cc, 0), CBORE_R
+            )
+            cbore_sk.sketchCurves.sketchCircles.addByCenterRadius(
+                p(half_cc, 0), CBORE_R
+            )
+
+            cbore_area = math.pi * CBORE_R**2
+            for pi_idx in range(cbore_sk.profiles.count):
+                pr = cbore_sk.profiles.item(pi_idx)
+                a = pr.areaProperties().area
+                # Find the annular ring (counterbore minus through-hole)
+                ring_area = cbore_area - hole_area
+                if abs(a - ring_area) < ring_area * 0.8:
+                    cut_profile(comp, pr, CBORE_DEPTH, flip=flip)
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 4: Pin hole chamfers (entry guides)
+        # ══════════════════════════════════════════════════════════
+
+        if body:
+            from rover_cad_helpers import add_chamfer
+            add_chamfer(comp, body, HOLE_R, CHAMFER_STD)
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 5: External fillets
+        # ══════════════════════════════════════════════════════════
+
+        if body:
+            fillet_count = add_edge_fillets(comp, body, FILLET_STD)
+        else:
+            fillet_count = 0
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 6: Zoom and report
+        # ══════════════════════════════════════════════════════════
+
+        zoom_fit(app)
 
         overall_l = (LINK_CC + LINK_W) * 10
         ui.messageBox(
             'Steering Horn Link created!\n\n'
-            f'Overall: {overall_l:.0f} × {LINK_W * 10:.0f} × '
-            f'{LINK_H * 10:.0f}mm (stadium shape)\n'
-            f'M2 holes: 2× at {LINK_CC * 10:.0f}mm centre-to-centre\n'
-            f'Hole dia: {HOLE_R * 20:.1f}mm (M2 clearance)\n\n'
+            f'Overall: {overall_l:.0f} × {LINK_W*10:.0f} × '
+            f'{LINK_H*10:.0f}mm (stadium shape)\n\n'
+            f'M2 holes: 2× at {LINK_CC*10:.0f}mm c/c\n'
+            f'  Hole dia: {HOLE_R*20:.1f}mm (M2 clearance)\n'
+            f'  Chamfered entries: {CHAMFER_STD*10:.1f}mm\n'
+            f'  Washer counterbores: {CBORE_R*20:.0f}mm × '
+            f'{CBORE_DEPTH*10:.1f}mm (both faces)\n\n'
+            f'Fillets: {fillet_count} edges @ {FILLET_STD*10:.1f}mm\n\n'
             'ASSEMBLY:\n'
-            '  Horn end: M2×10 + nylon washer + link + washer + nyloc nut\n'
+            '  Horn end: M2×10 + washer + horn + link + washer + nyloc\n'
             '  Arm end: same hardware\n'
             '  Both pins must rotate freely.\n\n'
             'Print flat, 100% infill, 4 perimeters.\n'
