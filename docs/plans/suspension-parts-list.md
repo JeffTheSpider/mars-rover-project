@@ -60,13 +60,13 @@ Inspired by [jakkra/Mars-Rover](https://github.com/jakkra/Mars-Rover) and NASA [
 
 | # | Part | Qty | Description | Script |
 |---|------|-----|-------------|--------|
-| 9 | **Diff Bar Adapter** | 3 | Press-fit on 8mm diff bar rod, provides bearing seat | `diff_bar_adapter.py` |
+| 9 | **Differential Pivot Housing** | 1 | Body-mounted housing for diff bar pivot bearing | `differential_pivot_housing.py` |
 
 #### A4. Wheels
 
 | # | Part | Qty | Description | Script |
 |---|------|-----|-------------|--------|
-| 10 | **Rover Wheel V2** | 6 | 80mm OD, Perseverance-style curved spokes, 24 grousers | `rover_wheel_v2.py` (**NEW**) |
+| 10 | **Rover Wheel V3** | 6 | 80mm OD, Perseverance-style curved spokes, 24 grousers | `rover_wheel_v3.py` |
 | 11 | **Rover Tire** | 6 | TPU 95A tire (86mm OD, 70mm bore) — Phase 2 / friend's printer | `rover_tire.py` |
 
 #### A5. Body (not part of suspension, but connects to it)

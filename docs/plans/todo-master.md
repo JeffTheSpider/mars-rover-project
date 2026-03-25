@@ -2,7 +2,7 @@
 
 **Created**: 2026-03-15
 **Last Updated**: 2026-03-25
-**Status**: 95% design-complete. All software, firmware, docs, and CAD scripts done. 0% physically built. Next: printer setup, parts ordering, print campaign.
+**Status**: 98% design-complete. All software, firmware, docs, CAD scripts, and CAD redesign done. 29/29 STLs exported. 0% physically built. Next: printer setup, parts ordering, print campaign.
 
 ---
 
@@ -28,7 +28,7 @@
   - [x] Cross-reference EA-18 binary protocol for Phase 2
 
 ### 1.2 Cross-Reference Audit (DONE — 3 HIGH issues fixed, 3 MEDIUM noted, 5 LOW noted)
-- [x] Verify all 29 EAs (EA-00 through EA-28) reference each other correctly where dependent
+- [x] Verify all 31 EAs (EA-00 through EA-30) reference each other correctly where dependent
 - [x] Check EA-02 torque calcs match EA-05 weight budget values — consistent (34.2kg design weight)
 - [x] Check EA-03 power budget matches EA-02 motor selections — consistent (peak 24A = 6×4A stall)
 - [x] Check EA-06 cost breakdown matches all component selections — **fixed**: filament $10→$20
@@ -113,7 +113,7 @@
 
 ## 3. CAD & MECHANICAL (Fusion 360 + CTC Bizer)
 
-### 3.1 Fusion 360 CAD Scripts (39 scripts: 27 active + 4 deprecated + 6 reference + 2 superseded)
+### 3.1 Fusion 360 CAD Scripts — COMPLETE (CAD redesign v1.0.0-cad-redesign)
 - [x] Install Fusion 360 Personal + MCP-Link add-in
 - [x] Create parametric dimension script (`generate_rover_params.py`)
 - [x] Design body quadrants — `body_bottom_*.py` (FL/FR/RL/RR), `top_deck_tile.py`
@@ -129,10 +129,13 @@
 - [x] Design electronics — `electronics_tray.py`, `strain_relief.py`, `fuse_holder.py`, `switch_mount.py`
 - [x] Design calibration — `bearing_test.py`, `tube_socket_test.py`
 - [x] Create 6 reference models (N20, SG90, 608ZZ, ESP32, L298N, 2S LiPo)
-- [x] Create BatchExportAll script (28 STL exports)
+- [x] Create BatchExportAll script (29 STL exports)
 - [x] Create printer calibration script (`printer_calibration.py`, zeroed — needs real data)
-- [~] Run BatchExportAll to generate all 28 STLs (needs Fusion 360 session)
-- [ ] Remove 6 stale STLs from deprecated scripts
+- [x] Full CAD redesign: all scripts rewritten with fillets, chamfers, shared helpers (cad_helpers.py)
+- [x] Run BatchExportAll — 29/29 STLs exported successfully (arc direction bug fixed)
+- [x] EA-29 engineering documentation written (CAD redesign record)
+- [x] rover_assembly_v2.py created for full assembly visualization
+- [x] Git tagged v1.0.0-cad-redesign
 
 ### 3.2 Printer Setup & Calibration (CTC Bizer, not used in years)
 - [ ] Mechanical inspection (belts, rods, nozzle, bed)
@@ -143,7 +146,7 @@
 - [ ] Iterate up to 3× until snug push-fit achieved
 - [ ] Update `printer_calibration.py` with real measured values
 
-### 3.3 Print Campaign (~72 hrs, 28 unique parts × copies ≈ 76 pieces)
+### 3.3 Print Campaign (~72 hrs, 29 unique parts × copies ≈ 76 pieces)
 - [ ] Batch A: 1× Wheel + 1× Steering bracket (gate: motor D-shaft, bearing seat)
 - [ ] Batch B: 1× Servo mount + horn link + knuckle (gate: SG90 pocket, link geometry)
 - [ ] Batch C: 5× remaining wheels (gate: O-ring grooves, batch quality)
@@ -342,14 +345,14 @@
 - [x] Create simulation test suite (21 Gazebo scenarios: mobility, sensors, nav, terrain, safety)
 - [x] Create integration test: UART bridge round-trip (30 tests: NMEA codec, commands, odometry, streams)
 - [ ] Create integration test: full Nav2 stack in simulation
-- [x] Set up CI/CD for ROS2 packages (GitHub Actions: ESP32 compile, firmware tests, ROS2 build, lint, docs check EA-00..EA-28)
+- [x] Set up CI/CD for ROS2 packages (GitHub Actions: ESP32 compile, firmware tests, ROS2 build, lint, docs check EA-00..EA-29)
 - [ ] Performance benchmarks: YOLO FPS, EKF update rate, UART throughput
 
 ---
 
 ## 10. PROJECT MANAGEMENT
 
-- [x] Complete all 29 engineering analyses (EA-00 through EA-28)
+- [x] Complete all 31 engineering analyses (EA-00 through EA-30)
 - [x] Create Phase 1 firmware skeleton (all modules implemented)
 - [x] Create ROS2 package scaffolding (all 10 nodes implemented)
 - [x] Create PWA app
@@ -369,6 +372,10 @@
 - [x] Create EA-28 systems integration (42 cross-domain interfaces, 6 diagrams)
 - [x] Create open-source CAD reference (30+ models, 8 categories)
 - [x] Render 10 Mermaid diagrams to SVG (4 wiring + 6 integration)
+- [x] Complete CAD redesign: all scripts rewritten with fillets/chamfers/shared helpers, 29/29 STLs exported
+- [x] Create EA-29 CAD redesign engineering documentation
+- [x] Create rover_assembly_v2.py full assembly visualization script
+- [x] Tag v1.0.0-cad-redesign milestone
 - [~] Maintain this todo list as work progresses
 
 ---
@@ -377,21 +384,21 @@
 
 1. ~~**Software & docs**: Documentation, firmware, ROS2, PWA, simulation~~ **DONE**
 2. ~~**CAD scripts**: 39 Fusion 360 scripts, parametric dimensions, reference models~~ **DONE**
-3. ~~**Engineering audit**: 29 EAs consistent, 65+ stale refs fixed, EA-28 integration~~ **DONE**
-4. **NOW → Run BatchExportAll in Fusion 360** to generate 28 STLs
+3. ~~**Engineering audit**: 30 EAs consistent, 65+ stale refs fixed, EA-28 integration~~ **DONE**
+4. ~~**CAD redesign**: All scripts rewritten with fillets/chamfers/helpers, 29/29 STLs exported, EA-29 written~~ **DONE** (v1.0.0-cad-redesign)
 5. **NOW → Printer setup**: CTC Bizer calibration, bearing/tube socket test prints
 6. **NOW → Order parts**: 4 orders (~£153), filament first for calibration
 7. **After calibration + filament**: Print campaign (~72 hrs, 13 batches with test-fit gates)
 8. **After electronics arrive**: Bench test (flash ESP32, L298N 3.3V test, servo/motor check)
 9. **After all printed + tested**: Mechanical assembly (8 stages, 6-8 hrs)
 10. **FIRST DRIVE**: 10 acceptance tests (EA-21), all 3 steering modes
-11. **Post-drive**: Tuning, EA-29 lessons learned, firmware iteration
+11. **Post-drive**: Tuning, lessons learned, firmware iteration
 12. **Phase 2**: Jetson, sensors, Nav2, YOLO, full autonomy, 1.0× scale
 13. **Phase 3**: Metal chassis (long-term)
 
 ---
 
 *Total items: ~200+ tasks across 10 categories*
-*Software/documentation/CAD: ~95% complete*
+*Software/documentation/CAD: ~98% complete (CAD redesign done, 29/29 STLs exported)*
 *Hardware/physical build: 0% — next milestone is printer calibration + parts ordering*
 *See `docs/plans/pre-print-checklist.md` (v3.0) for operational print workflow*

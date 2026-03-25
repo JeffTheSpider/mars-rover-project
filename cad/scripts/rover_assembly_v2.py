@@ -317,15 +317,12 @@ def import_stl_to_component(app, comp, stl_path, name):
     if not os.path.exists(stl_path):
         return None
 
-    importMgr = app.importManager
-    stlOpts = importMgr.createSTLImportOptions(stl_path)
-    stlOpts.isViewFit = False
-
     try:
-        importMgr.importToTarget(stlOpts, comp)
-        # Return the last mesh body added
-        if comp.meshBodies.count > 0:
-            mesh = comp.meshBodies.item(comp.meshBodies.count - 1)
+        # MeshBodies.add() is the correct API for STL import
+        # STLs exported from Fusion 360 are in mm; MillimeterMeshUnit scales correctly to Fusion's internal cm
+        mesh_list = comp.meshBodies.add(stl_path, adsk.fusion.MeshUnits.MillimeterMeshUnit)
+        if mesh_list and mesh_list.count > 0:
+            mesh = mesh_list.item(0)
             mesh.name = name
             return mesh
     except:
@@ -348,6 +345,9 @@ def run(context):
         if not design:
             ui.messageBox('No active design.')
             return
+
+        # Switch to direct design mode (avoids baseFeature requirement for mesh import)
+        design.designType = adsk.fusion.DesignTypes.DirectDesignType
 
         rootComp = design.rootComponent
         imported = 0

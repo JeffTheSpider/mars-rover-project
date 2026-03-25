@@ -128,7 +128,8 @@ Gather everything before starting. Missing a tool mid-stage is frustrating.
 ## Stage 3: Bogie Arms x2 -- left and right (~20 min)
 
 ### Parts per bogie:
-- 1x Bogie arm (bogie_arm.py)
+- 1x Bogie pivot connector (bogie_pivot_connector.py)
+- 2x 8mm steel tube sections (cut to length per EA-25)
 - 1x 608ZZ bearing (centre pivot)
 - 2x Wheel sub-assemblies (middle + rear)
 
@@ -237,8 +238,8 @@ All 4 steered wheels follow the same assembly (FL, FR, RL, RR).*
 ## Stage 6: Rocker-Bogie Suspension x2 -- left and right (~30 min)
 
 ### Parts per side:
-- 1x Rocker arm front half (rocker_arm.py)
-- 1x Rocker arm rear half (rocker_arm.py)
+- 1x Rocker hub connector (rocker_hub_connector.py)
+- 2x 8mm steel tube sections (front + rear rocker tubes per EA-25)
 - 1x Bogie arm sub-assembly (from Stage 3)
 - 1x Front wheel assembly (from Stage 5)
 - 1x Fixed wheel mount (fixed_wheel_mount.py) -- for rear-most steered wheel

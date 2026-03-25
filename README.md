@@ -2,7 +2,7 @@
 
 A Mars rover-inspired outdoor robot designed for garden and park use. Features NASA-style rocker-bogie suspension, Ackermann steering, AI-powered navigation, robotic arms, solar charging, and a coffee table mode for stationary use.
 
-**Status:** Design phase complete (29 engineering analyses, EA-00 through EA-28). All software scaffolded, awaiting hardware for validation.
+**Status:** Design phase complete (31 engineering analyses, EA-00 through EA-30). CAD redesign complete (29 STLs). All software scaffolded, awaiting hardware for validation.
 
 ## Key Specifications
 
@@ -55,7 +55,7 @@ The ESP32-S3 handles real-time motor control and sensor reading. The Jetson runs
 ```
 Mars Rover Project/
   docs/
-    engineering/          # 29 engineering analysis documents (EA-00 to EA-28)
+    engineering/          # 31 engineering analysis documents (EA-00 to EA-30)
     plans/                # Master design document, task tracking
     references/           # Research notes (3D printing, ROS2)
     datasheets/           # Component datasheets
@@ -117,6 +117,8 @@ Mars Rover Project/
 | EA-26 | Suspension Design Package (diff mechanism, steering knuckles, parametric ratios) |
 | EA-27 | Steering System Design (horn link 4-bar linkage, hard stops, clearance envelope) |
 | EA-28 | Systems Integration (42 cross-domain interfaces, assembly DAG, integration test plan) |
+| EA-29 | CAD Redesign (print-ready Phase 1 parts, shared helpers, 29 STLs, error log) |
+| EA-30 | CAD Testing Plan (calibration prints, interface validation, go/no-go checklist) |
 
 ## Key Features
 

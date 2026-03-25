@@ -16,7 +16,7 @@ Rapid grep-based scan for common stale values across the project. Much faster th
 6. **Stale printer**: Grep for `Ender 3|PETG` in Phase 1 context — should be CTC Bizer / PLA
 7. **Rod count**: Grep for `1m rod|1 rod|1x.*rod` — should be 2x 1m rods
 8. **Stale component dims**: Grep for `69.{0,5}mm.*ESP|ESP.*69|37mm.*motor|motor.*37mm|70.{0,5}35.{0,5}18.*lipo` — should be ESP32 63mm, N20 24mm, LiPo 86×34×19mm
-9. **Script count**: Grep for `33 CAD|33 script` — should be 39 (27 active + 4 deprecated + 6 reference + 2 superseded)
+9. **Script count**: Grep for `33 CAD|33 script` — should be 45 total (23 active part scripts + 4 deprecated + 6 reference + 2 superseded + 1 shared module + 9 utilities)
 
 ## Output Format
 

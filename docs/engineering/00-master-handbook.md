@@ -2,7 +2,7 @@
 
 **Document**: EA-00
 **Date**: 2026-03-15
-**Purpose**: Comprehensive reference compiling all engineering analyses (EA-01 through EA-28) into one authoritative document. Summarises key specifications, decisions, and cross-references for the Mars Rover Garden Robot project.
+**Purpose**: Comprehensive reference compiling all engineering analyses (EA-01 through EA-30) into one authoritative document. Summarises key specifications, decisions, and cross-references for the Mars Rover Garden Robot project.
 **Status**: Living document -- updated as EAs are revised.
 
 ---

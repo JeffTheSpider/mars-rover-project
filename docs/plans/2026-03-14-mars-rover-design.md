@@ -4,7 +4,7 @@
 **Date**: 2026-03-14 (updated 2026-03-15)
 **Version**: 1.3
 **Status**: Design Phase — Engineering Analysis Complete, Phase 1 Firmware Started
-**Engineering References**: EA-00 through EA-28 in `docs/engineering/`
+**Engineering References**: EA-00 through EA-30 in `docs/engineering/`
 **Research References**: `docs/references/` (3D printing materials, ROS2 architecture)
 
 ---
@@ -1079,8 +1079,10 @@ All design decisions in this document are backed by detailed engineering analyse
 | EA-26 | Suspension Design Package | Full 18-section design: diff mechanism (bar+link+ball joints), steering knuckles, parametric ratios, DOF map |
 | EA-27 | Steering System Design | Complete physical steering mechanism: offset parallel drive, horn link 4-bar linkage, hard stops, clearance envelope |
 | EA-28 | Systems Integration | Cross-domain interface matrix (42 interfaces), assembly DAG, integration test plan, 6 diagrams |
+| EA-29 | CAD Redesign | Print-ready Phase 1 parts: shared helpers, fillets/chamfers, 29 STLs, error documentation |
+| EA-30 | CAD Testing Plan | Calibration prints, interface validation, structural load testing, tolerance adjustment, go/no-go checklist |
 
 ---
 
-*Document generated 2026-03-14. Updated to v1.2 on 2026-03-15 with EA-01 through EA-17 and Phase 1 firmware. Updated to v1.3 on 2026-03-25 with EA-00 through EA-28, CTC Bizer printer, PLA Phase 1, 9 bearings.*
+*Document generated 2026-03-14. Updated to v1.2 on 2026-03-15 with EA-01 through EA-17 and Phase 1 firmware. Updated to v1.3 on 2026-03-25 with EA-00 through EA-30, CTC Bizer printer, PLA Phase 1, 9 bearings, full CAD redesign.*
 *This is a living document — will be updated as the design evolves.*

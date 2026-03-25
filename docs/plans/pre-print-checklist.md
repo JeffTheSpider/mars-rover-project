@@ -5,73 +5,75 @@ Before committing ~72 hours of print time, verify every CAD script, dimension, a
 **Printer**: CTC Bizer (225×145×150mm bed, PLA, x3g via GPX)
 **Date**: 2026-03-25
 **Version**: v3.0 (post EA-28 systems integration)
-**Integration ref**: EA-28 (docs/engineering/28-systems-integration.md)
+**Integration ref**: EA-28 (docs/engineering/28-systems-integration.md), EA-29 (CAD redesign)
 
 ---
 
 ## 1. CAD Script Execution Verification
 
-28 STL exports from BatchExportAll across 6 stages.
+29 STL exports from BatchExportAll across 6 stages. **All 29/29 STLs exported successfully** (2026-03-25, arc direction bug fixed and all STLs regenerated).
 
 ### Stage 1: Calibration (3 parts)
 
 | # | Script | Export Name | Qty | Status |
 |---|--------|------------|-----|--------|
-| 1 | `CalibrationTestCard` | calibration_test_card.stl | 1 | Pending |
-| 2 | `BearingTestPiece` | bearing_test_piece.stl | 1 | Pending |
-| 3 | `TubeSocketTest` | tube_socket_test.stl | 1 | Pending |
+| 1 | `CalibrationTestCard` | calibration_test_card.stl | 1 | EXPORTED |
+| 2 | `BearingTestPiece` | bearing_test_piece.stl | 1 | EXPORTED |
+| 3 | `TubeSocketTest` | tube_socket_test.stl | 1 | EXPORTED |
 
 ### Stage 2: Wheels (2 scripts, 12 parts)
 
 | # | Script | Export Name | Qty | Status |
 |---|--------|------------|-----|--------|
-| 4 | `RoverWheelV3` | rover_wheel_v3.stl | 6 | Pending |
-| 5 | `RoverTire` | rover_tire.stl | 6 (TPU) | Pending (CTC Bizer cannot print TPU — use O-rings or order externally) |
+| 4 | `RoverWheelV3` | rover_wheel_v3.stl | 6 | EXPORTED |
+| 5 | `RoverTire` | rover_tire.stl | 6 (TPU) | EXPORTED (CTC Bizer cannot print TPU — use O-rings or order externally) |
 
 ### Stage 3: Steering & Mounts (5 scripts, 18 parts)
 
 | # | Script | Export Name | Qty | Status |
 |---|--------|------------|-----|--------|
-| 6 | `SteeringBracket` | steering_bracket.stl | 4 | Pending |
-| 7 | `FixedWheelMount` | fixed_wheel_mount.stl | 2 | Pending |
-| 8 | `ServoMount` | servo_mount.stl | 4 | Pending |
-| 9 | `SteeringKnuckle` | steering_knuckle.stl | 4 | Pending |
-| 10 | `SteeringHornLink` | steering_horn_link.stl | 4 | Pending |
+| 6 | `SteeringBracket` | steering_bracket.stl | 4 | EXPORTED |
+| 7 | `FixedWheelMount` | fixed_wheel_mount.stl | 2 | EXPORTED |
+| 8 | `ServoMount` | servo_mount.stl | 4 | EXPORTED |
+| 9 | `SteeringKnuckle` | steering_knuckle.stl | 4 | EXPORTED |
+| 10 | `SteeringHornLink` | steering_horn_link.stl | 4 | EXPORTED |
 
 ### Stage 4: Suspension Connectors (6 scripts, 23 parts)
 
 | # | Script | Export Name | Qty | Status |
 |---|--------|------------|-----|--------|
-| 11 | `RockerHubConnector` | rocker_hub_connector.stl | 2 | Pending |
-| 12 | `BogiePivotConnector` | bogie_pivot_connector.stl | 2 | Pending |
-| 13 | `FrontWheelConnector` | front_wheel_connector.stl | 4 | Pending |
-| 14 | `MiddleWheelConnector` | middle_wheel_connector.stl | 2 | Pending |
-| 15 | `DifferentialPivotHousing` | differential_pivot_housing.stl | 1 | Pending |
-| 16 | `CableClip` | cable_clip.stl | 12 | Pending |
+| 11 | `RockerHubConnector` | rocker_hub_connector.stl | 2 | EXPORTED |
+| 12 | `BogiePivotConnector` | bogie_pivot_connector.stl | 2 | EXPORTED |
+| 13 | `FrontWheelConnector` | front_wheel_connector.stl | 4 | EXPORTED |
+| 14 | `MiddleWheelConnector` | middle_wheel_connector.stl | 2 | EXPORTED |
+| 15 | `DifferentialPivotHousing` | differential_pivot_housing.stl | 1 | EXPORTED |
+| 16 | `CableClip` | cable_clip.stl | 12 | EXPORTED |
 
 ### Stage 5: Body (2 scripts, 8 parts)
 
 | # | Script | Export Name | Qty | Status |
 |---|--------|------------|-----|--------|
-| 17a | `BodyQuadrant` (FL) | body_quadrant_fl.stl | 1 | Pending |
-| 17b | `BodyQuadrant` (FR) | body_quadrant_fr.stl | 1 | Pending |
-| 17c | `BodyQuadrant` (RL) | body_quadrant_rl.stl | 1 | Pending (trimmed for bed fit) |
-| 17d | `BodyQuadrant` (RR) | body_quadrant_rr.stl | 1 | Pending (trimmed for bed fit) |
-| 18a | `TopDeck` (FL) | top_deck_fl.stl | 1 | Pending |
-| 18b | `TopDeck` (FR) | top_deck_fr.stl | 1 | Pending (phone mount bosses) |
-| 18c | `TopDeck` (RL) | top_deck_rl.stl | 1 | Pending |
-| 18d | `TopDeck` (RR) | top_deck_rr.stl | 1 | Pending |
+| 17a | `BodyQuadrant` (FL) | body_quadrant_fl.stl | 1 | EXPORTED |
+| 17b | `BodyQuadrant` (FR) | body_quadrant_fr.stl | 1 | EXPORTED |
+| 17c | `BodyQuadrant` (RL) | body_quadrant_rl.stl | 1 | EXPORTED (trimmed for bed fit) |
+| 17d | `BodyQuadrant` (RR) | body_quadrant_rr.stl | 1 | EXPORTED (trimmed for bed fit) |
+| 18a | `TopDeck` (FL) | top_deck_fl.stl | 1 | EXPORTED |
+| 18b | `TopDeck` (FR) | top_deck_fr.stl | 1 | EXPORTED (phone mount bosses) |
+| 18c | `TopDeck` (RL) | top_deck_rl.stl | 1 | EXPORTED |
+| 18d | `TopDeck` (RR) | top_deck_rr.stl | 1 | EXPORTED |
 
 ### Stage 6: Small Parts (3 scripts, 12 parts)
 
 | # | Script | Export Name | Qty | Status |
 |---|--------|------------|-----|--------|
-| 19 | `ElectronicsTray` | electronics_tray.stl | 1 | Pending |
-| 20 | `StrainReliefClip` | strain_relief_clip.stl | 10 | Pending |
-| 21 | `FuseHolderBracket` | fuse_holder_bracket.stl | 1 | Pending |
-| 22 | `SwitchMountPlate` | switch_mount_plate.stl | 1 | Pending |
+| 19 | `ElectronicsTray` | electronics_tray.stl | 1 | EXPORTED |
+| 20 | `StrainReliefClip` | strain_relief_clip.stl | 10 | EXPORTED |
+| 21 | `FuseHolderBracket` | fuse_holder_bracket.stl | 1 | EXPORTED |
+| 22 | `SwitchMountPlate` | switch_mount_plate.stl | 1 | EXPORTED |
 
-**Total: 28 STL exports, ~76 printed parts** (excluding TPU tires)
+**Total: 29 STL exports, ~76 printed parts** (excluding TPU tires)
+
+> **BatchExportAll Status**: COMPLETE (2026-03-25). All 29/29 STLs exported successfully after CAD redesign. Arc direction bug was fixed and all STLs regenerated. All scripts now include fillets, chamfers, and use shared `cad_helpers.py` module. See EA-29 for full redesign documentation.
 
 ---
 
@@ -253,4 +255,4 @@ After all parts printed, before assembly:
 
 ---
 
-*Pre-Print Checklist v3.0 — 2026-03-25 (post EA-28 systems integration)*
+*Pre-Print Checklist v3.1 — 2026-03-25 (post CAD redesign, 29/29 STLs exported, EA-29)*
