@@ -16,7 +16,7 @@ Dimensions:
   - Rod bore: 8.3mm (slight clearance on 8mm rod)
   - Clip outer: ~12mm × 8mm × 5mm
   - Wire channel: 5mm wide × 3mm deep (on back of clip)
-  - Snap gap: 3mm opening, flexes open to snap onto rod
+  - Snap gap: 4mm opening, flexes open to snap onto rod
 
 Print: Flat (gap facing up), PLA, 100% infill (small part, needs flex)
 Qty: 12 (3 per arm tube × 4 tubes)
@@ -52,10 +52,10 @@ def run(context):
 
         # ── Dimensions (cm) ──
         ROD_R = 0.415               # 4.15mm radius (8.3mm bore)
-        CLIP_WALL = 0.2             # 2mm wall around rod
+        CLIP_WALL = 0.15            # 1.5mm wall for PLA flex (2mm is too rigid for snap-fit over 8mm rod)
         CLIP_OUTER_R = ROD_R + CLIP_WALL   # 6.15mm outer radius
         CLIP_H = 0.5               # 5mm clip height (along rod)
-        SNAP_GAP = 0.3             # 3mm snap opening
+        SNAP_GAP = 0.4             # 4mm opening (needs flex to pass over 8mm rod)
         WIRE_W = 0.5               # 5mm wire channel width
         WIRE_D = 0.3               # 3mm wire channel depth
         GROOVE_WALL = 0.1          # 1mm wall on sides of groove
@@ -253,6 +253,7 @@ def run(context):
             'Mars Rover - Cable Clip'
         )
 
-    except:
+    except Exception as e:
+        print(f'  Warning: {e}')
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

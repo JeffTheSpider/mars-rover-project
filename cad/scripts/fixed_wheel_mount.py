@@ -92,16 +92,23 @@ def run(context):
             body.name = 'Fixed Wheel Mount'
 
         # ══════════════════════════════════════════════════════════
-        # STEP 2: N20 motor clip pocket (from bottom face, motor hangs below)
+        # STEP 2: N20 motor clip pocket (horizontal — shaft toward wheel)
+        # FIX C2: Motor pocket cut from side face (YZ plane) so motor
+        # sits horizontally with shaft pointing out in -X toward wheel.
         # ══════════════════════════════════════════════════════════
 
-        motor_result = make_n20_clip(comp, comp.xYConstructionPlane, cx=0, cy=0)
+        motor_entry_plane = make_offset_plane(
+            comp, comp.yZConstructionPlane, MOUNT_W / 2
+        )
+        motor_result = make_n20_clip(
+            comp, motor_entry_plane,
+            cx=0, cy=MOUNT_H / 2,  # centred on Y=0, mid-height Z
+        )
 
         # ══════════════════════════════════════════════════════════
-        # STEP 3: Shaft exit hole (horizontal through side wall)
+        # STEP 3: Shaft exit hole (through opposite side wall)
+        # Motor shaft exits through the -X face toward the wheel.
         # ══════════════════════════════════════════════════════════
-
-        SHAFT_EXIT_Z = N20_D / 2  # mid-height of motor pocket
 
         shaft_plane = make_offset_plane(
             comp, comp.yZConstructionPlane, -MOUNT_W / 2
@@ -109,7 +116,7 @@ def run(context):
         shaft_sk = comp.sketches.add(shaft_plane)
         shaft_sk.name = 'Shaft Exit'
         shaft_sk.sketchCurves.sketchCircles.addByCenterRadius(
-            p(-SHAFT_EXIT_Z, 0, 0), SHAFT_HOLE_R
+            p(0, MOUNT_H / 2, 0), SHAFT_HOLE_R
         )
 
         shaft_prof = find_smallest_profile(shaft_sk)
@@ -120,8 +127,8 @@ def run(context):
             shaft_input.setDistanceExtent(True, val(MOUNT_W))
             try:
                 extrudes.add(shaft_input)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: shaft exit cut failed: {e}')
 
         # Shaft exit chamfer (entry guide)
         if body:
@@ -141,22 +148,24 @@ def run(context):
                         shaft_edges, val(CHAMFER_STD), True
                     )
                     cham.add(cham_in)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: shaft exit chamfer failed: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 4: M3 clearance through-holes (for bolting to connector)
         # ══════════════════════════════════════════════════════════
 
+        # FIX C1: Bolt holes along X to match middle_wheel_connector's
+        # heat-set inserts (axis='x' in make_heat_set_pair)
         top_plane = make_offset_plane(comp, comp.xYConstructionPlane, MOUNT_H)
         mount_sk = comp.sketches.add(top_plane)
         mount_sk.name = 'M3 Through-Holes'
         m3_r = 0.165  # 3.3mm dia M3 clearance
         mount_sk.sketchCurves.sketchCircles.addByCenterRadius(
-            p(0, -BOLT_SPACING / 2, 0), m3_r
+            p(-BOLT_SPACING / 2, 0, 0), m3_r
         )
         mount_sk.sketchCurves.sketchCircles.addByCenterRadius(
-            p(0, BOLT_SPACING / 2, 0), m3_r
+            p(BOLT_SPACING / 2, 0, 0), m3_r
         )
         for pi_idx in range(mount_sk.profiles.count):
             pr = mount_sk.profiles.item(pi_idx)
@@ -164,8 +173,8 @@ def run(context):
             if a < math.pi * m3_r**2 * 1.5:
                 try:
                     cut_profile(comp, pr, MOUNT_H + 0.02, flip=True)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: M3 through-hole cut failed: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 5: Zip-tie slot across motor pocket for retention
@@ -233,6 +242,6 @@ def run(context):
             'Mars Rover - Fixed Wheel Mount'
         )
 
-    except:
+    except Exception:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

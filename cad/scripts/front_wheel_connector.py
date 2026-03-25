@@ -97,18 +97,23 @@ def run(context):
             body.name = 'Front Wheel Connector'
 
         # ══════════════════════════════════════════════════════════
-        # STEP 2: Tube socket (from top face, vertical)
+        # STEP 2: Tube socket (from side face, horizontal entry)
         # ══════════════════════════════════════════════════════════
 
-        top_plane = make_offset_plane(comp, comp.xYConstructionPlane, BODY_H)
+        # Tube socket on side face — rod enters horizontally from bogie/rocker arm.
+        # Socket bore faces +Y direction (arm rod arrives from +Y side).
+        # XZ plane normal is +Y. Offset to the +Y face of the body.
+        side_plane = make_offset_plane(comp, comp.xZConstructionPlane, BODY_H / 2)
 
-        tube_sk = comp.sketches.add(top_plane)
+        tube_sk = comp.sketches.add(side_plane)
         tube_sk.name = 'Tube Socket'
         tube_sk.sketchCurves.sketchCircles.addByCenterRadius(
-            p(0, BODY_D / 2), TUBE_BORE_R
+            p(BODY_D / 2, 0), TUBE_BORE_R
         )
 
         tube_prof = find_smallest_profile(tube_sk)
+        # flip=False on XZ-offset plane → extrude in +Y (outward). We want to cut
+        # inward (-Y), so use flip=True.
         cut_profile(comp, tube_prof, TUBE_DEPTH, flip=True)
 
         # Entry chamfer
@@ -119,13 +124,15 @@ def run(context):
         # STEP 3: M3 grub screw for tube retention
         # ══════════════════════════════════════════════════════════
 
-        grub_y = BODY_H - TUBE_DEPTH / 2
-        grub_plane = make_offset_plane(comp, comp.xYConstructionPlane, grub_y)
+        # Grub screw approaches from the top face, perpendicular to the
+        # horizontal tube bore axis. Positioned at mid-depth of tube engagement.
+        grub_plane_y = BODY_H / 2 - TUBE_DEPTH / 2
+        grub_plane = make_offset_plane(comp, comp.xZConstructionPlane, grub_plane_y)
 
         grub_sk = comp.sketches.add(grub_plane)
         grub_sk.name = 'Tube Grub'
         grub_sk.sketchCurves.sketchCircles.addByCenterRadius(
-            p(TUBE_BORE_R + WALL / 2, BODY_D / 2), GRUB_M3
+            p(BODY_D / 2, TUBE_BORE_R + WALL / 2), GRUB_M3
         )
 
         grub_prof = find_smallest_profile(grub_sk)
@@ -138,13 +145,16 @@ def run(context):
             )
             try:
                 extrudes.add(g_input)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 4: Steering bracket mount — 2× heat-set inserts
         # (front face, XY plane at Z=0)
         # ══════════════════════════════════════════════════════════
+
+        # NOTE: Heat-set insert faces (steering bracket on front, servo on side)
+        # must be re-verified once tube socket is reoriented to horizontal entry.
 
         make_heat_set_pair(
             comp, comp.xYConstructionPlane, STEER_BOLT_SPACING,
@@ -172,12 +182,12 @@ def run(context):
         wire_sk.name = 'Wire Exit'
         draw_rounded_rect(
             wire_sk,
-            cx=0, cy=0,
-            w=WIRE_W, h=0.02,  # thin slot at bottom edge
-            r=0.005
+            cx=0, cy=WIRE_H / 2,
+            w=WIRE_W, h=WIRE_H,
+            r=0.05
         )
 
-        wire_target = WIRE_W * 0.02
+        wire_target = WIRE_W * WIRE_H
         wire_prof = find_profile_by_area(wire_sk, wire_target, tolerance=0.8)
         if wire_prof is None:
             wire_prof = find_smallest_profile(wire_sk)
@@ -188,8 +198,8 @@ def run(context):
             w_input.setDistanceExtent(False, val(BODY_D))
             try:
                 extrudes.add(w_input)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 7: External fillets
@@ -225,6 +235,7 @@ def run(context):
             'Mars Rover - Front/Rear Wheel Connector'
         )
 
-    except:
+    except Exception as e:
+        print(f'  Warning: {e}')
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

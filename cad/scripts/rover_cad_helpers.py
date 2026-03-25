@@ -264,7 +264,8 @@ def extrude_profile(comp, profile, height, operation=None, symmetric=False):
         ext_input.setDistanceExtent(False, val(height))
     try:
         return extrudes.add(ext_input)
-    except:
+    except Exception as e:
+        print(f'  Warning: {e}')
         return None
 
 
@@ -289,7 +290,8 @@ def cut_profile(comp, profile, depth, flip=False):
     ext_input.setDistanceExtent(flip, val(depth))
     try:
         return extrudes.add(ext_input)
-    except:
+    except Exception as e:
+        print(f'  Warning: {e}')
         return None
 
 
@@ -430,8 +432,10 @@ def make_tube_socket(comp, sketch_plane, cx=0, cy=0,
             p(grub_cx, grub_cy), GRUB_M3
         )
         gprof = find_smallest_profile(s2)
+        # FIX M23: Limit grub depth to wall thickness only (not wall + bore_r
+        # which could punch through the opposite wall)
         result['grub_feature'] = cut_profile(
-            comp, gprof, TUBE_WALL + bore_r + 0.01, flip=True
+            comp, gprof, TUBE_WALL + 0.01, flip=True
         )
 
     return result
@@ -631,8 +635,8 @@ def add_edge_fillets(comp, body, radius=None, skip_circular=True):
         fillet_input.addConstantRadiusEdgeSet(edges, val(r), True)
         fillets.add(fillet_input)
         return edges.count
-    except:
-        pass
+    except Exception as e:
+        print(f'  Warning: batch fillet failed, falling back to one-at-a-time: {e}')
 
     # Fall back to one-at-a-time if batch fails
     for i in range(edges.count):
@@ -643,8 +647,8 @@ def add_edge_fillets(comp, body, radius=None, skip_circular=True):
             fillet_input.addConstantRadiusEdgeSet(single, val(r), True)
             fillets.add(fillet_input)
             count += 1
-        except:
-            pass
+        except Exception as e:
+            print(f'  Warning: fillet edge {i} skipped: {e}')
 
     return count
 
@@ -686,7 +690,8 @@ def _chamfer_circular_edge(comp, feature, target_radius, size, body=None):
     if search_body is None and feature is not None:
         try:
             search_body = feature.bodies.item(0)
-        except:
+        except Exception as e:
+            print(f'  Warning: {e}')
             return None
 
     if search_body is None:
@@ -709,7 +714,8 @@ def _chamfer_circular_edge(comp, feature, target_radius, size, body=None):
             edges, val(size), True
         )
         return chamfers.add(cham_input)
-    except:
+    except Exception as e:
+        print(f'  Warning: {e}')
         return None
 
 
@@ -812,8 +818,8 @@ def make_cylinder(comp, sketch_plane, cx, cy, radius, height,
     if ext and operation == adsk.fusion.FeatureOperations.NewBodyFeatureOperation:
         try:
             ext.bodies.item(0).name = name
-        except:
-            pass
+        except Exception as e:
+            print(f'  Warning: {e}')
     return ext
 
 

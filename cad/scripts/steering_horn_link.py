@@ -181,6 +181,6 @@ def run(context):
             'Mars Rover - Steering Horn Link'
         )
 
-    except:
+    except Exception:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

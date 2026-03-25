@@ -110,6 +110,11 @@ def run(context):
         # At 45° intervals on bolt PCD
         # ══════════════════════════════════════════════════════════
 
+        # NOTE: Minimum wall between bearing seat OD and insert pocket is 2.5mm.
+        # This is above the 2.4mm minimum but leaves no margin. Use 4+ perimeters
+        # and 60%+ infill. Insert heat-set inserts BEFORE bearing to avoid thermal
+        # distortion near the bearing seat.
+
         for angle_deg in [45, 135, 225, 315]:
             angle = math.radians(angle_deg)
             cx = BOLT_R_PCD * math.cos(angle)
@@ -119,6 +124,13 @@ def run(context):
         # ══════════════════════════════════════════════════════════
         # STEP 4: Hard stop slots at ±25° (rotation limiters)
         # ══════════════════════════════════════════════════════════
+
+        # Hard stop walls limit diff bar rotation to ±25 degrees.
+        # REQUIRES: A radial tab on rocker_hub_connector.py that sweeps between
+        # these walls. Currently the rocker hub has no such tab — add one as a
+        # small arm protruding radially from the hub body, positioned to engage
+        # these stop walls at the ±25 degree limits.
+        # TODO: Add matching hard stop tab to rocker_hub_connector.py
 
         stop_sk = comp.sketches.add(top_plane)
         stop_sk.name = 'Hard Stop Slots'
@@ -194,6 +206,7 @@ def run(context):
             'Mars Rover - Diff Pivot Housing'
         )
 
-    except:
+    except Exception as e:
+        print(f'  Warning: {e}')
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

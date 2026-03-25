@@ -149,15 +149,16 @@ def run(context):
         # Step 2: Edge lips (hang down from outer edges)
         # ══════════════════════════════════════════════════════════
 
+        # Lips extend OUTWARD beyond the tile edge to hang over the body wall
         outer_edges = []
         if TILE in ('FL', 'RL'):
-            outer_edges.append((tx_min, tx_min + LIP_W, ty_min, ty_max))
+            outer_edges.append((tx_min - LIP_W, tx_min, ty_min, ty_max))  # left outer
         if TILE in ('FR', 'RR'):
-            outer_edges.append((tx_max - LIP_W, tx_max, ty_min, ty_max))
+            outer_edges.append((tx_max, tx_max + LIP_W, ty_min, ty_max))  # right outer
         if TILE in ('FL', 'FR'):
-            outer_edges.append((tx_min, tx_max, ty_max - LIP_W, ty_max))
+            outer_edges.append((tx_min, tx_max, ty_max, ty_max + LIP_W))  # front outer
         if TILE in ('RL', 'RR'):
-            outer_edges.append((tx_min, tx_max, ty_min, ty_min + LIP_W))
+            outer_edges.append((tx_min, tx_max, ty_min - LIP_W, ty_min))  # rear outer
 
         for ex_min, ex_max, ey_min, ey_max in outer_edges:
             lip_sk = comp.sketches.add(comp.xYConstructionPlane)
@@ -212,8 +213,8 @@ def run(context):
                 c_in.setDistanceExtent(True, val(CLIP_H))
                 try:
                     extrudes.add(c_in)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # Step 4: Stiffening ribs (cross pattern, underside)
@@ -245,8 +246,8 @@ def run(context):
                 r_in.setDistanceExtent(True, val(RIB_DEPTH))
                 try:
                     extrudes.add(r_in)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # Step 5: Solar panel grid texture (cosmetic, top surface)
@@ -417,6 +418,6 @@ def run(context):
             f'Mars Rover - Top Deck {TILE}'
         )
 
-    except:
+    except Exception:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

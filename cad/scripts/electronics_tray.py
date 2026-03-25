@@ -3,7 +3,7 @@ Mars Rover Electronics Tray — Phase 1 (0.4 Scale)
 ====================================================
 
 Flat tray that sits inside the body frame and holds all electronics:
-  - ESP32-S3 DevKitC-1 (63×25mm, 4× M2.5 standoffs)
+  - ESP32-S3 DevKitC-1 (62.7×25.4mm, edge-clip cradle — NO mounting holes)
   - 2× L298N motor drivers (43×43mm, 4× M2.5 standoffs each)
   - LiPo battery cradle (86×34×19mm)
   - Wire routing U-channels
@@ -60,14 +60,19 @@ def run(context):
         FLOOR_H = 0.3       # 3mm floor
         WALL_T = 0.2        # 2mm walls
 
-        # ESP32 standoffs
+        # ESP32-S3 DevKitC-1 has NO mounting holes. Board is held by:
+        # - 4x corner posts (solid, no screw holes) sized to board outline
+        # - Edge retention clips at short edges (PCB slides in from one end)
+        # Board dimensions: 62.7 x 25.4mm (NOT 69mm)
+        # Board cradle: posts at corners, 62.7 x 25.4mm board slides in
         ESP32_X = 0.0
         ESP32_Y = 4.0
-        ESP32_DX = 3.0
-        ESP32_DY = 6.0
+        ESP32_DX = 2.54     # 25.4mm board width (corner post spacing)
+        ESP32_DY = 6.07     # 60.7mm (62.7mm board - 2mm inset for edge posts)
         STAND_H = 0.5       # 5mm standoff height
         STAND_R = 0.35      # 3.5mm radius
-        SCREW_R = 0.1       # 2.0mm dia (self-tap)
+        SCREW_R = 0.1       # M2 dia (used for L298N only; ESP32 posts are solid)
+        USB_OFFSET_X = 0.67  # USB-C is 6.7mm right of board centre on ESP32-S3
 
         # L298N drivers
         L298N_1_X = -3.5
@@ -148,7 +153,7 @@ def run(context):
         cut_profile(comp, h_prof, TRAY_H - FLOOR_H, flip=True)
 
         # ══════════════════════════════════════════════════════════
-        # Step 3: ESP32 standoffs (4×)
+        # Step 3: ESP32 retaining posts (4× solid, no screw holes)
         # ══════════════════════════════════════════════════════════
 
         esp_positions = [
@@ -159,7 +164,7 @@ def run(context):
         ]
 
         so_sk = comp.sketches.add(comp.xYConstructionPlane)
-        so_sk.name = 'ESP32 Standoffs'
+        so_sk.name = 'ESP32 Retaining Posts'
         for sx, sy in esp_positions:
             so_sk.sketchCurves.sketchCircles.addByCenterRadius(
                 p(sx, sy), STAND_R
@@ -195,10 +200,11 @@ def run(context):
                 join_profile(comp, pr, FLOOR_H + STAND_H)
 
         # ══════════════════════════════════════════════════════════
-        # Step 5: Screw holes in all standoffs
+        # Step 5: Screw holes in L298N standoffs only
+        #         (ESP32 posts are solid — board has no mounting holes)
         # ══════════════════════════════════════════════════════════
 
-        all_positions = list(esp_positions) + l298n_positions
+        all_positions = l298n_positions  # ESP32 posts are solid (no screw holes)
         so_top = make_offset_plane(
             comp, comp.xYConstructionPlane, FLOOR_H + STAND_H
         )
@@ -355,8 +361,8 @@ def run(context):
                 l_in.setDistanceExtent(True, val(WALL_T + 0.01))
                 try:
                     extrudes.add(l_in)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # Right wall exit
         right_plane = make_offset_plane(
@@ -378,8 +384,8 @@ def run(context):
                 r_in.setDistanceExtent(True, val(WALL_T + 0.01))
                 try:
                     extrudes.add(r_in)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # Rear wall exit
         rear_plane = make_offset_plane(
@@ -401,8 +407,8 @@ def run(context):
                 re_in.setDistanceExtent(True, val(WALL_T + 0.01))
                 try:
                     extrudes.add(re_in)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # Step 11: USB-C access cutout (front wall, for ESP32)
@@ -414,7 +420,7 @@ def run(context):
         usb_sk = comp.sketches.add(front_plane)
         usb_sk.name = 'USB-C Access'
         draw_rounded_rect(
-            usb_sk, ESP32_X, FLOOR_H + STAND_H,
+            usb_sk, ESP32_X + USB_OFFSET_X, FLOOR_H + STAND_H,
             USB_W, USB_H, r=0.05
         )
         usb_target = USB_W * USB_H
@@ -428,8 +434,8 @@ def run(context):
             u_in.setDistanceExtent(True, val(WALL_T + 0.01))
             try:
                 extrudes.add(u_in)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # Step 12: Corner gussets (4× triangular reinforcement)
@@ -449,7 +455,32 @@ def run(context):
             )
 
         # ══════════════════════════════════════════════════════════
-        # Step 13: External fillets
+        # Step 13: Body mounting holes (4× M3 at tray corners)
+        # ══════════════════════════════════════════════════════════
+
+        # 4x M3 clearance holes at tray corners for mounting to body floor
+        MOUNT_INSET = 0.5  # 5mm from corner
+        MOUNT_R = 0.165    # M3 clearance (3.3mm dia)
+
+        mount_sk = comp.sketches.add(top_plane)
+        mount_sk.name = 'Body Mount Holes'
+        mount_circles = mount_sk.sketchCurves.sketchCircles
+        for mx in [-TRAY_W / 2 + MOUNT_INSET, TRAY_W / 2 - MOUNT_INSET]:
+            for my in [-TRAY_L / 2 + MOUNT_INSET, TRAY_L / 2 - MOUNT_INSET]:
+                mount_circles.addByCenterRadius(p(mx, my), MOUNT_R)
+
+        mount_area = math.pi * MOUNT_R**2
+        for pi in range(mount_sk.profiles.count):
+            pr = mount_sk.profiles.item(pi)
+            a = pr.areaProperties().area
+            if a < mount_area * 1.5:
+                try:
+                    cut_profile(comp, pr, TRAY_H + 0.02, flip=True)
+                except Exception as e:
+                    print(f'  Warning: {e}')
+
+        # ══════════════════════════════════════════════════════════
+        # Step 14: External fillets
         # ══════════════════════════════════════════════════════════
 
         if body:
@@ -458,7 +489,7 @@ def run(context):
             fillet_count = 0
 
         # ══════════════════════════════════════════════════════════
-        # Step 14: Zoom and report
+        # Step 15: Zoom and report
         # ══════════════════════════════════════════════════════════
 
         zoom_fit(app)
@@ -468,20 +499,22 @@ def run(context):
             f'Tray: {TRAY_W*10:.0f} × {TRAY_L*10:.0f} × '
             f'{TRAY_H*10:.0f}mm (rounded corners)\n'
             f'Floor: {FLOOR_H*10:.0f}mm | Walls: {WALL_T*10:.0f}mm\n\n'
-            f'ESP32 standoffs: 4× ({STAND_H*10:.0f}mm, M2.5 screws)\n'
-            f'L298N standoffs: 8× (2 drivers)\n'
+            f'ESP32 retaining posts: 4× ({STAND_H*10:.0f}mm, solid — no holes)\n'
+            f'L298N standoffs: 8× (2 drivers, M2 screws)\n'
             f'LiPo cradle: {LIPO_W*10:.0f}×{LIPO_L*10:.0f}mm + strap posts\n'
             f'Wire channels: 6 ({CHANNEL_W*10:.0f}mm, U-profile)\n'
             f'Breadboard pocket: {BB_W*10:.0f}×{BB_L*10:.0f}mm (rounded)\n'
             f'Cable exits: 3× (rounded {EXIT_W*10:.0f}×{EXIT_H*10:.0f}mm)\n'
             f'USB-C access: {USB_W*10:.0f}×{USB_H*10:.0f}mm (front wall)\n'
             f'Corner gussets: 4× triangular\n'
+            f'Body mount: 4× M3 holes (corners, {MOUNT_INSET*10:.0f}mm inset)\n'
             f'Fillets: {fillet_count} edges @ {FILLET_STD*10:.1f}mm\n\n'
             'Print flat bottom down, 30% infill.\n'
             'Qty: 1',
             'Mars Rover - Electronics Tray'
         )
 
-    except:
+    except Exception as e:
+        print(f'  Warning: {e}')
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

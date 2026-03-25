@@ -114,8 +114,8 @@ def run(context):
         if ring_prof:
             try:
                 cut_profile(comp, ring_prof, BORE_CHAMFER, flip=True)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 4: M3 bolt holes with counterbores (diagonal corners)
@@ -139,8 +139,8 @@ def run(context):
             if a < hole_area * 1.5:
                 try:
                     cut_profile(comp, pr, PLATE_H + 0.02, flip=True)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # Counterbores (larger diameter, shallow from top)
         cb_sk = comp.sketches.add(topP)
@@ -161,8 +161,8 @@ def run(context):
             if a < cb_area * 1.5 and a > hole_area * 0.5:
                 try:
                     cut_profile(comp, pr, CB_D, flip=True)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 5: Fillets
@@ -193,6 +193,7 @@ def run(context):
             'Mars Rover - Switch Mount Plate'
         )
 
-    except:
+    except Exception as e:
+        print(f'  Warning: {e}')
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

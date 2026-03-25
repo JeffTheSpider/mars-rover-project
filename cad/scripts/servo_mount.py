@@ -51,6 +51,11 @@ def run(context):
             ui.messageBox('No active design.')
             return
 
+        # NOTE: For the steering 4-bar linkage to work, the servo output shaft height
+        # must match the steering knuckle arm height. Verify at assembly time that
+        # both the servo mount and steering bracket position these features at the
+        # same Z-level on the front_wheel_connector.
+
         # ── Dimensions (cm) ──
         BRACKET_L = 4.0     # 40mm (along arm, Y)
         BRACKET_W = 1.8     # 18mm (across arm, X)
@@ -61,6 +66,8 @@ def run(context):
 
         # Horn slot
         HORN_SLOT_R = 0.6   # 6mm radius (12mm dia)
+        # SG90 shaft is 6mm from edge, not centred on body
+        SHAFT_OFFSET = SG90_W / 2 - 0.6  # offset from body centre (cm)
 
         # M3 arm mounting
         ARM_MOUNT_SPACING = 2.0  # 20mm
@@ -121,8 +128,9 @@ def run(context):
 
         horn_sk = comp.sketches.add(top_plane)
         horn_sk.name = 'Horn Slot'
+        # SG90 shaft is NOT centred — offset by SHAFT_OFFSET in -X
         horn_sk.sketchCurves.sketchCircles.addByCenterRadius(
-            p(0, 0), HORN_SLOT_R
+            p(-SHAFT_OFFSET, 0), HORN_SLOT_R
         )
 
         horn_prof = find_smallest_profile(horn_sk)
@@ -133,8 +141,8 @@ def run(context):
             horn_input.setDistanceExtent(True, val(BRACKET_H + 0.01))
             try:
                 extrudes.add(horn_input)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: {e}')
 
         # Horn slot chamfer (entry guide for horn)
         if body:
@@ -168,8 +176,8 @@ def run(context):
             cable_input.setDistanceExtent(True, val(0.5))  # 5mm into wall
             try:
                 extrudes.add(cable_input)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 6: M3 clearance through-holes (for bolting to connector)
@@ -190,8 +198,8 @@ def run(context):
             if a < math.pi * m3_r**2 * 1.5:
                 try:
                     cut_profile(comp, pr, BRACKET_H + 0.02, flip=False)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 7: External fillets
@@ -224,6 +232,7 @@ def run(context):
             'Mars Rover - Servo Mount'
         )
 
-    except:
+    except Exception as e:
+        print(f'  Warning: {e}')
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

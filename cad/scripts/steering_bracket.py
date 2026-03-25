@@ -147,13 +147,24 @@ def run(context):
                 x2, y2 = corners[(i + 1) % 4]
                 sl.addByTwoPoints(p(x1, y1), p(x2, y2))
 
-        # Extrude stop walls
+        # Extrude stop walls DOWNWARD (-Z) from Z=0 so they protrude
+        # below the bracket body. The knuckle's hard stop tab sweeps
+        # between these walls from below.
         target_stop = STOP_WALL_W * STOP_WALL_THICK
         for pi in range(stopSketch.profiles.count):
             pr = stopSketch.profiles.item(pi)
             a = pr.areaProperties().area
             if abs(a - target_stop) < target_stop * 0.5:
-                join_profile(comp, pr, STOP_WALL_H)
+                # Use extrude_profile with JoinFeatureOperation directly,
+                # with setDistanceExtent(True, ...) to flip direction to -Z
+                ext_input = extrudes.createInput(
+                    pr, adsk.fusion.FeatureOperations.JoinFeatureOperation
+                )
+                ext_input.setDistanceExtent(True, val(STOP_WALL_H))
+                try:
+                    extrudes.add(ext_input)
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 4: M3 clearance through-holes (for bolting to connector)
@@ -174,8 +185,8 @@ def run(context):
             if a < math.pi * m3_r**2 * 1.5:
                 try:
                     cut_profile(comp, pr, BRACKET_H + 0.02, flip=True)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 5: External fillets
@@ -210,6 +221,7 @@ def run(context):
             'Mars Rover - Steering Bracket'
         )
 
-    except:
+    except Exception as e:
+        print(f'  Warning: {e}')
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

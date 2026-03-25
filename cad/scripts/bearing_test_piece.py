@@ -99,8 +99,8 @@ def run(context):
         # Add draft taper for easy bed release (2°)
         try:
             ext.taperAngle = val(math.radians(2))
-        except:
-            pass
+        except Exception as e:
+            print(f'  Warning: draft taper failed: {e}')
 
         body_ext = extrudes.add(ext)
         body = body_ext.bodies.item(0)
@@ -186,6 +186,6 @@ def run(context):
             'Mars Rover - Bearing Test'
         )
 
-    except:
+    except Exception:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

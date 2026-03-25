@@ -133,37 +133,37 @@ def run(context):
             cut_profile(comp, int_prof, BATT_H, flip=True)
 
         # ══════════════════════════════════════════════════════════
-        # STEP 3: Strap slots through side walls
+        # STEP 3: Strap slots through side walls (Y-facing)
         # ══════════════════════════════════════════════════════════
-
-        # Strap slots on both long sides (Y walls)
-        strap_plane = make_offset_plane(comp, comp.xYConstructionPlane, STRAP_Z)
-        strap_sk = comp.sketches.add(strap_plane)
-        strap_sk.name = 'Strap Slots'
-        sl = strap_sk.sketchCurves.sketchLines
+        # Sketch on XZ plane (offset to wall Y position), cut through
+        # wall in Y direction so velcro/zip-tie can thread through.
 
         for y_sign in [1, -1]:
-            y_outer = y_sign * OUTER_W / 2
-            y_inner = y_sign * (OUTER_W / 2 - WALL - 0.01)
-            # Use consistent ordering so addTwoPointRectangle works
-            y_min = min(y_outer, y_inner)
-            y_max = max(y_outer, y_inner)
+            y_wall = y_sign * OUTER_W / 2
+            strap_wall_plane = make_offset_plane(
+                comp, comp.xZConstructionPlane, y_wall
+            )
+            strap_sk = comp.sketches.add(strap_wall_plane)
+            strap_sk.name = f'Strap Slots {"+" if y_sign > 0 else "-"}Y'
+            sl = strap_sk.sketchCurves.sketchLines
 
             for x_off in [-STRAP_SPACING / 2, STRAP_SPACING / 2]:
+                # On XZ plane: X stays X, Z becomes the vertical axis
+                # Slot is STRAP_L wide (X) × STRAP_W tall (Z)
                 sl.addTwoPointRectangle(
-                    p(x_off - STRAP_L / 2, y_min, 0),
-                    p(x_off + STRAP_L / 2, y_max, 0)
+                    p(x_off - STRAP_L / 2, STRAP_Z, 0),
+                    p(x_off + STRAP_L / 2, STRAP_Z + STRAP_W, 0)
                 )
 
-        strap_target = STRAP_L * (WALL + 0.01)
-        for pi_idx in range(strap_sk.profiles.count):
-            pr = strap_sk.profiles.item(pi_idx)
-            a = pr.areaProperties().area
-            if abs(a - strap_target) < strap_target * 0.6:
-                try:
-                    cut_profile(comp, pr, STRAP_W, flip=False)
-                except:
-                    pass
+            strap_target = STRAP_L * STRAP_W
+            for pi_idx in range(strap_sk.profiles.count):
+                pr = strap_sk.profiles.item(pi_idx)
+                a = pr.areaProperties().area
+                if abs(a - strap_target) < strap_target * 0.6:
+                    try:
+                        cut_profile(comp, pr, WALL + 0.01, flip=(y_sign > 0))
+                    except Exception as e:
+                        print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 4: XT60 connector access cutout (front end wall)
@@ -190,8 +190,8 @@ def run(context):
         if xt_prof:
             try:
                 cut_profile(comp, xt_prof, XT60_H, flip=False)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 5: JST-XH balance lead exit (above XT60)
@@ -215,8 +215,8 @@ def run(context):
         if jst_prof:
             try:
                 cut_profile(comp, jst_prof, JST_H, flip=False)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 6: M3 mounting holes through floor (4 corners)
@@ -237,8 +237,8 @@ def run(context):
             if a < hole_area * 1.5:
                 try:
                     cut_profile(comp, pr, TOTAL_H + 0.02, flip=True)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 7: Corner gussets (interior corners, floor to wall)
@@ -268,8 +268,8 @@ def run(context):
                 if abs(a - gusset_target) < gusset_target * 0.6:
                     try:
                         join_profile(comp, pr, BATT_H)
-                    except:
-                        pass
+                    except Exception as e:
+                        print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 8: Fillets
@@ -305,6 +305,7 @@ def run(context):
             'Mars Rover - Battery Tray'
         )
 
-    except:
+    except Exception as e:
+        print(f'  Warning: {e}')
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

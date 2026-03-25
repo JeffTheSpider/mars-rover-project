@@ -114,8 +114,8 @@ def run(context):
         # Add slight draft taper for organic look (2°)
         try:
             ext_input.taperAngle = val(math.radians(-2))
-        except:
-            pass
+        except Exception as e:
+            print(f'  Warning: {e}')
 
         ext = extrudes.add(ext_input)
         body = ext.bodies.item(0) if ext else None
@@ -163,59 +163,73 @@ def run(context):
             )
             try:
                 extrudes.add(grub_input)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
-        # STEP 4: Motor mount pocket (N20 from -Y face)
+        # STEP 4: Motor mount pocket (N20 entering from -Y face, horizontal)
+        # Sketch on XZ offset plane at Y = -BODY_L/2 (the -Y face),
+        # coordinates are (X, Z), extrusion goes in +Y into body.
         # ══════════════════════════════════════════════════════════
 
-        motor_plane = make_offset_plane(comp, comp.xYConstructionPlane, AXLE_Z)
+        motor_plane = make_offset_plane(
+            comp, comp.xZConstructionPlane, -BODY_L / 2
+        )
 
         motor_sk = comp.sketches.add(motor_plane)
         motor_sk.name = 'Motor Pocket'
+        # Sketch on XZ plane: coords are (X, Z)
+        # Motor pocket centred at X=0, Z=AXLE_Z (motor centre height)
         draw_rounded_rect(
             motor_sk,
-            cx=0, cy=-BODY_L / 2 + N20_D / 2,
-            w=N20_W, h=N20_D,
+            cx=0, cy=AXLE_Z,
+            w=N20_W, h=N20_H,
             r=0.05
         )
 
-        motor_target = N20_W * N20_D
+        motor_target = N20_W * N20_H
         motor_prof = find_profile_by_area(motor_sk, motor_target, tolerance=0.4)
         if motor_prof is None:
             motor_prof = find_largest_profile(motor_sk)
         if motor_prof:
+            # XZ plane normal = +Y; flip=False → +Y (into body from -Y face)
             m_input = extrudes.createInput(
                 motor_prof, adsk.fusion.FeatureOperations.CutFeatureOperation
             )
-            m_input.setDistanceExtent(False, val(N20_H))
+            m_input.setDistanceExtent(False, val(N20_D))
             try:
                 extrudes.add(m_input)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
-        # STEP 5: Wheel axle bore (horizontal, through body)
+        # STEP 5: Wheel axle bore (horizontal, through body along X)
+        # Sketch on YZ offset plane at X = -BODY_W/2 (the -X face),
+        # coordinates are (Y, Z), extrusion goes in +X through body.
         # ══════════════════════════════════════════════════════════
 
-        axle_plane = make_offset_plane(comp, comp.xYConstructionPlane, AXLE_Z)
+        axle_plane = make_offset_plane(
+            comp, comp.yZConstructionPlane, -BODY_W / 2
+        )
         axle_sk = comp.sketches.add(axle_plane)
         axle_sk.name = 'Axle Bore'
+        # Sketch on YZ plane: coords are (Y, Z)
+        # Bore centred at Y=0, Z=AXLE_Z
         axle_sk.sketchCurves.sketchCircles.addByCenterRadius(
-            p(-BODY_W / 2, 0), AXLE_R
+            p(0, AXLE_Z), AXLE_R
         )
 
         axle_prof = find_smallest_profile(axle_sk)
         if axle_prof:
+            # YZ plane normal = +X; flip=False → +X (through body)
             ax_input = extrudes.createInput(
                 axle_prof, adsk.fusion.FeatureOperations.CutFeatureOperation
             )
             ax_input.setDistanceExtent(False, val(BODY_W + 0.1))
             try:
                 extrudes.add(ax_input)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: {e}')
 
         # Axle bore chamfers
         if body:
@@ -322,6 +336,7 @@ def run(context):
             'Mars Rover - Steering Knuckle'
         )
 
-    except:
+    except Exception as e:
+        print(f'  Warning: {e}')
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

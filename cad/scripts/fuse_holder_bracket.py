@@ -13,7 +13,7 @@ Redesigned with:
   - 0.5mm fillets on external edges
 
 Dimensions:
-  - Body: 40 × 15 × 12mm
+  - Body: 40 × 19 × 12mm (widened for M3 hole wall clearance)
   - Clip channel: 8mm wide × 6mm deep (inline fuse holder body)
   - End retention lips: 1mm overhang × 1.5mm thick
   - 4× M3 bolt holes (2 per side of channel)
@@ -53,7 +53,7 @@ def run(context):
 
         # ── Dimensions (cm) ──
         BRKT_L = 4.0        # 40mm length (Y — along fuse holder)
-        BRKT_W = 1.5        # 15mm width (X)
+        BRKT_W = 1.9        # 19mm wide (was 15mm, widened for M3 hole wall clearance)
         BRKT_H = 1.2        # 12mm height (Z)
         BASE_H = 0.3        # 3mm base thickness
         CLIP_W = 0.8        # 8mm fuse holder channel width
@@ -133,8 +133,8 @@ def run(context):
             if abs(a - lip_target) < lip_target * 0.8:
                 try:
                     join_profile(comp, pr, LIP_T)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 4: M3 mounting holes (2 per side of channel)
@@ -144,7 +144,7 @@ def run(context):
         hole_sk.name = 'Mount Holes'
         circles = hole_sk.sketchCurves.sketchCircles
 
-        hole_x_pos = (CLIP_W / 2 + BRKT_W / 2) / 2  # midpoint of side wall
+        hole_x_pos = BRKT_W / 2 - 0.25  # 2.5mm from outer edge (gives ~2.4mm wall to channel)
         for hx in [hole_x_pos, -hole_x_pos]:
             circles.addByCenterRadius(p(hx, HOLE_Y1, 0), HOLE_R)
             circles.addByCenterRadius(p(hx, HOLE_Y2, 0), HOLE_R)
@@ -156,8 +156,8 @@ def run(context):
             if a < hole_area * 1.5:
                 try:
                     cut_profile(comp, pr, BRKT_H + 0.02, flip=True)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 5: Fillets
@@ -186,6 +186,7 @@ def run(context):
             'Mars Rover - Fuse Holder Bracket'
         )
 
-    except:
+    except Exception as e:
+        print(f'  Warning: {e}')
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

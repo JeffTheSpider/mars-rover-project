@@ -116,6 +116,11 @@ def run(context):
         # STEP 2: Bearing seat (from bottom face) via helper
         # ══════════════════════════════════════════════════════════
 
+        # TODO: Verify bearing seat cut direction in Fusion 360. If pocket is missing,
+        # change sketch plane to offset at BODY_H and use flip=True to cut inward.
+        # XZ plane normal is +Y. Body extends Y=0 to Y=BODY_H. Bearing seat should
+        # cut into the bottom face (Y=0) in the +Y direction (flip=False on XZ plane).
+
         make_bearing_seat(
             comp, comp.xZConstructionPlane,
             cx=0, cy=0,
@@ -170,6 +175,10 @@ def run(context):
         socket_y = BODY_H / 2  # Mid-height
         spread_half = math.radians(70)  # 140° spread / 2
 
+        # TODO: Verify socket angles in assembled rover context. 70-degree spread
+        # from vertical = 20 degrees below horizontal. May need adjustment based
+        # on actual arm geometry and wheel positions.
+
         # Front boss: project outward from body at mid-height
         front_cx = math.sin(spread_half) * BODY_R
         front_cz = math.cos(spread_half) * BODY_R
@@ -184,12 +193,12 @@ def run(context):
         fb_prof = find_smallest_profile(fb_sk)
         if fb_prof:
             extrude_profile(
-                comp, fb_prof, SOCKET_OUTER_R * 2 + 0.2,
+                comp, fb_prof, TUBE_DEPTH * 2 + BODY_R,
                 adsk.fusion.FeatureOperations.JoinFeatureOperation,
                 symmetric=True
             )
 
-        # Front bore
+        # Front bore — TUBE_DEPTH engagement from each entry face
         fb_bore_sk = comp.sketches.add(mid_plane)
         fb_bore_sk.name = 'Front Socket Bore'
         fb_bore_sk.sketchCurves.sketchCircles.addByCenterRadius(
@@ -198,7 +207,7 @@ def run(context):
         fb_bore_prof = find_smallest_profile(fb_bore_sk)
         if fb_bore_prof:
             extrude_profile(
-                comp, fb_bore_prof, SOCKET_OUTER_R * 2 + 0.5,
+                comp, fb_bore_prof, TUBE_DEPTH * 2 + BODY_R + 0.01,
                 adsk.fusion.FeatureOperations.CutFeatureOperation,
                 symmetric=True
             )
@@ -218,12 +227,12 @@ def run(context):
         rb_prof = find_smallest_profile(rb_sk)
         if rb_prof:
             extrude_profile(
-                comp, rb_prof, SOCKET_OUTER_R * 2 + 0.2,
+                comp, rb_prof, TUBE_DEPTH * 2 + BODY_R,
                 adsk.fusion.FeatureOperations.JoinFeatureOperation,
                 symmetric=True
             )
 
-        # Rear bore
+        # Rear bore — TUBE_DEPTH engagement from each entry face
         rb_bore_sk = comp.sketches.add(mid_plane)
         rb_bore_sk.name = 'Rear Socket Bore'
         rb_bore_sk.sketchCurves.sketchCircles.addByCenterRadius(
@@ -232,10 +241,43 @@ def run(context):
         rb_bore_prof = find_smallest_profile(rb_bore_sk)
         if rb_bore_prof:
             extrude_profile(
-                comp, rb_bore_prof, SOCKET_OUTER_R * 2 + 0.5,
+                comp, rb_bore_prof, TUBE_DEPTH * 2 + BODY_R + 0.01,
                 adsk.fusion.FeatureOperations.CutFeatureOperation,
                 symmetric=True
             )
+
+        # ══════════════════════════════════════════════════════════
+        # STEP 5b: M3 grub screws for front/rear sockets
+        # ══════════════════════════════════════════════════════════
+
+        # Grub screws approach radially (perpendicular to socket bore axis).
+        # Socket bores radiate from the body centre on the mid_plane (XZ).
+        # Grub holes are placed on the same mid_plane, offset perpendicular
+        # to the bore axis (rotated 90 degrees around Y).
+
+        for (scx, scz, sname) in [(front_cx, front_cz, 'Front'), (rear_cx, rear_cz, 'Rear')]:
+            # Normalise direction from body centre to socket centre
+            dist = math.sqrt(scx**2 + scz**2)
+            if dist < 0.001:
+                continue
+            dx, dz = scx / dist, scz / dist
+            # Grub position: along bore axis, TUBE_DEPTH/2 from body surface
+            grub_cx = scx + dx * TUBE_DEPTH / 2
+            grub_cz = scz + dz * TUBE_DEPTH / 2
+            # Perpendicular direction (90 deg CCW in XZ plane)
+            perp_x, perp_z = -dz, dx
+            # Grub hole centre offset perpendicular for the approach
+            grub_off_x = grub_cx + perp_x * (TUBE_BORE_R + WALL / 2)
+            grub_off_z = grub_cz + perp_z * (TUBE_BORE_R + WALL / 2)
+
+            lg_sk = comp.sketches.add(mid_plane)
+            lg_sk.name = f'{sname} Socket Grub'
+            lg_sk.sketchCurves.sketchCircles.addByCenterRadius(
+                p(grub_off_x, grub_off_z), GRUB_M3
+            )
+            lg_prof = find_smallest_profile(lg_sk)
+            if lg_prof:
+                cut_profile(comp, lg_prof, WALL + TUBE_BORE_R + 0.01, flip=True)
 
         # ══════════════════════════════════════════════════════════
         # STEP 6: Wire channel (vertical through body centre)
@@ -245,14 +287,16 @@ def run(context):
 
         wire_sk = comp.sketches.add(comp.xYConstructionPlane)
         wire_sk.name = 'Wire Channel'
+        # Wire channel is a modest slot, not a body-splitting cut.
+        # Height = WIRE_H (6mm), centred at mid-body height.
         draw_rounded_rect(
             wire_sk,
-            cx=0, cy=BODY_H / 2 + TUBE_DEPTH / 2,
-            w=WIRE_W, h=BODY_H + TUBE_DEPTH,
+            cx=0, cy=BODY_H / 2,
+            w=WIRE_W, h=WIRE_H,
             r=0.1
         )
 
-        wire_target = WIRE_W * (BODY_H + TUBE_DEPTH)
+        wire_target = WIRE_W * WIRE_H
         wire_prof = find_profile_by_area(wire_sk, wire_target, tolerance=0.6)
         if wire_prof is None:
             wire_prof = find_largest_profile(wire_sk)
@@ -296,6 +340,7 @@ def run(context):
             'Mars Rover - Bogie Pivot Connector'
         )
 
-    except:
+    except Exception as e:
+        print(f'  Warning: {e}')
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

@@ -54,7 +54,8 @@ def run(context):
             return
 
         # ── Mode Toggle ──
-        USE_TPU_TIRE = True  # True = tire channel rim, False = O-ring + grouser
+        # False = PLA wheel with O-ring grooves (Phase 1 CTC Bizer). True = TPU tire version.
+        USE_TPU_TIRE = False
 
         # ── Dimensions (cm — Fusion API unit) ──
         WHEEL_R = 4.0           # 40mm radius (80mm OD at lip peaks)
@@ -192,8 +193,8 @@ def run(context):
             cutInput.setDistanceExtent(False, val(WHEEL_W + 0.05))
             try:
                 voidCut = extrudes.add(cutInput)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: spoke void cut failed: {e}')
 
         # Circular pattern the void cut × 5
         if voidCut and SPOKE_COUNT > 1:
@@ -206,8 +207,8 @@ def run(context):
             patInput.isSymmetric = False
             try:
                 patterns.add(patInput)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: circular pattern failed: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 3: Hub boss protrusion (extends inward from face 1)
@@ -240,8 +241,8 @@ def run(context):
             hubRevInput.setAngleExtent(False, val(2 * math.pi))
             try:
                 revolves.add(hubRevInput)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: hub boss revolve failed: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 4: D-flat cut on shaft bore
@@ -275,8 +276,8 @@ def run(context):
             dflatRevInput.setAngleExtent(False, val(dflat_angle))
             try:
                 revolves.add(dflatRevInput)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: D-flat revolve failed: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 5: M2 grub screw hole through hub wall
@@ -299,8 +300,8 @@ def run(context):
             grubInput.setDistanceExtent(True, val(GRUB_DEPTH))
             try:
                 extrudes.add(grubInput)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: grub screw cut failed: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 5b: Grub screw entry chamfer
@@ -327,8 +328,8 @@ def run(context):
                         grub_edges, val(CHAMFER_STD), True
                     )
                     cham.add(cham_in)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: grub chamfer failed: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 6: O-ring grooves + grousers (fallback mode only)
@@ -424,8 +425,8 @@ def run(context):
                         spoke_edges, val(SPOKE_FILLET), True
                     )
                     fillets.add(fillet_in)
-                except:
-                    pass  # Some edges may fail, that's OK
+                except Exception as e:
+                    print(f'  Warning: spoke fillet failed: {e}')
 
             # Hub boss fillet (blend into disc face)
             hub_edges = adsk.core.ObjectCollection.create()
@@ -446,8 +447,8 @@ def run(context):
                         hub_edges, val(HUB_FILLET), True
                     )
                     fillets.add(hf_in)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: hub fillet failed: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 8: Zoom and report
@@ -494,6 +495,6 @@ def run(context):
             'Mars Rover - Wheel V3'
         )
 
-    except:
+    except Exception:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

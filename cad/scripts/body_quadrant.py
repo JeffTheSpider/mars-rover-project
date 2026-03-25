@@ -36,7 +36,9 @@ Features per quadrant (as applicable):
   - LED underglow pass-through holes
 
 Qty: 4 total (FL, FR, RL, RR)
-Print: Open face up, 20% gyroid, 4 perimeters, 8mm brim
+Print: Open face up, 20% gyroid, 4 perimeters
+  Brim: 2-3mm only (part is 220mm on 225mm bed — 8mm brim would exceed bed).
+  Use brim on short edges (130mm) only if needed. Consider raft instead for large parts.
 
 Reference: EA-08, EA-11, EA-20
 """
@@ -178,6 +180,11 @@ def run(context):
         # Step 1: Outer shell with rounded external corners
         # ══════════════════════════════════════════════════════════
 
+        # NOTE: Inner seam corners have 2mm radius creating a ~3mm cosmetic gap
+        # at the 4-quadrant meeting point. Fill with putty or leave as design feature.
+        # Alternative: Use draw_rounded_rect with r=0 and add a single fillet arc
+        # on just the external corner.
+        #
         # Only round the outer corners (not seam edges)
         # For simplicity, use rounded-rect for the full outline
         sk = comp.sketches.add(comp.xYConstructionPlane)
@@ -207,6 +214,12 @@ def run(context):
         inner_y_max = qy_max - WALL
 
         # Extra wall on seam edges for tongue
+        # TODO: Current "tongue-and-groove" is just thicker walls on seam edges.
+        # For proper mechanical interlock, add:
+        # - Tongue: 2mm protrusion on FL right edge and RL right edge
+        # - Groove: 2.2mm channel on FR left edge and RR left edge (0.2mm clearance)
+        # - Same for top/bottom seam edges
+        # Current approach relies on alignment dowels + heat-set insert bolts only.
         if QUADRANT in ('FL', 'RL'):
             inner_x_max = qx_max - WALL - TONGUE_D
         if QUADRANT in ('FR', 'RR'):
@@ -230,6 +243,17 @@ def run(context):
         if h_prof is None:
             h_prof = find_smallest_profile(hollow_sk)
         cut_profile(comp, h_prof, BODY_H - WALL, flip=True)
+
+        # ── Step 2b: Top deck clip receiver slots ─────────────────
+        # TODO: Cut clip receiver slots into inner wall near top edge.
+        # Slots: 6.5 x 10.5 x 5mm (clip + 0.5mm clearance), positioned to
+        # match top_deck.py snap clip locations on seam edges.
+        # Required for top deck attachment — currently deck sits loose.
+        # Clip dimensions from top_deck.py:
+        #   CLIP_W = 0.6cm (6mm), CLIP_L = 1.0cm (10mm), CLIP_H = 0.5cm (5mm)
+        #   CLIP_OFFSET = 3.0cm from edge
+        # Receiver slots need +0.05cm (0.5mm) clearance on each dimension.
+        # Place 2-3 slots per long edge (220mm) and 1-2 per short edge (130mm).
 
         # ══════════════════════════════════════════════════════════
         # Step 3: Internal ribs (cross-bracing)
@@ -331,8 +355,8 @@ def run(context):
                 v_in.setDistanceExtent(True, val(WALL + 0.01))
                 try:
                     extrudes.add(v_in)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # Step 6: Cable channel guide ridges on floor
@@ -397,8 +421,8 @@ def run(context):
                 sw_in.setDistanceExtent(True, val(WALL + 0.01))
                 try:
                     extrudes.add(sw_in)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # Step 8: M3 heat-set insert pockets along seam edges
@@ -468,8 +492,8 @@ def run(context):
                     ce_in.setDistanceExtent(True, val(WALL + 0.02))
                     try:
                         extrudes.add(ce_in)
-                    except:
-                        pass
+                    except Exception as e:
+                        print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # Step 10: Alignment dowel pin holes at seam corners
@@ -556,8 +580,8 @@ def run(context):
                 l_in.setDistanceExtent(True, val(WALL + 0.01))
                 try:
                     extrudes.add(l_in)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # Step 13: Cosmetic — panel line grooves
@@ -584,8 +608,8 @@ def run(context):
                     pl_in.setDistanceExtent(True, val(PANEL_LINE_D))
                     try:
                         extrudes.add(pl_in)
-                    except:
-                        pass
+                    except Exception as e:
+                        print(f'  Warning: {e}')
 
         # Front/rear wall panel lines
         panel_wall_y = qy_max if QUADRANT in ('FL', 'FR') else qy_min
@@ -609,8 +633,8 @@ def run(context):
                     pl2_in.setDistanceExtent(True, val(PANEL_LINE_D))
                     try:
                         extrudes.add(pl2_in)
-                    except:
-                        pass
+                    except Exception as e:
+                        print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # Step 14: Arm mount bosses (FL only, Phase 2)
@@ -682,8 +706,8 @@ def run(context):
                     r_in.setDistanceExtent(True, val(RTG_PAD_D))
                     try:
                         extrudes.add(r_in)
-                    except:
-                        pass
+                    except Exception as e:
+                        print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # Step 16: MLI blanket edge ridges (cosmetic)
@@ -713,8 +737,8 @@ def run(context):
                 m_in.setDistanceExtent(flip, val(MLI_RIDGE_H))
                 try:
                     extrudes.add(m_in)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # End wall ridge
         mli_end_plane = make_offset_plane(
@@ -738,8 +762,8 @@ def run(context):
                 me_in.setDistanceExtent(not flip, val(MLI_RIDGE_H))
                 try:
                     extrudes.add(me_in)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # Step 17: External fillets
@@ -775,10 +799,11 @@ def run(context):
             f'RTG detail: {rtg_count}× (RL/RR)\n'
             f'Fillets: {fillet_count} edges @ {FILLET_STD*10:.1f}mm\n\n'
             'Change QUADRANT variable for other quadrants.\n'
-            'Print open face up, 20% infill, 8mm brim.',
+            'Print open face up, 20% infill, 2-3mm brim only\n'
+            '(220mm part on 225mm bed — 8mm brim would exceed bed).',
             f'Mars Rover - Body {QUADRANT}'
         )
 
-    except:
+    except Exception:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

@@ -19,13 +19,13 @@ diff bar via an M3 grub screw. The diff bar passes through 608ZZ
 bearings in the body.
 
 Features:
-  - Diff bar clamp bore: 8.2mm (clearance fit, M3 grub retention)
+  - Diff bar clamp bore: 8.0mm (press-fit, M3 grub retention)
   - 2× tube sockets (8.2mm × 15mm deep): front + rear
   - M3 grub screws in each tube socket + diff bar clamp
   - 2× wire channels (8×6mm)
   - 4mm minimum wall thickness
 
-Overall size: ~45 × 35 × 35mm
+Overall size: ~45 × 40 × 35mm
 Print: Body-side down | PLA | 60% infill | 5 perimeters
 Qty: 2 (left + right — symmetric)
 
@@ -63,14 +63,14 @@ def run(context):
 
         # ── Dimensions (cm) ──
         TUBE_BORE_R = TUBE_BORE / 2   # 4.1mm
-        DIFF_BORE_R = 0.41             # 4.1mm (8.2mm bore, assembly clearance on 8mm rod)
+        DIFF_BORE_R = 0.40             # 8.0mm press-fit on 8mm diff bar rod (EA-25 spec). Grub screw for axial retention.
         WALL = TUBE_WALL               # 4mm
         WIRE_W = 0.8                   # 8mm
         WIRE_H = 0.6                   # 6mm
 
         # Body
         BODY_W = 4.5                   # 45mm (Y, front-rear)
-        BODY_H_Z = 3.5                 # 35mm (Z, up-down)
+        BODY_H_Z = 4.0                 # 40mm tall (EA-25 spec: 45x40x35mm → W×H×D)
         BODY_D = 3.5                   # 35mm (X, along diff bar)
 
         comp = design.rootComponent
@@ -112,8 +112,8 @@ def run(context):
             d_input.setDistanceExtent(False, val(BODY_D + 0.01))
             try:
                 extrudes.add(d_input)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: {e}')
 
         # Diff bar bore entry chamfer
         if body:
@@ -140,12 +140,16 @@ def run(context):
             g_input.setDistanceExtent(True, val(WALL + DIFF_BORE_R + 0.01))
             try:
                 extrudes.add(g_input)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 4: Front tube socket (on +Y face)
         # ══════════════════════════════════════════════════════════
+
+        # TODO: Create angled construction plane (-15 deg from horizontal for front,
+        # -20 deg for rear) per EA-25. Currently horizontal — acceptable for initial
+        # prototype but will cause slight arm geometry mismatch (~6mm at 0.4 scale).
 
         front_y = BODY_W / 2
         front_z = BODY_H_Z / 2
@@ -158,6 +162,11 @@ def run(context):
 
         fb_prof = find_smallest_profile(fb_sk)
         cut_profile(comp, fb_prof, TUBE_DEPTH, flip=False)
+
+        # TODO (M2): Add triangular gusset at front tube socket junction using
+        # add_triangular_gusset(comp, body, ...). Gusset should bridge the socket
+        # boss to the main body for print strength. Deferred until geometry is
+        # verified in Fusion 360 — needs correct edge references.
 
         # Front grub screw
         fg_sk = comp.sketches.add(mid_plane)
@@ -174,12 +183,15 @@ def run(context):
             fg_in.setDistanceExtent(True, val(WALL + TUBE_BORE_R + 0.01))
             try:
                 extrudes.add(fg_in)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 5: Rear tube socket (on -Y face)
         # ══════════════════════════════════════════════════════════
+
+        # TODO: Create angled construction plane (-20 deg from horizontal for rear
+        # socket) per EA-25. Currently horizontal — see STEP 4 TODO.
 
         rear_y = -BODY_W / 2
         rear_z = BODY_H_Z / 2
@@ -192,6 +204,10 @@ def run(context):
 
         rb_prof = find_smallest_profile(rb_sk)
         cut_profile(comp, rb_prof, TUBE_DEPTH, flip=True)
+
+        # TODO (M2): Add triangular gusset at rear tube socket junction using
+        # add_triangular_gusset(comp, body, ...). Same as front socket gusset.
+        # Deferred until geometry verified in Fusion 360.
 
         # Rear grub screw
         rg_sk = comp.sketches.add(mid_plane)
@@ -208,12 +224,16 @@ def run(context):
             rg_in.setDistanceExtent(True, val(WALL + TUBE_BORE_R + 0.01))
             try:
                 extrudes.add(rg_in)
-            except:
-                pass
+            except Exception as e:
+                print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 6: Wire channels (rounded-rect cross-section)
         # ══════════════════════════════════════════════════════════
+
+        # NOTE: Wire channels are external cable routing guides, not internal tunnels.
+        # Steel rods are solid — wires route along the outside of arm tubes using
+        # cable_clip.py snap-on clips (per EA-26 Section 13.4).
 
         for sign, name in [(1, 'Front'), (-1, 'Rear')]:
             wsk = comp.sketches.add(comp.xYConstructionPlane)
@@ -261,6 +281,7 @@ def run(context):
             'Mars Rover - Rocker Hub Connector'
         )
 
-    except:
+    except Exception as e:
+        print(f'  Warning: {e}')
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

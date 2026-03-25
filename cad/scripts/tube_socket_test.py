@@ -160,26 +160,33 @@ def run(context):
                             edges, val(ENTRY_CHAM), True
                         )
                         chamfers.add(cham_in)
-                    except:
-                        pass
+                    except Exception as e:
+                        print(f'  Warning: chamfer {bore_r*20:.1f}mm bore: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 5: M3 grub screw hole in centre socket (nominal 8.2mm)
-        # Radial hole from outside into bore at mid-socket height
+        # FIX C19: Grub hole must cut radially (from outside toward bore
+        # centre), not vertically. Sketch on YZ offset plane at socket
+        # height, extrude in +X to cut through the wall.
         # ══════════════════════════════════════════════════════════
 
-        grub_z = BASE_H + SOCKET_DEPTH / 2
-        grub_plane = make_offset_plane(comp, comp.xYConstructionPlane, grub_z)
+        grub_z = BASE_H + SOCKET_DEPTH / 2  # mid-socket height (Z)
+
+        # Offset the XZ plane along Y to the boss centre (Y=0 for centre boss)
+        # Sketch circle on that plane at (boss_outer_edge, grub_z)
+        grub_plane = make_offset_plane(comp, comp.xZConstructionPlane, 0)
 
         grub_sk = comp.sketches.add(grub_plane)
         grub_sk.name = 'Grub Screw Test'
-        # Position at edge of centre boss
+        # On XZ plane: X = radial position, Y = height (Z in model space)
+        # Position the hole at the outer edge of the boss wall
         grub_sk.sketchCurves.sketchCircles.addByCenterRadius(
-            p(BORE_RADII[1] + WALL / 2, 0), GRUB_R
+            p(BOSS_R, grub_z), GRUB_R
         )
 
         grub_prof = find_smallest_profile(grub_sk)
-        cut_profile(comp, grub_prof, WALL + BORE_RADII[1] + 0.01, flip=False)
+        # Cut radially inward through the wall only (not through opposite wall)
+        cut_profile(comp, grub_prof, WALL + 0.01, flip=True)
 
         # ══════════════════════════════════════════════════════════
         # STEP 6: Identification rings on boss tops
@@ -244,6 +251,6 @@ def run(context):
             'Mars Rover - Tube Socket Test'
         )
 
-    except:
+    except Exception:
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))

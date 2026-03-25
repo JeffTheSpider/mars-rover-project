@@ -106,72 +106,73 @@ def run(context):
             cut_profile(comp, ch_prof, CHANNEL_D, flip=True)
 
         # ══════════════════════════════════════════════════════════
-        # STEP 3: Snap tabs (inward ledges at top of channel walls)
+        # STEP 3: Snap tabs (inward ledges along SIDES of channel)
+        #         Tabs on Y edges so wires can be pressed in from above
         # ══════════════════════════════════════════════════════════
 
         snap_sk = comp.sketches.add(topP)
         snap_sk.name = 'Snap Tabs'
         sl = snap_sk.sketchCurves.sketchLines
 
-        # Left snap tab
+        # Front snap tab (−Y side of channel)
         sl.addTwoPointRectangle(
             p(-ch_inner_l / 2, -CHANNEL_W / 2, 0),
-            p(-ch_inner_l / 2 + SNAP_OVERHANG, CHANNEL_W / 2, 0)
+            p(ch_inner_l / 2, -CHANNEL_W / 2 + SNAP_OVERHANG, 0)
         )
-        # Right snap tab
+        # Rear snap tab (+Y side of channel)
         sl.addTwoPointRectangle(
-            p(ch_inner_l / 2 - SNAP_OVERHANG, -CHANNEL_W / 2, 0),
+            p(-ch_inner_l / 2, CHANNEL_W / 2 - SNAP_OVERHANG, 0),
             p(ch_inner_l / 2, CHANNEL_W / 2, 0)
         )
 
-        snap_target = SNAP_OVERHANG * CHANNEL_W
+        snap_target = SNAP_OVERHANG * ch_inner_l
         for pi_idx in range(snap_sk.profiles.count):
             pr = snap_sk.profiles.item(pi_idx)
             a = pr.areaProperties().area
             if abs(a - snap_target) < snap_target * 0.8:
                 try:
                     join_profile(comp, pr, SNAP_T)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 4: Entry ramp cuts on snap tab tips
         # ══════════════════════════════════════════════════════════
 
         # Chamfer the inner edge of each snap tab to create a wire-entry ramp
-        # Done via a triangular cut at the snap tab inner corners
+        # Done via a triangular cut at the inner (channel-facing) edge of Y-side tabs
         ramp_sk = comp.sketches.add(topP)
         ramp_sk.name = 'Entry Ramps'
         rl = ramp_sk.sketchCurves.sketchLines
 
-        # Left ramp: triangle at inner edge of left tab
-        lx = -ch_inner_l / 2 + SNAP_OVERHANG
+        # Front ramp: triangle at inner edge of front (−Y) tab
+        fy = -CHANNEL_W / 2 + SNAP_OVERHANG
         rl.addByTwoPoints(
-            p(lx, -CHANNEL_W / 2, 0),
-            p(lx - RAMP_H, -CHANNEL_W / 2, 0)
+            p(-ch_inner_l / 2, fy, 0),
+            p(-ch_inner_l / 2, fy - RAMP_H, 0)
         )
         rl.addByTwoPoints(
-            p(lx - RAMP_H, -CHANNEL_W / 2, 0),
-            p(lx, -CHANNEL_W / 2 + RAMP_H, 0)
+            p(-ch_inner_l / 2, fy - RAMP_H, 0),
+            p(-ch_inner_l / 2 + RAMP_H, fy, 0)
         )
         rl.addByTwoPoints(
-            p(lx, -CHANNEL_W / 2 + RAMP_H, 0),
-            p(lx, -CHANNEL_W / 2, 0)
+            p(-ch_inner_l / 2 + RAMP_H, fy, 0),
+            p(-ch_inner_l / 2, fy, 0)
         )
 
-        # Right ramp: triangle at inner edge of right tab
-        rx = ch_inner_l / 2 - SNAP_OVERHANG
+        # Rear ramp: triangle at inner edge of rear (+Y) tab
+        ry = CHANNEL_W / 2 - SNAP_OVERHANG
         rl.addByTwoPoints(
-            p(rx, -CHANNEL_W / 2, 0),
-            p(rx + RAMP_H, -CHANNEL_W / 2, 0)
+            p(-ch_inner_l / 2, ry, 0),
+            p(-ch_inner_l / 2, ry + RAMP_H, 0)
         )
         rl.addByTwoPoints(
-            p(rx + RAMP_H, -CHANNEL_W / 2, 0),
-            p(rx, -CHANNEL_W / 2 + RAMP_H, 0)
+            p(-ch_inner_l / 2, ry + RAMP_H, 0),
+            p(-ch_inner_l / 2 + RAMP_H, ry, 0)
         )
         rl.addByTwoPoints(
-            p(rx, -CHANNEL_W / 2 + RAMP_H, 0),
-            p(rx, -CHANNEL_W / 2, 0)
+            p(-ch_inner_l / 2 + RAMP_H, ry, 0),
+            p(-ch_inner_l / 2, ry, 0)
         )
 
         ramp_target = 0.5 * RAMP_H * RAMP_H
@@ -181,8 +182,8 @@ def run(context):
             if a < ramp_target * 2:
                 try:
                     cut_profile(comp, pr, SNAP_T + 0.01, flip=False)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 5: M3 mounting holes through base
@@ -200,8 +201,8 @@ def run(context):
             if a < math.pi * HOLE_R**2 * 1.5:
                 try:
                     cut_profile(comp, pr, CLIP_H + 0.02, flip=True)
-                except:
-                    pass
+                except Exception as e:
+                    print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
         # STEP 6: Fillets
@@ -232,6 +233,7 @@ def run(context):
             'Mars Rover - Strain Relief Clip'
         )
 
-    except:
+    except Exception as e:
+        print(f'  Warning: {e}')
         if ui:
             ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
