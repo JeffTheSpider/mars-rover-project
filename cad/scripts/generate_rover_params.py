@@ -56,7 +56,7 @@ FULL_SCALE_PARAMS = {
     "body": {
         "length":               1100,   # mm, outer
         "width":                 650,   # mm, outer
-        "height":                200,   # mm, outer frame height (Phase 2 uses extrusion)
+        "height":                300,   # mm, outer frame height (raised for NASA-like proportions)
         "wall_thickness":          4,   # mm, outer walls (NOT scaled -- 4mm for PLA rigidity)
         "rib_thickness":           2,   # mm, internal ribs (NOT scaled)
         "top_deck_thickness":      2,   # mm, cosmetic cover (NOT scaled)
@@ -97,8 +97,8 @@ FULL_SCALE_PARAMS = {
     # ------------------------------------------------------------------
     "differential_bar": {
         "rod_od":                  8,   # mm, steel rod outer diameter
-        "bar_half_span":         500,   # mm, bar extends ±500mm from pivot centre
-        "pivot_z_above_rocker":   50,   # mm, diff pivot Z above rocker pivot Z
+        "bar_half_span":         325,   # mm, bar extends ±325mm (within body width, like Curiosity through-bar)
+        "pivot_z_above_rocker":    0,   # mm, through-bar: diff bar IS the rocker pivot axis (like Curiosity/Perseverance)
         "bearing_seat_od":        22,   # mm, nominal 608ZZ OD (for central pivot)
         "bearing_seat_depth":      7,   # mm, nominal 608ZZ width
         "angular_range_deg":      25,   # +/- degrees from horizontal
@@ -110,8 +110,8 @@ FULL_SCALE_PARAMS = {
     "differential_link": {
         "count":                   2,   # one per side
         "rod_od":                  6,   # mm, link rod diameter (M6 threaded rod)
-        "bar_attach_offset_z":    75,   # mm, link attaches this far below bar end
-        "rocker_attach_offset_z": 75,   # mm, link attaches this far above rocker pivot
+        "bar_attach_offset_z":     0,   # mm, through-bar: no separate links (set >0 for link mechanism)
+        "rocker_attach_offset_z":  0,   # mm, through-bar: no separate links (set >0 for link mechanism)
         "ball_joint_bore":         3,   # mm, M3 rod-end bearing bore
         "ball_joint_od":          10,   # mm, rod-end bearing housing OD
         "ball_joint_length":      20,   # mm, rod-end bearing body length
@@ -125,7 +125,7 @@ FULL_SCALE_PARAMS = {
     "wheel": {
         "outer_diameter":        200,   # mm, including tread
         "radius":                100,   # mm
-        "width":                  80,   # mm, tread included
+        "width":                 110,   # mm, tread included (ratio 0.55, between Curiosity 0.79 and Perseverance 0.58)
         "hub_bore_d_shaft":      3.0,   # mm, N20 D-shaft (Phase 1) -- NOT scaled
         "hub_bore_clearance":    0.1,   # mm, added to bore for print tolerance
         "d_flat_depth":          0.5,   # mm
@@ -271,7 +271,7 @@ FULL_SCALE_PARAMS = {
     "body_features": {
         "rocker_pivot_x":        313,   # mm, +/- from centre (Phase 2)
         "rocker_pivot_y":          0,   # mm, at middle axle line
-        "rocker_pivot_z":        150,   # mm, above ground (Phase 2)
+        "rocker_pivot_z":        300,   # mm, above ground (raised: ratio ~1.5× wheel ø, like Curiosity)
         "battery_tray_l":        175,   # mm
         "battery_tray_w":         88,   # mm
         "battery_tray_h":         63,   # mm
@@ -508,14 +508,14 @@ def get_params(scale=0.4):
                 params[group_key][param_key] = round(value * scale, 2)
 
     # Phase 1 overrides (values from EA-08 that don't follow simple scaling)
-    params["body"]["height"] = 80                # EA-08: 80mm body height
-    params["overall"]["body_height"] = 80
+    params["body"]["height"] = 120               # Taller body for NASA-like proportions (body encloses pivot)
+    params["overall"]["body_height"] = 120
     params["overall"]["driving_height"] = 420    # EA-08: no mast in Phase 1
     params["overall"]["target_speed_kmh"] = 2    # EA-08: 2 km/h for safety
     params["wheel"]["hub_boss_od"] = 14           # 14mm OD (wider for spoke strength at 0.4 scale, matches V3 CAD)
     params["wheel"]["hub_boss_length"] = 8        # not scaled, shaft engagement
     params["body_features"]["rocker_pivot_x"] = 125  # EA-08: X=+/-125mm
-    params["body_features"]["rocker_pivot_z"] = 60   # EA-08: Z=+60mm
+    params["body_features"]["rocker_pivot_z"] = 120  # Raised: 1.5× wheel ø above ground (like Curiosity, arms sweep ~24° down)
     params["body_features"]["battery_tray_l"] = 70   # EA-08: fits 2S 2200mAh
     params["body_features"]["battery_tray_w"] = 35
     params["body_features"]["battery_tray_h"] = 25
@@ -541,13 +541,13 @@ def get_params(scale=0.4):
     params["suspension_geometry"]["cog_height"] = 120  # estimated at 0.4 scale
 
     # Differential mechanism Phase 1 overrides (from EA-26 assembly geometry)
-    params["differential_bar"]["bar_half_span"] = 200     # 500 * 0.4 = 200mm
-    params["differential_bar"]["pivot_z_above_rocker"] = 20  # 50 * 0.4 = 20mm
+    params["differential_bar"]["bar_half_span"] = 130     # 325 * 0.4 = 130mm (within body, like Curiosity)
+    params["differential_bar"]["pivot_z_above_rocker"] = 0   # Through-bar: diff IS rocker pivot
     params["differential_bar"]["pivot_housing_w"] = 30    # smaller at 0.4 scale
     params["differential_bar"]["pivot_housing_l"] = 30
     params["differential_bar"]["pivot_housing_h"] = 20
-    params["differential_link"]["bar_attach_offset_z"] = 30    # 75 * 0.4 = 30mm
-    params["differential_link"]["rocker_attach_offset_z"] = 30  # 75 * 0.4 = 30mm
+    params["differential_link"]["bar_attach_offset_z"] = 0     # Through-bar: no separate links
+    params["differential_link"]["rocker_attach_offset_z"] = 0   # Through-bar: no separate links
 
     # Add computed fields
     _add_computed(params, scale)
@@ -579,7 +579,7 @@ def _add_computed(params, scale):
         "FR": {"x":  hw, "y":  hb, "z": wr},
     }
 
-    # Differential link geometry (computed from EA-26 mechanism)
+    # Differential geometry (computed)
     db = params["differential_bar"]
     dl = params["differential_link"]
     bf = params["body_features"]
@@ -587,27 +587,37 @@ def _add_computed(params, scale):
     dpz = rpz + db["pivot_z_above_rocker"]        # diff pivot Z
     rpx = bf["rocker_pivot_x"]                    # rocker pivot X
 
-    # Link endpoints (vertical)
-    link_top_z = dpz - dl["bar_attach_offset_z"]   # bar end, offset below
-    link_bot_z = rpz + dl["rocker_attach_offset_z"]  # rocker, offset above
-    # Link endpoints (horizontal)
-    link_top_x = db["bar_half_span"]               # at bar end
-    link_bot_x = rpx                                # at rocker pivot X
+    # Through-bar mode: diff bar IS rocker pivot, no separate links
+    through_bar = (db["pivot_z_above_rocker"] == 0 and
+                   dl["bar_attach_offset_z"] == 0)
 
-    dx = link_top_x - link_bot_x
-    dz = link_top_z - link_bot_z
-    link_len = (dx**2 + dz**2) ** 0.5
-    link_angle = math.degrees(math.atan2(abs(dz), abs(dx)))
-
-    params["differential_computed"] = {
-        "diff_pivot_z":           round(dpz, 1),
-        "link_top_z":             round(link_top_z, 1),
-        "link_bot_z":             round(link_bot_z, 1),
-        "link_length":            round(link_len, 1),
-        "link_angle_from_horiz_deg": round(link_angle, 1),
-        "link_top_pos":           f"(±{link_top_x}, 0, {link_top_z})",
-        "link_bot_pos":           f"(±{link_bot_x}, 0, {link_bot_z})",
-    }
+    if through_bar:
+        params["differential_computed"] = {
+            "diff_pivot_z":           round(dpz, 1),
+            "mechanism_type":         "through-bar",
+            "link_length":            0,
+            "link_angle_from_horiz_deg": 0,
+        }
+    else:
+        # Link mechanism mode (EA-26 original design)
+        link_top_z = dpz - dl["bar_attach_offset_z"]
+        link_bot_z = rpz + dl["rocker_attach_offset_z"]
+        link_top_x = db["bar_half_span"]
+        link_bot_x = rpx
+        dx = link_top_x - link_bot_x
+        dz = link_top_z - link_bot_z
+        link_len = (dx**2 + dz**2) ** 0.5
+        link_angle = math.degrees(math.atan2(abs(dz), abs(dx)))
+        params["differential_computed"] = {
+            "diff_pivot_z":           round(dpz, 1),
+            "mechanism_type":         "bar-and-link",
+            "link_top_z":             round(link_top_z, 1),
+            "link_bot_z":             round(link_bot_z, 1),
+            "link_length":            round(link_len, 1),
+            "link_angle_from_horiz_deg": round(link_angle, 1),
+            "link_top_pos":           f"(±{link_top_x}, 0, {link_top_z})",
+            "link_bot_pos":           f"(±{link_bot_x}, 0, {link_bot_z})",
+        }
 
 
 def _calculate_ackermann(params, turn_radius_mm):
