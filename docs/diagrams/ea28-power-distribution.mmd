@@ -1,0 +1,94 @@
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#f9e2af', 'primaryTextColor': '#cdd6f4', 'primaryBorderColor': '#6c7086', 'lineColor': '#a6adc8', 'secondaryColor': '#45475a', 'tertiaryColor': '#313244', 'background': '#1e1e2e'}}}%%
+
+graph TD
+    BATT["🔋 2S LiPo 2200mAh<br/>7.4V nominal (8.4V full)<br/>XT60 connector"]
+
+    FUSE["5A Blade Fuse<br/>ATC holder, inline"]
+    SWITCH["Kill Switch<br/>Toggle, rear panel<br/>10A rated"]
+
+    BATT -->|"Red 14AWG<br/>W001"| FUSE
+    FUSE -->|"Red 14AWG<br/>W003"| SWITCH
+
+    subgraph DIST["Power Distribution"]
+        direction LR
+        BUS_P["+7.4V Bus"]
+        BUS_N["GND Bus<br/>(Star topology)"]
+    end
+
+    SWITCH -->|"Red 16AWG<br/>W004"| BUS_P
+    BATT -->|"Black 14AWG<br/>W002"| BUS_N
+
+    subgraph L298N_1["L298N Module #1 (Left)"]
+        direction TB
+        VCC1["VCC: 7.4V"]
+        REG1["78M05 Regulator<br/>5V out (0.5A max)"]
+        OUT1["OUT1/2: W1 FL motor"]
+        OUT2["OUT3/4: W2+W3 ML+RL"]
+    end
+
+    subgraph L298N_2["L298N Module #2 (Right)"]
+        direction TB
+        VCC2["VCC: 7.4V"]
+        OUT3["OUT1/2: W6 FR motor"]
+        OUT4["OUT3/4: W5+W4 MR+RR"]
+    end
+
+    BUS_P -->|"Red 16AWG<br/>W005"| VCC1
+    BUS_P -->|"Red 16AWG<br/>W007"| VCC2
+    BUS_N -->|"Black 16AWG<br/>W006"| L298N_1
+    BUS_N -->|"Black 16AWG<br/>W008"| L298N_2
+
+    subgraph FIVE_V["5V Rail"]
+        direction LR
+        ESP["ESP32-S3<br/>VIN (5V)<br/>150mA typical"]
+        SERVO_V["4× SG90 Servos<br/>VCC (5V)<br/>2.6A peak!"]
+    end
+
+    REG1 -->|"5V, 0.5A max<br/>W009"| ESP
+    REG1 -->|"5V via breadboard<br/>W011"| SERVO_V
+
+    subgraph ADC["Battery Monitoring"]
+        R1["10kΩ"]
+        R2["4.7kΩ"]
+        CAP["100nF"]
+        ADC_PIN["GPIO14<br/>~2.37V"]
+    end
+
+    BUS_P --> R1 --> ADC_PIN
+    ADC_PIN --> R2 --> BUS_N
+    ADC_PIN --- CAP
+
+    subgraph MOTORS["6× N20 Motors (6V, 100RPM)"]
+        W1["W1 FL<br/>0.8-1.5A stall"]
+        W23["W2+W3 ML+RL<br/>Parallel"]
+        W6["W6 FR<br/>0.8-1.5A stall"]
+        W54["W5+W4 MR+RR<br/>Parallel"]
+    end
+
+    OUT1 -->|"18AWG"| W1
+    OUT2 -->|"18AWG"| W23
+    OUT3 -->|"18AWG"| W6
+    OUT4 -->|"18AWG"| W54
+
+    subgraph SERVOS["4× SG90 Steering Servos"]
+        S_FL["FL Servo<br/>GPIO1"]
+        S_FR["FR Servo<br/>GPIO2"]
+        S_RL["RL Servo<br/>GPIO41"]
+        S_RR["RR Servo<br/>GPIO42"]
+    end
+
+    SERVO_V --- S_FL & S_FR & S_RL & S_RR
+
+    WARN["⚠️ L298N 5V regulator<br/>rated 0.5A continuous<br/>Servo peak draw: 2.6A<br/>Needs dedicated BEC!"]
+
+    classDef battStyle fill:#45475a,stroke:#f9e2af,stroke-width:3px,color:#cdd6f4
+    classDef fuseStyle fill:#313244,stroke:#f38ba8,stroke-width:2px,color:#cdd6f4
+    classDef driverStyle fill:#313244,stroke:#a6e3a1,stroke-width:2px,color:#cdd6f4
+    classDef motorStyle fill:#313244,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4
+    classDef warnStyle fill:#45475a,stroke:#f38ba8,stroke-width:2px,color:#f38ba8
+
+    class BATT battStyle
+    class FUSE,SWITCH fuseStyle
+    class VCC1,VCC2,REG1,OUT1,OUT2,OUT3,OUT4 driverStyle
+    class W1,W23,W6,W54,S_FL,S_FR,S_RL,S_RR motorStyle
+    class WARN warnStyle

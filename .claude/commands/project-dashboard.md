@@ -48,7 +48,7 @@ Each card shows status (not started / in progress / complete):
 - Firmware: version, compile status, test results
 - Wiring: harness built yes/no
 - Software: PWA, ROS2 status
-- Documentation: X/28 EA docs
+- Documentation: X/29 EA docs
 
 **Parts Table:**
 Sortable table of all Phase 1 parts:

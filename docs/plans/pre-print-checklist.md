@@ -1,237 +1,183 @@
 # Pre-Print Verification Checklist
 
-Before committing ~72 hours of print time, verify every CAD script and dimension.
+Before committing ~72 hours of print time, verify every CAD script, dimension, and interface.
 
 **Printer**: CTC Bizer (225×145×150mm bed, PLA, x3g via GPX)
-**Date**: 2026-03-23
-**Audit version**: v2.0 (post comprehensive pre-print audit)
+**Date**: 2026-03-25
+**Version**: v3.0 (post EA-28 systems integration)
+**Integration ref**: EA-28 (docs/engineering/28-systems-integration.md)
 
 ---
 
 ## 1. CAD Script Execution Verification
 
-All 18 scripts run via BatchExportAll. 23 STL files expected after latest changes.
-**Changes since v2.0**: Wheel redesigned (spoke holes, rim lips, TPU mode), TPU tire script added,
-body walls 4mm, bogie arm 3mm walls, tray corner gussets, panel line grooves, corner chamfers.
+28 STL exports from BatchExportAll across 6 stages.
 
-| # | Script | Status | STL Size | Notes |
-|---|--------|--------|----------|-------|
-| 1 | `BearingTestPiece` | PASS | 58 KB | 30mm OD, 22.15mm bore verified |
-| 2 | `CalibrationTestCard` | PASS | 266 KB | 7 test holes + bearing counterbore |
-| 3 | `RoverWheel` | **UPDATED** | TBD | Spoke holes, rim lips, USE_TPU_TIRE toggle (re-export needed) |
-| 3b | `RoverTire` | **NEW** | TBD | TPU tire 86mm OD, 70mm bore, 48 treads (re-export needed) |
-| 4 | `SteeringBracket` | PASS | 65 KB | 608ZZ seat, motor clip, 8mm bore |
-| 5 | `DiffBarAdapter` | PASS | 73 KB | 608ZZ seat, 8mm bore, 30mm boss OD |
-| 6 | `BogieArm` | **UPDATED** | TBD | 180mm span, 3mm walls (was 2.5mm), re-export needed |
-| 7 | `RockerArm` | PASS | 67+64 KB | TWO-PIECE: front 195mm + rear 118mm (105+boss), lap joint |
-| 8 | `FixedWheelMount` | PASS | 35 KB | N20 clip, M3 bolt holes, zip-tie slot |
-| 9 | `ServoMount` | PASS | 58 KB | SG90 pocket, M2 holes, 12mm circular horn slot |
-| 10 | `ElectronicsTray` | **UPDATED** | TBD | Corner gussets added, re-export needed |
-| 11 | `BodyQuadrant` (×4) | **UPDATED** | TBD | 4mm walls, panel line grooves, corner chamfers added, re-export needed |
-| 12 | `TopDeck` (×4) | **UPDATED** | TBD | Panel line grid on top surface added, re-export needed |
-| 13 | `StrainReliefClip` | PASS | 30 KB | U-channel, snap tab |
-| 14 | `FuseHolderBracket` | PASS | 45 KB | 8mm clip channel, end walls |
-| 15 | `SwitchMountPlate` | PASS | 30 KB | 15mm bore, M3 diagonal holes |
+### Stage 1: Calibration (3 parts)
+
+| # | Script | Export Name | Qty | Status |
+|---|--------|------------|-----|--------|
+| 1 | `CalibrationTestCard` | calibration_test_card.stl | 1 | Pending |
+| 2 | `BearingTestPiece` | bearing_test_piece.stl | 1 | Pending |
+| 3 | `TubeSocketTest` | tube_socket_test.stl | 1 | Pending |
+
+### Stage 2: Wheels (2 scripts, 12 parts)
+
+| # | Script | Export Name | Qty | Status |
+|---|--------|------------|-----|--------|
+| 4 | `RoverWheelV3` | rover_wheel_v3.stl | 6 | Pending |
+| 5 | `RoverTire` | rover_tire.stl | 6 (TPU) | Pending (CTC Bizer cannot print TPU — use O-rings or order externally) |
+
+### Stage 3: Steering & Mounts (5 scripts, 18 parts)
+
+| # | Script | Export Name | Qty | Status |
+|---|--------|------------|-----|--------|
+| 6 | `SteeringBracket` | steering_bracket.stl | 4 | Pending |
+| 7 | `FixedWheelMount` | fixed_wheel_mount.stl | 2 | Pending |
+| 8 | `ServoMount` | servo_mount.stl | 4 | Pending |
+| 9 | `SteeringKnuckle` | steering_knuckle.stl | 4 | Pending |
+| 10 | `SteeringHornLink` | steering_horn_link.stl | 4 | Pending |
+
+### Stage 4: Suspension Connectors (6 scripts, 23 parts)
+
+| # | Script | Export Name | Qty | Status |
+|---|--------|------------|-----|--------|
+| 11 | `RockerHubConnector` | rocker_hub_connector.stl | 2 | Pending |
+| 12 | `BogiePivotConnector` | bogie_pivot_connector.stl | 2 | Pending |
+| 13 | `FrontWheelConnector` | front_wheel_connector.stl | 4 | Pending |
+| 14 | `MiddleWheelConnector` | middle_wheel_connector.stl | 2 | Pending |
+| 15 | `DifferentialPivotHousing` | differential_pivot_housing.stl | 1 | Pending |
+| 16 | `CableClip` | cable_clip.stl | 12 | Pending |
+
+### Stage 5: Body (2 scripts, 8 parts)
+
+| # | Script | Export Name | Qty | Status |
+|---|--------|------------|-----|--------|
+| 17a | `BodyQuadrant` (FL) | body_quadrant_fl.stl | 1 | Pending |
+| 17b | `BodyQuadrant` (FR) | body_quadrant_fr.stl | 1 | Pending |
+| 17c | `BodyQuadrant` (RL) | body_quadrant_rl.stl | 1 | Pending (trimmed for bed fit) |
+| 17d | `BodyQuadrant` (RR) | body_quadrant_rr.stl | 1 | Pending (trimmed for bed fit) |
+| 18a | `TopDeck` (FL) | top_deck_fl.stl | 1 | Pending |
+| 18b | `TopDeck` (FR) | top_deck_fr.stl | 1 | Pending (phone mount bosses) |
+| 18c | `TopDeck` (RL) | top_deck_rl.stl | 1 | Pending |
+| 18d | `TopDeck` (RR) | top_deck_rr.stl | 1 | Pending |
+
+### Stage 6: Small Parts (3 scripts, 12 parts)
+
+| # | Script | Export Name | Qty | Status |
+|---|--------|------------|-----|--------|
+| 19 | `ElectronicsTray` | electronics_tray.stl | 1 | Pending |
+| 20 | `StrainReliefClip` | strain_relief_clip.stl | 10 | Pending |
+| 21 | `FuseHolderBracket` | fuse_holder_bracket.stl | 1 | Pending |
+| 22 | `SwitchMountPlate` | switch_mount_plate.stl | 1 | Pending |
+
+**Total: 28 STL exports, ~76 printed parts** (excluding TPU tires)
 
 ---
 
-## 2. STL Dimensional Verification (all 19 current files)
+## 2. Hardware Fitment Verification
 
-Measured via `get_stl_info` bounding box. All dimensions in mm.
+All dimensions from EA-28 Section 3 cross-domain interface matrix.
 
-| Part | Expected | STL Actual | Bed Fit | Status |
-|------|----------|------------|---------|--------|
-| calibration_test_card | 80×30×5 | 80×30×5.4 | 80×30 YES | PASS |
-| bearing_test_piece | 30×30×10 | 30×30×10 | 30×30 YES | PASS |
-| rover_wheel | 86×86×32 | 86×86×32 | 86×86 YES | PASS |
-| steering_bracket | 35×30×40 | 35×30×40 | 35×30 YES | PASS |
-| fixed_wheel_mount | 25×25×30 | 25×25×30 | 25×25 YES | PASS |
-| servo_mount | 40×15×25 | 40×15×25 | 40×15 YES | PASS |
-| bogie_arm | 30×180×12 | 29.9×180×12 | 180×30 YES | PASS |
-| rocker_arm_front | 30×195×15 | 30×195×15 | 195×30 YES | PASS |
-| rocker_arm_rear | 30×118×15 | 30×118×15 | 118×30 YES | PASS (105mm arm + 13mm boss) |
-| diff_bar_adapter | 30×30×20 | 30×30×20 | 30×30 YES | PASS |
-| body_quadrant_fl | 130×220×80 | 130×220×80 | 220×130 YES | PASS |
-| body_quadrant_fr | 130×220×80 | 130×220×80 | 220×130 YES | PASS |
-| body_quadrant_rl | ≤225×145 | **140×235** | **NO** | **FAIL — script fixed (trim cut)** |
-| body_quadrant_rr | ≤225×145 | **140×235** | **NO** | **FAIL — script fixed (trim cut)** |
-| top_deck | 130×220×3 | 130×220×8 | 220×130 YES | **FAIL — only 1 tile, hollow (104 faces). Script fixed** |
-| electronics_tray | 120×180×18 | 120×180×18 | 180×120 YES | PASS |
-| strain_relief_clip | 18×10×11.5 | 18×10×11.5 | 18×10 YES | PASS (10mm body + 1.5mm snap tab) |
-| fuse_holder_bracket | 15×40×12 | 15×40×12 | 40×15 YES | PASS |
-| switch_mount_plate | 30×30×5 | 30×30×5 | 30×30 YES | PASS |
+### 608ZZ Bearing Seats (9 locations — EA-28 M-01 to M-07)
 
----
+| Location | Host Part | Bore | Depth | Boss OD | Status |
+|----------|-----------|------|-------|---------|--------|
+| Body L rocker pivot | body_quadrant RL | 22.15mm | 7.2mm | 30mm | Pending |
+| Body R rocker pivot | body_quadrant RR | 22.15mm | 7.2mm | 30mm | Pending |
+| Body diff centre | body (centre) | 22.15mm | 7.2mm | 30mm | Pending |
+| L rocker-to-bogie | bogie_pivot_connector | 22.15mm | 7.2mm | 30mm | Pending |
+| R rocker-to-bogie | bogie_pivot_connector | 22.15mm | 7.2mm | 30mm | Pending |
+| FL steering pivot | steering_bracket | 22.15mm | 7.2mm | N/A | Pending |
+| FR steering pivot | steering_bracket | 22.15mm | 7.2mm | N/A | Pending |
+| RL steering pivot | steering_bracket | 22.15mm | 7.2mm | N/A | Pending |
+| RR steering pivot | steering_bracket | 22.15mm | 7.2mm | N/A | Pending |
 
-## 3. Hardware Fitment Verification
+### Tube Socket Interfaces (all connectors — EA-28 M-04 to M-06)
 
-### 608ZZ Bearing Seats (9 locations)
-
-| Script | Bore (mm) | Depth (mm) | Boss OD (mm) | Status |
-|--------|-----------|------------|--------------|--------|
-| steering_bracket | 22.15 | 7.2 | N/A (bracket width) | PASS |
-| bogie_arm | 22.15 | 7.2 | 30.0 | PASS |
-| rocker_arm (body pivot) | 22.15 | 7.2 | 30.0 | PASS |
-| rocker_arm (bogie pivot) | 22.15 | 7.2 | 26.0 | PASS |
-| diff_bar_adapter (×3) | 22.15 | 7.2 | 30.0 | PASS |
-| body_quadrant RL/RR | 22.15 | 7.2 | 30.0 | PASS |
-
-All 608ZZ seats: **22.15mm bore × 7.2mm depth** (0.15mm clearance, 0.2mm depth extra). PASS.
+| Feature | Dimension | Tolerance |
+|---------|-----------|-----------|
+| Bore | 8.2mm | ±0.1mm |
+| Depth | 15mm | ±0.5mm |
+| M3 grub hole | 3.0mm × 6mm deep | ±0.1mm |
+| Minimum wall | ≥4mm | — |
 
 ### N20 Motor Clips (6 locations)
 
-| Script | Pocket (mm) | Shaft Exit | Status |
-|--------|-------------|------------|--------|
-| steering_bracket (×4) | 12.2×10.2×25 | 4.0mm hole | PASS |
-| fixed_wheel_mount (×2) | 12.2×10.2×25 | 4.0mm hole + zip-tie | PASS |
-| bogie_arm (×2 ends) | 12.2×10.2 | Open top cut | PASS |
-
-All N20 clips: **12.2×10.2mm** (0.2mm clearance). PASS.
+| Part | Pocket (W×H×D) | Shaft Exit |
+|------|-----------------|------------|
+| steering_knuckle (×4) | 12.2×10.2×25mm | 4.0mm hole |
+| fixed_wheel_mount (×2) | 12.2×10.2×25mm | 4.0mm hole + zip-tie |
 
 ### SG90 Servo Pockets (4 locations)
 
-| Script | Pocket (mm) | Tab Span | M2 Holes | Horn Slot | Status |
-|--------|-------------|----------|----------|-----------|--------|
-| servo_mount (×4) | 22.4×12.2×12 | 32.4mm | 27.5mm spacing, 2.4mm dia | 12mm circular | PASS |
+| Part | Pocket | Tab Span | M2 Holes | Horn Slot |
+|------|--------|----------|----------|-----------|
+| servo_mount (×4) | 22.4×12.2×12mm | 32.4mm | 27.5mm spacing | 12mm circular |
 
-### Heat-Set Insert Holes
+### Heat-Set Insert Holes (~40 total)
 
-All scripts use **4.8mm diameter × 5.5mm deep** for M3 × 5.7mm OD inserts. PASS.
+All holes: **4.8mm diameter × 5.5mm deep** for M3 × 5.7mm OD brass inserts.
+Install temperature: **170-180°C** (PLA — lower than PETG's 200-220°C).
 
-| Location | Count |
-|----------|-------|
-| Body quadrant seams | ~22 |
-| Steering bracket | 2 per part (×4 = 8) |
-| Fixed wheel mount | 2 per part (×2 = 4) |
-| Servo mount | 2 per part (×4 = 8) |
-| **Total** | **~42** |
+### Shaft Bores
 
-### D-Shaft Bore (6 wheels)
-
-Wheel hub bore: **3.1mm** (0.1mm clearance on 3mm shaft), **0.5mm D-flat**, **M2 grub screw** (2mm × 5mm deep radial). PASS.
-
-### 8mm Pivot Bores
-
-All pivot parts have **8.0mm through-bore**: steering_bracket, bogie_arm, rocker_arm, diff_bar_adapter. PASS.
+| Feature | Dimension | Parts |
+|---------|-----------|-------|
+| 608ZZ shaft bore | 8.1mm | All bearing locations |
+| Wheel hub D-shaft | 3.1mm + 0.5mm D-flat | rover_wheel_v3 |
+| D-shaft M2 grub screw | 2mm × 5mm deep radial | rover_wheel_v3 |
 
 ---
 
-## 4. Cable Routing Verification
+## 3. Bed Fit Verification
 
-### Wire Features in Scripts
+All parts must fit within CTC Bizer: **225×145×150mm**.
 
-| Script | Feature | Dimensions | Status |
-|--------|---------|------------|--------|
-| bogie_arm | Wire routing slot | 5×4mm along boss | PASS |
-| electronics_tray | Floor wire channels (×4) | 10mm wide × 3mm deep | PASS |
-| electronics_tray | Wall cable exits (×3) | 10×5mm rectangular slots | PASS |
-| body_quadrant | Side wall cable exits | 10×5mm slots (2 per RL/RR, 1 per FL/FR) | PASS |
-| body_quadrant | Cable channel ridges | 10mm wide × 10mm tall | PASS |
-
-### Wire Count Through Body Walls
-
-- Motor wires: 6 motors × 2 wires = 12
-- Servo wires: 4 servos × 3 wires = 12
-- Encoder wires: 6 encoders × 2 wires = 12 (optional Phase 1)
-- Power: 2 wires
-- **Total**: ~26-38 wires through body walls
-
-Cable exits: 6 slots (2 per rear quad + 1 per front quad) × 10×5mm = adequate for wire bundles with strain relief clips.
+| Part | Largest Dimension | Bed Footprint | Fits? |
+|------|-------------------|---------------|-------|
+| body_quadrant_fl | 220×130×80mm | 220×130 | YES |
+| body_quadrant_fr | 220×130×80mm | 220×130 | YES |
+| body_quadrant_rl | ≤225×145×80mm | ≤225×145 | YES (trim cut applied) |
+| body_quadrant_rr | ≤225×145×80mm | ≤225×145 | YES (trim cut applied) |
+| electronics_tray | 120×180×18mm | 180×120 | YES |
+| rover_wheel_v3 | 86×86×32mm | 86×86 | YES |
+| rocker_hub_connector | ~45×40×35mm | 45×40 | YES |
+| All other parts | <100mm any axis | <100mm | YES |
 
 ---
 
-## 5. Discrepancies Found & Fixed
+## 4. Integration Verification (EA-28 Cross-Reference)
 
-| # | Issue | Fix Applied | Severity |
-|---|-------|-------------|----------|
-| B1 | body_quadrant RL/RR 140×235mm > 225mm bed | Added Step 4b trim cut in body_quadrant.py | **CRITICAL — fixed** |
-| B2 | top_deck: only 1 tile exported (FL hardcoded) | Updated batch_export_all.py with 4-tile TopDeck handler | **CRITICAL — fixed** |
-| B3 | top_deck: 104 faces / 5KB hollow shell | Fixed lip/clip/rib extrusion direction (downward from panel) | **CRITICAL — fixed** |
-| D1 | Shopping list O-ring: "30-40mm OD" should be "70mm ID × 3mm" | Fixed in phase1-shopping-list.md | Medium |
-| D2 | Shopping list bearing count: 10 should be 11 | Fixed in phase1-shopping-list.md | Low (both say buy 12) |
-| D3 | Shopping list heat-set insert OD/L swapped: "OD 4.6mm, L 5mm" → "OD 5.7mm, L 4.6mm" | Fixed in phase1-shopping-list.md | Medium |
-| D4 | Diff bar rod 200mm vs rocker pivot span 250mm | **RESOLVED — rod updated to 300mm** | Medium |
+### Mechanical Interfaces
 
-### Resolved: Diff Bar Rod Length
+- [ ] Diff bar length 300mm fits body width (250mm pivot span + 25mm overhang each side)
+- [ ] Rocker tube angles match `generate_rover_params.py` values
+- [ ] All tube sockets accept 8mm rod with slide fit
+- [ ] Horn link 20mm c/c matches servo horn + knuckle arm geometry
+- [ ] Hard stop channels allow ±35° rotation
+- [ ] All parts symmetric — no mirrored STLs needed (L/R flip on bed)
 
-The 8mm steel rod was updated from 200mm to 300mm. The rocker pivot span is 250mm (±125mm). The 300mm rod provides 25mm overhang each side for diff bar adapters. Shopping list, BOM, CAD scripts, URDF, and assembly reference all updated to 300mm.
+### Electrical Clearances
 
----
+- [ ] Wire channel 8×6mm accommodates wire bundles at each joint
+- [ ] Body cable exits (10×5mm × 6 slots) align with wire routing
+- [ ] Electronics tray standoffs align with ESP32 + L298N mounting holes
+- [ ] Kill switch bore (15mm) in rear body wall
+- [ ] Battery tray recess fits 2S LiPo (86×34×19mm)
 
-## 6. Left/Right Mirroring Check
+### Assembly Compatibility
 
-All parts are symmetric about at least one axis. No mirrored STLs needed — just flip on print bed.
-
-| Part | Symmetric? | L/R Handling |
-|------|-----------|--------------|
-| Steering bracket | Yes (about Y and X) | Print 4x, same orientation |
-| Fixed wheel mount | Yes | Print 2x, same orientation |
-| Bogie arm | Yes (about length axis) | Print 2x, same orientation |
-| Rocker arm front | Yes (about length axis) | Print 2x, same orientation |
-| Rocker arm rear | Yes (about length axis) | Print 2x, same orientation |
-| Servo mount | Yes | Print 4x, same orientation |
-| Body quadrant FL/FR | Mirror pair | Separate STLs (FL, FR) |
-| Body quadrant RL/RR | Mirror pair | Separate STLs (RL, RR) |
+- [ ] Body quadrant join seams align (M3 bolt holes match)
+- [ ] Rocker pivot boss Z-height matches suspension geometry (Z=60mm)
+- [ ] All M3 bolt holes clear heat-set insert positions
+- [ ] Strain relief clips fit on wire bundles
 
 ---
 
-## 7. Part Count & Quantity Summary
+## 5. Pre-First-Print Checklist
 
-| Part | Qty Needed | STL Files | Print Copies | Status |
-|------|-----------|-----------|--------------|--------|
-| Calibration test card | 1 | 1 | 1 | OK |
-| Bearing test piece | 1 | 1 | 1 | OK |
-| Rover wheel | 6 | 1 | 6 | OK |
-| Steering bracket | 4 | 1 | 4 | OK |
-| Fixed wheel mount | 2 | 1 | 2 | OK |
-| Servo mount | 4 | 1 | 4 | OK |
-| Bogie arm | 2 | 1 | 2 | OK |
-| Rocker arm front | 2 | 1 | 2 | OK |
-| Rocker arm rear | 2 | 1 | 2 | OK |
-| Diff bar adapter | 3 | 1 | 3 | OK |
-| Body quadrant FL | 1 | 1 | 1 | OK |
-| Body quadrant FR | 1 | 1 | 1 | OK |
-| Body quadrant RL | 1 | 1 | 1 | FIXED |
-| Body quadrant RR | 1 | 1 | 1 | FIXED |
-| Top deck tile | 4 | 4 (after fix) | 1 each | FIXED |
-| Electronics tray | 1 | 1 | 1 | OK |
-| Strain relief clip | 10 | 1 | 10 | OK |
-| Fuse holder bracket | 1 | 1 | 1 | OK |
-| Switch mount plate | 1 | 1 | 1 | OK |
-| **Total** | **46 parts** | **22 files** | | |
-
----
-
-## 8. Recommended Print Order
-
-| Order | Part(s) | Est. Time | Why This Order |
-|-------|---------|-----------|----------------|
-| 1 | Calibration test card | 30min | Verify printer accuracy |
-| 2 | Bearing test piece | 15min | Test 608ZZ press-fit before committing |
-| 3 | 1× Wheel + 1× Steering bracket | 2h45m | Test motor fit, bearing fit, assembly |
-| 4 | 1× Servo mount | 20min | Test SG90 fit |
-| 5 | Remaining 5× Wheels | 10hr | Batch if fit is good |
-| 6 | 3× Steering brackets + 2× Fixed mounts | 3.5hr | Complete wheel mounts |
-| 7 | 3× Servo mounts | 1hr | Complete servo mounts |
-| 8 | 2× Bogie arms | 3hr | Suspension assembly |
-| 9 | 2× Rocker front + 2× rear halves | 5hr | Suspension (split design) |
-| 10 | 3× Diff bar adapters | 1.5hr | Differential bar |
-| 11 | Electronics tray | 3hr | Wire + test electronics |
-| 12 | Body quadrant FL | 8hr | Start body (overnight) |
-| 13 | Body quadrant FR | 8hr | Continue body |
-| 14 | Body quadrant RL | 10hr | Largest piece (overnight) |
-| 15 | Body quadrant RR | 10hr | Has kill switch hole |
-| 16 | 4× Top deck tiles | 4hr | Cosmetic last |
-| 17 | 10× Strain relief clips | 1.5hr | Batch print |
-| 18 | Fuse bracket + Switch plate | 30min | Small parts, last |
-
-**Total estimated print time: ~72 hours** (~3 days continuous or ~5 days practical)
-
----
-
-## 9. Pre-First-Print Checklist
-
-- [ ] CTC Bizer powered on, bed levelled
+- [ ] CTC Bizer powered on and bed levelled
 - [ ] PLA filament loaded (left extruder only)
 - [ ] Right nozzle removed or parked (prevent scratching)
 - [ ] Bed adhesion: glue stick or painter's tape applied
@@ -239,43 +185,72 @@ All parts are symmetric about at least one axis. No mirrored STLs needed — jus
 - [ ] Nozzle temp: 200-210°C (PLA)
 - [ ] SD card available with x3g files
 - [ ] GPX conversion tested: `gpx -m cr1d test.gcode test.x3g`
-- [ ] Cura profile set for CTC Bizer (0.4mm nozzle, 0.2mm layer height)
-- [ ] First print: calibration test card or bearing test piece
+- [ ] Cura profile set for CTC Bizer (0.4mm nozzle, 0.2mm layer)
+- [ ] First print: calibration test card (verify dimensional accuracy)
+- [ ] Second print: bearing test piece (verify 608ZZ press-fit)
+- [ ] Third print: tube socket test (verify 8mm rod slide fit)
 
 ---
 
-## 10. Slicer Settings Reference
+## 6. Slicer Settings Reference
 
-| Setting | Value | Notes |
-|---------|-------|-------|
-| Layer height | 0.2mm | Standard quality |
-| Nozzle diameter | 0.4mm | Stock CTC nozzle |
-| Perimeters/walls | 3 (body panels), 4 (structural brackets) | |
-| Infill | 20% gyroid (body), 30% (tray), 40-60% (brackets) | |
-| Top/bottom layers | 4 | |
-| Supports | Off for most parts, on for overhangs >45° | |
-| Bed temp | 60°C | PLA on heated bed |
-| Nozzle temp | 205°C | Adjust ±5° for your filament |
-| Speed | 40-50 mm/s | CTC Bizer is not fast |
-| Brim | 5mm for large parts (body quadrants) | Bed adhesion |
-| Retraction | 1-2mm at 25mm/s | Direct drive (not Bowden) |
+| Setting | Structural Parts | Body Panels | Small Parts |
+|---------|-----------------|-------------|-------------|
+| Layer height | 0.2mm | 0.2mm | 0.2mm |
+| Nozzle | 0.4mm | 0.4mm | 0.4mm |
+| Walls | 4-5 | 3-4 | 3 |
+| Infill | 40-60% gyroid | 20% gyroid | 30% gyroid |
+| Top/bottom layers | 4 | 4 | 4 |
+| Supports | Off (most parts) | Off | Off |
+| Bed temp | 60°C | 60°C | 60°C |
+| Nozzle temp | 205°C ±5 | 205°C ±5 | 205°C ±5 |
+| Speed | 40-50 mm/s | 40-50 mm/s | 40-50 mm/s |
+| Brim | None | 5-8mm (body quads) | None |
+| Retraction | 1-2mm @ 25mm/s | 1-2mm @ 25mm/s | 1-2mm @ 25mm/s |
 
----
-
-## 11. Post-Audit Action Items
-
-1. ~~**Deploy fixed scripts**~~ DONE — body_quadrant.py, top_deck.py, batch_export_all.py deployed to Fusion 360 Scripts folder
-2. **Re-run BatchExportAll** in Fusion 360 to regenerate all STLs (RL/RR quadrants trimmed + LED/light holes, 4× top deck tiles with FR phone mount)
-3. **Verify** re-exported STLs via `get_stl_info` (RL/RR must be ≤225×145mm, top deck >5KB each, body quadrants have new holes)
-4. **Verify diff bar rod length** during assembly (300mm rod, 250mm pivot span, 25mm overhang each side)
-5. **Backup** all files to D:\Backup and E:\Backup
-
-### Phase 1 Enhancement Features Added (2026-03-23)
-- **LED underglow holes**: 4× 5mm diameter pass-throughs in body quadrant floor (15mm inset from outer wall)
-- **Headlight holes**: 2× 5mm diameter through front wall of FL/FR quadrants (40mm apart, 60% up wall)
-- **Taillight holes**: 2× 5mm diameter through rear wall of RL/RR quadrants (40mm apart, 60% up wall)
-- **Phone holder mount**: 4× M3 heat-set insert bosses on FR top deck tile (8mm OD × 3mm tall, 60×80mm pattern)
+**File workflow**: Fusion 360 → STL → Cura → gcode → `gpx -m cr1d input.gcode output.x3g` → SD card
 
 ---
 
-*Pre-Print Checklist v2.0 — 2026-03-23 (post-audit)*
+## 7. Print Order (Recommended)
+
+| Order | Part(s) | Qty | Est. Time | Purpose |
+|-------|---------|-----|-----------|---------|
+| 1 | Calibration test card | 1 | 30 min | Verify printer accuracy |
+| 2 | Bearing test piece | 1 | 15 min | Test 608ZZ press-fit |
+| 3 | Tube socket test | 1 | 15 min | Test 8mm rod fit |
+| 4 | 1× Wheel + 1× Steering bracket | 2 | 3 hrs | Test motor fit, bearing fit |
+| 5 | 1× Servo mount + 1× Horn link | 2 | 45 min | Test SG90 fit, link geometry |
+| 6 | Remaining 5× Wheels | 5 | 10 hrs | Batch overnight |
+| 7 | 3× Steering brackets + 2× Fixed mounts | 5 | 4 hrs | Complete wheel mounts |
+| 8 | 3× Servo mounts + 3× Horn links | 6 | 2 hrs | Complete steering |
+| 9 | 4× Steering knuckles | 4 | 3 hrs | Test with bracket + bearing |
+| 10 | Connectors (hub, bogie, front, middle, diff) | 11 | 8 hrs | Suspension connectors |
+| 11 | 12× Cable clips | 12 | 2 hrs | Batch print |
+| 12 | Electronics tray | 1 | 3 hrs | Wire test before body |
+| 13 | Body quadrant FL | 1 | 8 hrs | Start body (overnight) |
+| 14 | Body quadrant FR | 1 | 8 hrs | Overnight |
+| 15 | Body quadrant RL | 1 | 10 hrs | Largest (overnight, trimmed) |
+| 16 | Body quadrant RR | 1 | 10 hrs | Kill switch hole (overnight) |
+| 17 | 4× Top deck tiles | 4 | 4 hrs | Cosmetic last |
+| 18 | 10× Strain relief + fuse + switch | 12 | 2 hrs | Small parts, last |
+
+**Total estimated print time: ~72 hours** (~3 days continuous or ~5 days practical)
+
+---
+
+## 8. Post-Print Assembly Verification
+
+After all parts printed, before assembly:
+
+- [ ] All bearing test piece fits verified (608ZZ, 8mm rod, tube socket)
+- [ ] Heat-set inserts installed in all parts (~40 inserts at 170-180°C)
+- [ ] 8mm steel rods cut to length (13 segments from 2× 1m rods)
+- [ ] Rod ends deburred with file
+- [ ] All parts labelled (L/R, FL/FR/RL/RR)
+- [ ] Refer to EA-17 (Build Guide) for step-by-step assembly
+- [ ] Refer to EA-28 (Integration) for interface verification
+
+---
+
+*Pre-Print Checklist v3.0 — 2026-03-25 (post EA-28 systems integration)*

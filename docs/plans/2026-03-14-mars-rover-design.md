@@ -4,7 +4,7 @@
 **Date**: 2026-03-14 (updated 2026-03-15)
 **Version**: 1.3
 **Status**: Design Phase — Engineering Analysis Complete, Phase 1 Firmware Started
-**Engineering References**: EA-00 through EA-27 in `docs/engineering/`
+**Engineering References**: EA-00 through EA-28 in `docs/engineering/`
 **Research References**: `docs/references/` (3D printing materials, ROS2 architecture)
 
 ---

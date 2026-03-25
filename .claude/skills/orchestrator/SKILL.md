@@ -60,7 +60,7 @@ You have an extensive toolkit for the Mars Rover project. **Before starting any 
 
 ### DIAGRAMS:
 1. **Mermaid**: `mermaid` MCP for flowcharts, wiring, architecture
-2. **Docs**: Follow EA-XX numbering (currently EA-00 through EA-27)
+2. **Docs**: Follow EA-XX numbering (currently EA-00 through EA-28)
 
 ## MCP Servers Available (10)
 | Server | Key Tools |
@@ -78,6 +78,6 @@ You have an extensive toolkit for the Mars Rover project. **Before starting any 
 ## Key Reminders
 - Charlie wants ALL plugins and skills used proactively
 - Run `tools/backup.bat` after significant work
-- 9 bearings (not 8 or 11), 28 STLs, 28 EA docs (EA-00 through EA-27)
+- 9 bearings (not 8 or 11), 28 STLs, 29 EA docs (EA-00 through EA-28)
 - CTC Bizer: 225×145×150mm bed, PLA only, x3g via GPX
 - Fusion 360 API: values in cm (mm/10), Z negated on XZ/YZ planes

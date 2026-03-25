@@ -1,0 +1,108 @@
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#fab387', 'primaryTextColor': '#cdd6f4', 'primaryBorderColor': '#6c7086', 'lineColor': '#a6adc8', 'secondaryColor': '#45475a', 'tertiaryColor': '#313244', 'background': '#1e1e2e'}}}%%
+
+graph TD
+    subgraph PHASE_0["Phase 0: Calibration & Test"]
+        CAL["Print Calibration Card<br/>30 min"]
+        BEAR["Print Bearing Test Piece<br/>15 min"]
+        TEST_FIT["Test 608ZZ fit<br/>Adjust bore ±0.1mm"]
+    end
+
+    subgraph PHASE_1["Phase 1: Wheels & Mounts"]
+        WHEEL["Print 6× Wheels<br/>12 hrs"]
+        STEER_B["Print 4× Steering Brackets<br/>6 hrs"]
+        FIXED["Print 2× Fixed Mounts<br/>2 hrs"]
+        SERVO_M["Print 4× Servo Mounts<br/>4 hrs"]
+        HORN["Print 4× Horn Links<br/>1 hr"]
+    end
+
+    subgraph PHASE_2["Phase 2: Suspension Arms"]
+        BOG["Print 2× Bogie Arms<br/>5 hrs"]
+        ROCK["Print 2× Rocker Arms<br/>(front + rear halves)<br/>10 hrs"]
+        DADAPT["Print 3× Diff Bar Adapters<br/>3 hrs"]
+    end
+
+    subgraph PHASE_3["Phase 3: Body"]
+        BQ_FL["Print Body FL<br/>8 hrs"]
+        BQ_FR["Print Body FR<br/>8 hrs"]
+        BQ_RL["Print Body RL<br/>10 hrs"]
+        BQ_RR["Print Body RR<br/>10 hrs"]
+        TRAY["Print Electronics Tray<br/>3 hrs"]
+        DECK["Print 4× Top Deck<br/>4 hrs"]
+        SMALL["Print Small Parts<br/>(clips, brackets)<br/>2 hrs"]
+    end
+
+    subgraph PHASE_4["Phase 4: Preparation"]
+        INSERTS["Install ~40 Heat-Set Inserts<br/>170-180°C, 1 hr"]
+        CUT_ROD["Cut 8mm Steel Rods<br/>(13 segments from 2m)"]
+        SOLDER["Solder Motor Wires<br/>+ 100nF Caps (×6)"]
+    end
+
+    subgraph PHASE_5["Phase 5: Suspension Assembly"]
+        ASM_BOG["Assemble Bogie Arms<br/>Bearings + rod segments"]
+        ASM_ROCK["Assemble Rocker Arms<br/>Bearings + rod segments"]
+        ASM_DIFF["Assemble Differential<br/>300mm rod + body bearings"]
+        MOUNT_SUSP["Mount Suspension to Body<br/>Rocker hubs → diff bar"]
+    end
+
+    subgraph PHASE_6["Phase 6: Steering & Drive"]
+        MOUNT_SERVO["Mount SG90 Servos (×4)<br/>+ Horn links"]
+        MOUNT_MOT["Mount N20 Motors (×6)<br/>+ Wheels"]
+        WIRE_MOT["Wire Motors → L298N<br/>(12 wires + 6 caps)"]
+        WIRE_SERVO["Wire Servos → ESP32<br/>(12 wires)"]
+    end
+
+    subgraph PHASE_7["Phase 7: Electronics"]
+        MOUNT_ESP["Mount ESP32 + L298N ×2<br/>on tray standoffs"]
+        WIRE_CTRL["Wire ESP32 → L298N<br/>(12 control wires)"]
+        WIRE_PWR["Wire Power<br/>Battery → fuse → switch → drivers"]
+        WIRE_SENSE["Wire Battery ADC<br/>+ E-stop button"]
+    end
+
+    subgraph PHASE_8["Phase 8: Software & Test"]
+        FLASH["Upload Firmware<br/>v0.3.0"]
+        BENCH["Bench Test<br/>(wheels off ground)"]
+        DRIVE["First Drive!"]
+    end
+
+    CAL --> BEAR --> TEST_FIT
+
+    TEST_FIT --> WHEEL & STEER_B & FIXED & SERVO_M & HORN
+    TEST_FIT --> BOG & ROCK & DADAPT
+    TEST_FIT --> BQ_FL & BQ_FR & BQ_RL & BQ_RR & TRAY & DECK & SMALL
+
+    WHEEL & STEER_B & FIXED & SERVO_M & HORN --> INSERTS
+    BOG & ROCK & DADAPT --> INSERTS
+    BQ_FL & BQ_FR & BQ_RL & BQ_RR --> INSERTS
+
+    INSERTS --> CUT_ROD
+    CUT_ROD --> ASM_BOG & ASM_ROCK & ASM_DIFF
+    ASM_BOG --> MOUNT_SUSP
+    ASM_ROCK --> MOUNT_SUSP
+    ASM_DIFF --> MOUNT_SUSP
+
+    INSERTS --> SOLDER
+    MOUNT_SUSP --> MOUNT_SERVO --> MOUNT_MOT
+    SOLDER --> MOUNT_MOT
+
+    TRAY --> MOUNT_ESP
+    MOUNT_MOT --> WIRE_MOT
+    MOUNT_SERVO --> WIRE_SERVO
+    MOUNT_ESP --> WIRE_CTRL & WIRE_PWR & WIRE_SENSE
+    WIRE_MOT --> WIRE_CTRL
+    WIRE_SERVO --> WIRE_CTRL
+
+    WIRE_CTRL & WIRE_PWR & WIRE_SENSE --> FLASH --> BENCH --> DRIVE
+
+    classDef cal fill:#313244,stroke:#a6e3a1,stroke-width:2px,color:#cdd6f4
+    classDef print fill:#313244,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4
+    classDef prep fill:#313244,stroke:#f9e2af,stroke-width:2px,color:#cdd6f4
+    classDef asm fill:#313244,stroke:#fab387,stroke-width:2px,color:#cdd6f4
+    classDef wire fill:#313244,stroke:#cba6f7,stroke-width:2px,color:#cdd6f4
+    classDef test fill:#45475a,stroke:#f38ba8,stroke-width:3px,color:#cdd6f4
+
+    class CAL,BEAR,TEST_FIT cal
+    class WHEEL,STEER_B,FIXED,SERVO_M,HORN,BOG,ROCK,DADAPT,BQ_FL,BQ_FR,BQ_RL,BQ_RR,TRAY,DECK,SMALL print
+    class INSERTS,CUT_ROD,SOLDER prep
+    class ASM_BOG,ASM_ROCK,ASM_DIFF,MOUNT_SUSP,MOUNT_SERVO,MOUNT_MOT asm
+    class WIRE_MOT,WIRE_SERVO,MOUNT_ESP,WIRE_CTRL,WIRE_PWR,WIRE_SENSE wire
+    class FLASH,BENCH,DRIVE test

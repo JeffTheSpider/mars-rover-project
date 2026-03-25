@@ -1,0 +1,99 @@
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#a6e3a1', 'primaryTextColor': '#cdd6f4', 'primaryBorderColor': '#6c7086', 'lineColor': '#a6adc8', 'secondaryColor': '#45475a', 'tertiaryColor': '#313244', 'background': '#1e1e2e'}}}%%
+
+graph LR
+    subgraph ESP["ESP32-S3 (N16R8)"]
+        direction TB
+        G4["GPIO4 - LF PWM"]
+        G5["GPIO5 - LF DIR_A"]
+        G6["GPIO6 - LF DIR_B"]
+        G7["GPIO7 - LR PWM"]
+        G15["GPIO15 - LR DIR_A"]
+        G16["GPIO16 - LR DIR_B"]
+        G8["GPIO8 - RF PWM"]
+        G9["GPIO9 - RF DIR_A"]
+        G10["GPIO10 - RF DIR_B"]
+        G11["GPIO11 - RR PWM"]
+        G12["GPIO12 - RR DIR_A"]
+        G13["GPIO13 - RR DIR_B"]
+        G1["GPIO1 - FL Servo"]
+        G2["GPIO2 - FR Servo"]
+        G41["GPIO41 - RL Servo"]
+        G42["GPIO42 - RR Servo"]
+        G14["GPIO14 - Battery ADC"]
+        G0["GPIO0 - Status LED"]
+        G46["GPIO46 - E-stop (input-only)"]
+    end
+
+    subgraph L298_1["L298N #1 (Left)"]
+        ENA1["ENA (PWM)"]
+        IN1_1["IN1"]
+        IN2_1["IN2"]
+        ENB1["ENB (PWM)"]
+        IN3_1["IN3"]
+        IN4_1["IN4"]
+    end
+
+    subgraph L298_2["L298N #2 (Right)"]
+        ENA2["ENA (PWM)"]
+        IN1_2["IN1"]
+        IN2_2["IN2"]
+        ENB2["ENB (PWM)"]
+        IN3_2["IN3"]
+        IN4_2["IN4"]
+    end
+
+    G4 -->|"Yellow 22AWG"| ENA1
+    G5 -->|"Yellow 22AWG"| IN1_1
+    G6 -->|"Yellow 22AWG"| IN2_1
+    G7 -->|"Yellow 22AWG"| ENB1
+    G15 -->|"Yellow 22AWG"| IN3_1
+    G16 -->|"Yellow 22AWG"| IN4_1
+
+    G8 -->|"Yellow 22AWG"| ENA2
+    G9 -->|"Yellow 22AWG"| IN1_2
+    G10 -->|"Yellow 22AWG"| IN2_2
+    G11 -->|"Yellow 22AWG"| ENB2
+    G12 -->|"Yellow 22AWG"| IN3_2
+    G13 -->|"Yellow 22AWG"| IN4_2
+
+    subgraph MOTORS["Motors"]
+        W1["W1 FL"]
+        W23["W2+W3 ML+RL"]
+        W6["W6 FR"]
+        W54["W5+W4 MR+RR"]
+    end
+
+    ENA1 & IN1_1 & IN2_1 -->|"OUT1/2"| W1
+    ENB1 & IN3_1 & IN4_1 -->|"OUT3/4"| W23
+    ENA2 & IN1_2 & IN2_2 -->|"OUT1/2"| W6
+    ENB2 & IN3_2 & IN4_2 -->|"OUT3/4"| W54
+
+    subgraph SERVOS["SG90 Servos"]
+        S1["FL Servo<br/>LEDC Ch4, 50Hz"]
+        S2["FR Servo<br/>LEDC Ch5, 50Hz"]
+        S3["RL Servo<br/>LEDC Ch6, 50Hz"]
+        S4["RR Servo<br/>LEDC Ch7, 50Hz"]
+    end
+
+    G1 -->|"Orange 22AWG"| S1
+    G2 -->|"Orange 22AWG"| S2
+    G41 -->|"Orange 22AWG"| S3
+    G42 -->|"Orange 22AWG"| S4
+
+    VDIV["Voltage Divider<br/>10kΩ + 4.7kΩ"]
+    ESTOP_BTN["E-stop Button<br/>Momentary, pull-down"]
+    LED["Status LED<br/>NeoPixel / Single"]
+
+    VDIV -->|"Brown 22AWG"| G14
+    ESTOP_BTN -->|"White 22AWG"| G46
+    G0 -->|"22AWG"| LED
+
+    classDef espStyle fill:#313244,stroke:#a6e3a1,stroke-width:2px,color:#cdd6f4
+    classDef driverStyle fill:#313244,stroke:#f9e2af,stroke-width:2px,color:#cdd6f4
+    classDef motorStyle fill:#313244,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4
+    classDef servoStyle fill:#313244,stroke:#cba6f7,stroke-width:2px,color:#cdd6f4
+
+    class G4,G5,G6,G7,G8,G9,G10,G11,G12,G13,G15,G16,G1,G2,G41,G42,G14,G0,G46 espStyle
+    class ENA1,IN1_1,IN2_1,ENB1,IN3_1,IN4_1,ENA2,IN1_2,IN2_2,ENB2,IN3_2,IN4_2 driverStyle
+    class W1,W23,W6,W54 motorStyle
+    class S1,S2,S3,S4 servoStyle

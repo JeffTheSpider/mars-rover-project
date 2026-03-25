@@ -1,0 +1,70 @@
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#f38ba8', 'primaryTextColor': '#cdd6f4', 'primaryBorderColor': '#6c7086', 'lineColor': '#a6adc8', 'secondaryColor': '#45475a', 'tertiaryColor': '#313244', 'background': '#1e1e2e'}}}%%
+
+graph TB
+    subgraph PHONE["📱 Phone (PWA)"]
+        PWA["Catppuccin Mocha UI<br/>D-pad + ARM/DISARM"]
+    end
+
+    subgraph ESP32["🔧 ESP32-S3 (N16R8)"]
+        direction TB
+        FW["Firmware v0.3.0<br/>9 modules"]
+        MOT_CTRL["Motor Control<br/>4ch L298N PWM"]
+        STEER["Steering<br/>4× SG90 Servos"]
+        SENSE["Sensors<br/>ADC + Encoders + E-stop"]
+        SAFETY["Safety Layer<br/>Arm/Watchdog/Cutoff"]
+    end
+
+    subgraph MECH["⚙️ Mechanical"]
+        direction TB
+        BODY["Body Frame<br/>4 Quadrants (440×260×80mm)"]
+        DIFF["Differential<br/>300mm 8mm Rod + 2× 608ZZ"]
+        ROCK["Rocker Arms (×2)<br/>270mm span"]
+        BOG["Bogie Arms (×2)<br/>180mm span"]
+        WHEELS["Wheels (×6)<br/>80mm dia, N20 motors"]
+        STEER_MECH["Steering (×4)<br/>Horn Link 4-bar + 608ZZ"]
+    end
+
+    subgraph POWER["🔋 Power"]
+        BATT["2S LiPo 2200mAh<br/>7.4V"]
+        FUSE["5A Blade Fuse"]
+        SWITCH["Kill Switch"]
+        L298N["L298N ×2<br/>5V Regulator"]
+    end
+
+    subgraph JETSON["🧠 Jetson Orin Nano (Phase 2)"]
+        ROS2["ROS2 Humble<br/>Nav2 + SLAM + YOLO"]
+    end
+
+    PWA -->|"WebSocket JSON<br/>WiFi (Port 81)"| FW
+    FW --> MOT_CTRL
+    FW --> STEER
+    FW --> SENSE
+    FW --> SAFETY
+
+    MOT_CTRL -->|"PWM + DIR<br/>12 GPIO"| L298N
+    STEER -->|"50Hz PWM<br/>4 GPIO"| STEER_MECH
+    SENSE -->|"ADC GPIO14"| BATT
+
+    L298N -->|"OUT1-4<br/>2A/ch"| WHEELS
+    BATT --> FUSE --> SWITCH --> L298N
+    L298N -->|"5V out"| ESP32
+
+    BODY --- DIFF
+    DIFF --- ROCK
+    ROCK --- BOG
+    BOG --- WHEELS
+    ROCK --- STEER_MECH
+
+    ROS2 -.->|"UART NMEA<br/>115200 baud<br/>(Phase 2)"| FW
+
+    classDef phoneStyle fill:#45475a,stroke:#f38ba8,stroke-width:2px,color:#cdd6f4
+    classDef espStyle fill:#313244,stroke:#a6e3a1,stroke-width:2px,color:#cdd6f4
+    classDef mechStyle fill:#313244,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4
+    classDef powerStyle fill:#313244,stroke:#f9e2af,stroke-width:2px,color:#cdd6f4
+    classDef futureStyle fill:#313244,stroke:#6c7086,stroke-width:1px,stroke-dasharray:5,color:#6c7086
+
+    class PWA phoneStyle
+    class FW,MOT_CTRL,STEER,SENSE,SAFETY espStyle
+    class BODY,DIFF,ROCK,BOG,WHEELS,STEER_MECH mechStyle
+    class BATT,FUSE,SWITCH,L298N powerStyle
+    class ROS2 futureStyle

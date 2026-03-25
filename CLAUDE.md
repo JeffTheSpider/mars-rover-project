@@ -6,7 +6,7 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 ## Project Location
 - Root: `D:\Mars Rover Project\`
 - Design doc: `docs/plans/2026-03-14-mars-rover-design.md` (v1.3)
-- Engineering analyses: `docs/engineering/` (EA-00 through EA-27)
+- Engineering analyses: `docs/engineering/` (EA-00 through EA-28)
 - Shopping list: `docs/plans/phase1-shopping-list.md`
 - Master todo: `docs/plans/todo-master.md`
 - Firmware: `firmware/esp32/` (ESP32-S3 Phase 1 motor controller)
@@ -45,6 +45,7 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 | 25 | Suspension Audit | Tube+connector approach, 9 bearings (EA-26 added diff pivot), dim matrix, wire routing |
 | 26 | Suspension Design Package | Full 18-section design: diff mechanism (bar+link+ball joints), steering knuckles, parametric ratios, DOF map |
 | 27 | Steering System Design | Complete physical steering mechanism: offset parallel drive, horn link 4-bar linkage, hard stops, clearance envelope |
+| 28 | Systems Integration | Cross-domain interface matrix (42 interfaces), assembly DAG, integration test plan, 6 diagrams |
 
 ## Key Specs
 - Size: 1100mm x 650mm x 1050mm (full) / 440x260mm (0.4 scale Phase 1)
@@ -153,7 +154,7 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 - UK magnetic declination: -0.0175 rad (for navsat_transform)
 
 ## Project Status (as of 2026-03-24)
-- All 28 engineering analyses complete (EA-00 through EA-27; EA-27 = steering system design)
+- All 29 engineering analyses complete (EA-00 through EA-28; EA-28 = systems integration)
 - Full engineering audit complete: all stale values swept (bogie 180mm, diff bar, CTC Bizer, PLA, 9 bearings — EA-25/EA-26)
 - All ROS2 nodes scaffolded (10 nodes across 7 packages)
 - All ESP32 firmware modules complete (9 headers: config, motors, steering, sensors, webserver, uart_nmea, uart_binary, ota, leds)
@@ -163,11 +164,11 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 - Gazebo garden world + 21 simulation test scenarios
 - ROS2 unit tests: 164 pytest tests across 6 test files (with mock framework)
 - ESP32 firmware unit tests: 42 pytest host-based tests (all passing)
-- CI/CD: GitHub Actions (ESP32 compile, firmware tests, ROS2 build, Python lint, docs check EA-00 to EA-27)
+- CI/CD: GitHub Actions (ESP32 compile, firmware tests, ROS2 build, Python lint, docs check EA-00 to EA-28)
 - 39 Fusion 360 CAD scripts (27 active + 4 deprecated + 6 reference models + 2 superseded)
 - EA-25/EA-26 suspension complete: tube+connector approach, 9 bearings (not 11), through-bar diff mechanism
 - BatchExportAll updated: 28 STL exports (DifferentialLink removed)
-- 4 wiring diagrams rendered to SVG (power, signal, tray layout, cable routing)
+- 10 diagrams rendered to SVG (4 wiring + 6 integration from EA-28)
 - Print strategy, Phase 1 BOM, maintenance guide, disassembly guide, data capture template all complete
 - ESP32 Arduino core v3.3.7 installed locally, pytest + flake8 + mmdc installed
 - **Next step**: Re-run BatchExportAll in Fusion 360, set up CTC Bizer printer, order Phase 1 parts

@@ -1,0 +1,55 @@
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#a6e3a1', 'primaryTextColor': '#cdd6f4', 'primaryBorderColor': '#6c7086', 'lineColor': '#a6adc8', 'secondaryColor': '#45475a', 'tertiaryColor': '#313244', 'background': '#1e1e2e'}}}%%
+
+stateDiagram-v2
+    [*] --> BOOTING : Power on
+
+    BOOTING --> REFUSE : Battery below 3.2V per cell
+    BOOTING --> DISARMED : Init OK
+
+    REFUSE --> [*] : Deep sleep
+
+    DISARMED --> ARMED : Arm command AND not estop AND not batt critical
+
+    ARMED --> DISARMED : Disarm command
+    ARMED --> DRIVING : Motor command received
+
+    DRIVING --> ARMED : Stop command OR timeout 2000ms
+    DRIVING --> ESTOP : Estop OR batt critical OR stall 2s
+
+    ESTOP --> ARMED : Estop released AND resume command
+    ESTOP --> DISARMED : Disarm command
+
+    WATCHDOG --> BOOTING : ESP32 hard reset after 5s hang
+
+    state BOOTING {
+        direction LR
+        InitGPIO --> InitModules
+        InitModules --> ConnectWiFi
+        ConnectWiFi --> SetupWebServer
+        SetupWebServer --> EnableWatchdog
+    }
+
+    state DISARMED {
+        direction LR
+        SlowPulseLED --> MotorsOFF
+        MotorsOFF --> ServosCentred
+    }
+
+    state ARMED {
+        direction LR
+        DoubleBlink --> WaitCommand
+    }
+
+    state DRIVING {
+        direction LR
+        RampMotors --> RampSteering
+        RampSteering --> CheckStall
+        CheckStall --> MonitorBattery
+        MonitorBattery --> RampMotors
+    }
+
+    state ESTOP {
+        direction LR
+        AllMotorsOFF --> SOSPattern
+        SOSPattern --> HoldServos
+    }

@@ -1,0 +1,78 @@
+%%{init: {'theme': 'dark', 'themeVariables': {'primaryColor': '#89b4fa', 'primaryTextColor': '#cdd6f4', 'primaryBorderColor': '#6c7086', 'lineColor': '#a6adc8', 'secondaryColor': '#45475a', 'tertiaryColor': '#313244', 'background': '#1e1e2e'}}}%%
+
+graph TD
+    BODY["Body Frame<br/>4 Quadrants joined by<br/>22× M3 bolts + heat-set inserts"]
+
+    subgraph LEFT["Left Side"]
+        direction TB
+        L_ROCK["Left Rocker Arm<br/>270mm (180+90), 608ZZ body pivot"]
+        L_BOG["Left Bogie Arm<br/>180mm (90+90), 608ZZ pivot"]
+        L_FW["FL Steering Bracket<br/>608ZZ steering pivot"]
+        L_MW["ML Fixed Mount<br/>N20 clip + M3 inserts"]
+        L_RW["RL Steering Bracket<br/>608ZZ steering pivot"]
+        L_FK["FL Knuckle<br/>Horn link + N20 + wheel"]
+        L_MK["ML Wheel<br/>N20 direct drive"]
+        L_RK["RL Knuckle<br/>Horn link + N20 + wheel"]
+        L_FS["FL SG90 Servo<br/>via servo mount"]
+        L_RS["RL SG90 Servo<br/>via servo mount"]
+    end
+
+    subgraph RIGHT["Right Side"]
+        direction TB
+        R_ROCK["Right Rocker Arm<br/>270mm (180+90), 608ZZ body pivot"]
+        R_BOG["Right Bogie Arm<br/>180mm (90+90), 608ZZ pivot"]
+        R_FW["FR Steering Bracket<br/>608ZZ steering pivot"]
+        R_MW["MR Fixed Mount<br/>N20 clip + M3 inserts"]
+        R_RW["RR Steering Bracket<br/>608ZZ steering pivot"]
+        R_FK["FR Knuckle<br/>Horn link + N20 + wheel"]
+        R_MK["MR Wheel<br/>N20 direct drive"]
+        R_RK["RR Knuckle<br/>Horn link + N20 + wheel"]
+        R_FS["FR SG90 Servo<br/>via servo mount"]
+        R_RS["RR SG90 Servo<br/>via servo mount"]
+    end
+
+    DIFF["Differential Bar<br/>300mm × 8mm steel rod<br/>608ZZ centre pivot in body<br/>Rocker hubs clamped (M3 grub)"]
+
+    BODY -->|"608ZZ bearings<br/>in pivot bosses"| DIFF
+    DIFF -->|"M3 grub screw<br/>rigid clamp"| L_ROCK
+    DIFF -->|"M3 grub screw<br/>rigid clamp"| R_ROCK
+
+    L_ROCK -->|"608ZZ bearing<br/>8mm rod"| L_BOG
+    L_ROCK -->|"Front arm tube<br/>150mm"| L_FW
+    L_BOG -->|"Front arm tube<br/>60mm"| L_MW
+    L_BOG -->|"Rear arm tube<br/>60mm"| L_RW
+
+    L_FW -->|"608ZZ pivot<br/>50mm shaft"| L_FK
+    L_FW --- L_FS
+    L_FS -->|"Horn link<br/>20mm 4-bar"| L_FK
+    L_MW --> L_MK
+    L_RW -->|"608ZZ pivot<br/>50mm shaft"| L_RK
+    L_RW --- L_RS
+    L_RS -->|"Horn link<br/>20mm 4-bar"| L_RK
+
+    R_ROCK -->|"608ZZ bearing<br/>8mm rod"| R_BOG
+    R_ROCK -->|"Front arm tube<br/>150mm"| R_FW
+    R_BOG -->|"Front arm tube<br/>60mm"| R_MW
+    R_BOG -->|"Rear arm tube<br/>60mm"| R_RW
+
+    R_FW -->|"608ZZ pivot<br/>50mm shaft"| R_FK
+    R_FW --- R_FS
+    R_FS -->|"Horn link<br/>20mm 4-bar"| R_FK
+    R_MW --> R_MK
+    R_RW -->|"608ZZ pivot<br/>50mm shaft"| R_RK
+    R_RW --- R_RS
+    R_RS -->|"Horn link<br/>20mm 4-bar"| R_RK
+
+    classDef bodyStyle fill:#45475a,stroke:#f38ba8,stroke-width:2px,color:#cdd6f4
+    classDef rockStyle fill:#313244,stroke:#89b4fa,stroke-width:2px,color:#cdd6f4
+    classDef bogStyle fill:#313244,stroke:#a6e3a1,stroke-width:2px,color:#cdd6f4
+    classDef wheelStyle fill:#313244,stroke:#f9e2af,stroke-width:2px,color:#cdd6f4
+    classDef servoStyle fill:#313244,stroke:#cba6f7,stroke-width:2px,color:#cdd6f4
+    classDef diffStyle fill:#45475a,stroke:#fab387,stroke-width:2px,color:#cdd6f4
+
+    class BODY bodyStyle
+    class L_ROCK,R_ROCK rockStyle
+    class L_BOG,R_BOG bogStyle
+    class L_FW,L_MW,L_RW,L_FK,L_MK,L_RK,R_FW,R_MW,R_RW,R_FK,R_MK,R_RK wheelStyle
+    class L_FS,L_RS,R_FS,R_RS servoStyle
+    class DIFF diffStyle
