@@ -82,14 +82,6 @@ def run(context):
             body.name = 'Middle Wheel Connector'
 
         # ═══ STEP 2: Tube socket ═══
-        topPlane = comp.constructionPlanes.add(
-            comp.constructionPlanes.createInput().setByOffset(
-                comp.xYConstructionPlane,
-                adsk.core.ValueInput.createByReal(BODY_H)
-            ) or comp.constructionPlanes.createInput()
-        )
-
-        # Workaround: create plane properly
         tpInput = comp.constructionPlanes.createInput()
         tpInput.setByOffset(
             comp.xYConstructionPlane,
