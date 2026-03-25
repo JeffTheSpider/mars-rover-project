@@ -2,6 +2,9 @@
 Mars Rover Differential Link — Phase 1
 ========================================
 
+*** DEPRECATED — Through-bar differential mechanism no longer uses links. ***
+*** Kept for reference only. See generate_rover_params.py mechanism_type. ***
+
 Rigid link connecting the differential bar end to a rocker arm.
 Each end has a ball joint (M3 rod-end bearing / Heim joint) for
 multi-axis rotation accommodation.
@@ -9,6 +12,10 @@ multi-axis rotation accommodation.
 The diff bar rotates about X, rockers rotate about Y — these axes
 are perpendicular, so pin joints would bind. Ball joints allow the
 angular misalignment.
+
+NOTE: With the NASA-proportioned through-bar design, the diff bar
+passes directly through the rocker hub connectors. No external links
+are needed. This script is only relevant if mechanism_type == "bar+links".
 
 Features:
   - Printed flat bar: ~85mm long × 15mm wide × 6mm thick
@@ -26,7 +33,7 @@ Link length: ~85mm (Phase 1, 0.4x scale) / ~212mm (full scale)
   See generate_rover_params.py differential_computed.link_length
 
 Print: Flat, PLA, 80% infill, 5 perimeters (structural link)
-Qty: 2 (left + right — identical, not mirrored)
+Qty: 2 (left + right — identical, not mirrored) — ONLY if using bar+links mode
 
 Reference: EA-26 Section 9.4, generate_rover_params.py
 """

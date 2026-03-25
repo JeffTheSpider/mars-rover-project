@@ -10,7 +10,7 @@ Usage:
   1. Open Fusion 360
   2. Shift+S (Scripts and Add-Ins)
   3. Select "BatchExportAll" > Run
-  4. Wait for completion (~5-10 min, exports 29 STL files)
+  4. Wait for completion (~5-10 min, exports 28 STL files)
   5. Check D:/Mars Rover Project/3d-print/ for output
 
 Output: STL files in D:/Mars Rover Project/3d-print/<category>/
@@ -70,7 +70,8 @@ COMPONENTS = [
     ('FrontWheelConnector',         'suspension', 'front_wheel_connector.stl',         'Front Wheel Connector',         'Stage 4 — print x4'),
     ('MiddleWheelConnector',        'suspension', 'middle_wheel_connector.stl',        'Middle Wheel Connector',        'Stage 4 — print x2'),
     ('DifferentialPivotHousing',    'suspension', 'differential_pivot_housing.stl',    'Diff Pivot Housing',            'Stage 4 — print x1'),
-    ('DifferentialLink',            'suspension', 'differential_link.stl',             'Differential Link',             'Stage 4 — print x2'),
+    # DifferentialLink DEPRECATED — through-bar mechanism doesn't use links
+    # ('DifferentialLink',            'suspension', 'differential_link.stl',             'Differential Link',             'Stage 4 — print x2'),
     ('CableClip',                   'suspension', 'cable_clip.stl',                    'Cable Clip',                    'Stage 4 — print x12'),
 
     # Stage 5: Body (BodyQuadrant handled specially — 4 runs)

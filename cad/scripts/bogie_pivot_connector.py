@@ -61,8 +61,8 @@ def run(context):
         # FRONT socket: angled forward-down for middle wheel
         # REAR socket: angled backward-down for rear wheel
         # Tubes spread at ~120° from each other for stability
-        FRONT_ANGLE_DEG = 35       # degrees below horizontal (forward-down)
-        REAR_ANGLE_DEG = 35        # degrees below horizontal (backward-down)
+        FRONT_ANGLE_DEG = 24       # degrees below horizontal (was 35°, NASA-proportioned)
+        REAR_ANGLE_DEG = 24        # degrees below horizontal (was 35°, NASA-proportioned)
         SPREAD_ANGLE_DEG = 140     # angle between front and rear tubes (viewed from top)
 
         comp = design.rootComponent

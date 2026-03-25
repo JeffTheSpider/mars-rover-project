@@ -8,7 +8,7 @@ Inspired by NASA Perseverance's 48 gently curved tread pattern.
 Dimensions:
   - Inner bore: 75mm (interference fit on 75mm rim seat — EA-25 corrected from 70mm)
   - Outer diameter: 86mm (matches current total wheel OD with grousers)
-  - Width: 32mm (matches rim)
+  - Width: 44mm (matches rim)
   - Wall thickness: 3mm radial (at thinnest between treads)
   - Tread: 48 gently curved treads, 2mm deep × 2mm wide
 
@@ -51,7 +51,7 @@ def run(context):
         # ── Parameters (cm — Fusion API unit) ──
         TIRE_OD_R = 4.3         # 43mm radius (86mm OD)
         TIRE_ID_R = 3.75        # 37.5mm radius (75mm bore — matches 75mm rim seat, EA-25)
-        TIRE_W = 3.2            # 32mm width
+        TIRE_W = 4.4            # 44mm width (matches rim, was 32mm)
         WALL_THICK = TIRE_OD_R - TIRE_ID_R  # 8mm radial (3mm between treads)
 
         # Tread pattern

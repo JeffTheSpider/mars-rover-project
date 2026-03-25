@@ -2,11 +2,11 @@
 Mars Rover Wheel V3 — Phase 1 (0.4 Scale) — 5-Spoke Jakkra-Style
 ==================================================================
 
-80mm OD × 32mm wide PLA wheel rim with 5 chunky spokes.
+80mm OD × 44mm wide PLA wheel rim with 5 chunky spokes.
 Designed for PLA strength at 0.4 scale — inspired by jakkra/Mars-Rover.
 
 Geometry:
-  - 80mm OD at lip peaks, 75mm seat OD (tire channel between lips)
+  - 80mm OD at lip peaks, 75mm seat OD (tire channel between lips), 44mm wide
   - 5 solid spokes from hub to rim inner wall (70mm ID)
   - 2.5mm rim wall, 2mm lip width each side, 2.5mm lip height
   - 14mm OD hub boss with 3.1mm D-shaft bore (N20 motor)
@@ -45,7 +45,7 @@ def run(context):
         # ── Dimensions (cm — Fusion API unit) ──
         WHEEL_R = 4.0           # 40mm radius (80mm OD at lip peaks)
         SEAT_R = 3.75           # 37.5mm radius (75mm seat OD for tire)
-        WHEEL_W = 3.2           # 32mm width
+        WHEEL_W = 4.4           # 44mm width (NASA-proportioned, was 32mm)
         LIP_W = 0.2             # 2mm lip width (axial)
         RIM_WALL = 0.25         # 2.5mm rim wall thickness
         RIM_INNER_R = SEAT_R - RIM_WALL  # 35mm radius (70mm inner dia)

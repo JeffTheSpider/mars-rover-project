@@ -14,13 +14,13 @@ the other side — keeping the body level.
 Features:
   - Diff bar clamp bore: 8.0mm (press-fit on 8mm rod, M3 grub for retention)
   - 2× tube sockets (8.2mm bore × 15mm deep):
-    * FRONT: angled forward-down (~8.5° below horizontal)
-    * REAR: angled backward-down (~9.5° below horizontal)
+    * FRONT: angled forward-down (~24° below horizontal)
+    * REAR: angled backward-down (~24° below horizontal)
   - M3 grub screws in each tube socket + diff bar clamp
   - 2× wire channels (8×6mm): from body side to each tube socket
   - 4mm minimum wall thickness
 
-Overall size: ~45 × 40 × 35mm
+Overall size: ~45 × 40 × 35mm (may need enlarging for steeper 24° tube angles)
 Print: Flat (body-facing side down), PLA, 60% infill, 5 perimeters
 Qty: 2 (left + right — symmetric)
 
@@ -59,9 +59,9 @@ def run(context):
         BODY_R = TUBE_BORE_R + WALL + 0.2   # ~8.3mm radius, 16.6mm OD
         BODY_LEN = 3.5             # 35mm long (along diff bar axis, X)
 
-        # ── Tube socket angles (from EA-25 Appendix A) ──
-        FRONT_DOWN_ANGLE = 8.5     # degrees below horizontal
-        REAR_DOWN_ANGLE = 9.5      # degrees below horizontal
+        # ── Tube socket angles (NASA-proportioned: pivot Z=120, wheel Z=40, WB_half=180) ──
+        FRONT_DOWN_ANGLE = 24.0    # degrees below horizontal (was 8.5°)
+        REAR_DOWN_ANGLE = 24.0     # degrees below horizontal (was 9.5°)
 
         comp = design.rootComponent
         p = adsk.core.Point3D.create

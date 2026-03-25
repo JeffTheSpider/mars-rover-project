@@ -11,10 +11,10 @@ Quadrant split:
   - Y split: Y=0mm (centre — all quadrants 220×130mm, fits 225mm bed)
 
 Quadrants:
-  FL: Front-left  (~220 × 130 × 80mm)
-  FR: Front-right (~220 × 130 × 80mm)
-  RL: Rear-left   (~220 × 130 × 80mm)
-  RR: Rear-right  (~220 × 130 × 80mm)
+  FL: Front-left  (~220 × 130 × 120mm)
+  FR: Front-right (~220 × 130 × 120mm)
+  RL: Rear-left   (~220 × 130 × 120mm)
+  RR: Rear-right  (~220 × 130 × 120mm)
 
 This script creates ONE quadrant at a time. Run with appropriate
 parameters or modify the QUADRANT variable.
@@ -67,7 +67,7 @@ def run(context):
         # ── Dimensions (cm) ──
         BODY_L = 44.0       # 440mm total body length (Y)
         BODY_W = 26.0       # 260mm total body width (X)
-        BODY_H = 8.0        # 80mm total body height (Z)
+        BODY_H = 12.0       # 120mm total body height (Z) — NASA-proportioned, was 80mm
         WALL = 0.4          # 4mm wall thickness (increased from 3mm for strength)
         RIB_T = 0.2         # 2mm internal rib thickness
 
