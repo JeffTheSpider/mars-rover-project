@@ -91,6 +91,9 @@ cad/scripts_*.png
 cad/batch_*.png
 cad/fusion_*.png
 
+# === Temporary screenshots (root) ===
+temp_*.png
+
 # === Claude Code local config ===
 .claude/settings.local.json
 
