@@ -3,9 +3,9 @@ Mars Rover Electronics Tray — Phase 1 (0.4 Scale)
 ====================================================
 
 Flat tray that sits inside the body frame and holds all electronics:
-  - ESP32-S3 DevKitC-1 (69×25mm, 4× M3 standoffs)
+  - ESP32-S3 DevKitC-1 (63×25mm, 4× M3 standoffs)
   - 2× L298N motor drivers (43×43mm, 4× M3 standoffs each)
-  - LiPo battery cradle (70×35×18mm)
+  - LiPo battery cradle (86×34×19mm)
   - Wiring channels between components
   - Mini breadboard area (47×35mm)
 
@@ -47,7 +47,7 @@ def run(context):
         WALL_T = 0.2        # 2mm wall thickness
 
         # ESP32-S3 DevKitC-1 pocket
-        ESP32_L = 7.1        # 71mm (69mm + 2mm clearance)
+        ESP32_L = 6.5        # 65mm (63mm + 2mm clearance)
         ESP32_W = 2.7        # 27mm (25mm + 2mm clearance)
         ESP32_Y = 4.0        # offset toward front
         ESP32_X = 0.0        # centred
@@ -68,8 +68,8 @@ def run(context):
         L298N_Y = -3.0       # rear of tray
 
         # LiPo battery cradle
-        LIPO_L = 7.2         # 72mm (70mm + 2mm)
-        LIPO_W = 3.7         # 37mm (35mm + 2mm)
+        LIPO_L = 8.8         # 88mm (86mm + 2mm clearance)
+        LIPO_W = 3.6         # 36mm (34mm + 2mm clearance)
         LIPO_WALL = 0.3      # 3mm cradle walls
         LIPO_Y = -7.0        # rear of tray
         LIPO_X = 0.0         # centred

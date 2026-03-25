@@ -46,7 +46,7 @@ def run(context):
         # N20 motor clip pocket
         MOTOR_W = 1.22      # 12.2mm clip inner width
         MOTOR_H = 1.02      # 10.2mm clip inner height
-        MOTOR_DEPTH = 2.5   # 25mm motor body length
+        MOTOR_DEPTH = 2.5   # 25mm clip depth (holds 24mm motor+gearbox + 1mm clearance)
         SHAFT_HOLE_R = 0.2  # 4mm shaft exit
 
         # M3 bolt holes for arm mounting

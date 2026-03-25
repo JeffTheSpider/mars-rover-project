@@ -232,16 +232,16 @@ FULL_SCALE_PARAMS = {
     # N20 gearmotor (x6)
     # ------------------------------------------------------------------
     "motor_n20": {
-        "body_width":             12,   # mm
-        "body_height":            10,   # mm
-        "body_length":            25,   # mm (motor only)
-        "gearbox_length":         12,   # mm
-        "total_length":           37,   # mm (motor + gearbox)
+        "body_width":             12,   # mm (cross-section, verified)
+        "body_height":            10,   # mm (cross-section, verified)
+        "body_length":            15,   # mm (motor can only, per Pololu/generic datasheets)
+        "gearbox_length":          9,   # mm (standard N20, varies by ratio)
+        "total_length":           24,   # mm (motor + gearbox, measure your actual motor)
         "shaft_diameter":        3.0,   # mm, D-shaft
         "shaft_protrusion":       10,   # mm
         "mounting_screw_size":     2,   # M2
         "mounting_screw_spacing":  9,   # mm, centres
-        "weight_each_g":          20,   # grams
+        "weight_each_g":          10,   # grams (typical N20 100RPM)
         "clip_inner_width":     12.2,   # mm, 0.2mm clearance
         "clip_inner_height":    10.2,   # mm, 0.2mm clearance
         "clip_wall_thickness":   2.0,   # mm
@@ -286,7 +286,7 @@ FULL_SCALE_PARAMS = {
     # Electronics layout (reference dimensions, NOT scaled)
     # ------------------------------------------------------------------
     "electronics": {
-        "esp32_l":                69,   # mm
+        "esp32_l":                63,   # mm (62.7mm per Espressif DXF, rounded)
         "esp32_w":                25,   # mm
         "esp32_mount_holes":       4,   # M3
         "l298n_l":                43,   # mm
@@ -294,9 +294,9 @@ FULL_SCALE_PARAMS = {
         "l298n_h":                27,   # mm
         "l298n_mount_pcd":        37,   # mm
         "l298n_count":             2,
-        "lipo_l":                 70,   # mm (2S 2200mAh)
-        "lipo_w":                 35,   # mm
-        "lipo_h":                 18,   # mm
+        "lipo_l":                 86,   # mm (2S 2200mAh, typical Gens Ace/Turnigy)
+        "lipo_w":                 34,   # mm (varies 32-35mm by brand)
+        "lipo_h":                 19,   # mm (varies 16-20mm by brand)
         "breadboard_l":           47,   # mm
         "breadboard_w":           35,   # mm
     },
