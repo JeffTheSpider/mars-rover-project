@@ -49,7 +49,7 @@ def run(context):
         WALL = 0.4                  # 4mm minimum wall
         BEARING_SEAT_R = 1.1075     # 22.15mm dia (608ZZ)
         BEARING_SEAT_DEPTH = 0.72   # 7.2mm
-        PIVOT_BORE_R = 0.4          # 8.0mm through-hole (for 8mm bogie shaft)
+        PIVOT_BORE_R = 0.405        # 8.1mm through-hole (0.1mm clearance on 8mm shaft)
         CHAMFER = 0.03              # 0.3mm bearing entry chamfer
 
         # ── Connector body ──

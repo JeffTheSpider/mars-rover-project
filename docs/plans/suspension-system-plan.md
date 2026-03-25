@@ -440,7 +440,7 @@ Rover
 
 | Item | Qty | Est. Cost | Source |
 |------|-----|-----------|--------|
-| 608ZZ bearing | 10 (2 spare, 8 needed) | £5 | Amazon |
+| 608ZZ bearing | 12 (3 spare, 9 needed) | £5 | Amazon |
 | 8mm steel rod × 1m | 1 | £3 | Hardware store |
 | M3 × 8mm socket cap bolt | 30 | £4 (box of 50) | Amazon |
 | M3 × 12mm socket cap bolt | 10 | £3 (box of 20) | Amazon |

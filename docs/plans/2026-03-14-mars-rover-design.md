@@ -4,7 +4,7 @@
 **Date**: 2026-03-14 (updated 2026-03-15)
 **Version**: 1.3
 **Status**: Design Phase — Engineering Analysis Complete, Phase 1 Firmware Started
-**Engineering References**: EA-01 through EA-18 in `docs/engineering/`
+**Engineering References**: EA-00 through EA-27 in `docs/engineering/`
 **Research References**: `docs/references/` (3D printing materials, ROS2 architecture)
 
 ---
@@ -50,14 +50,14 @@ A Mars rover-inspired outdoor robot that serves as a functional vehicle, AI-powe
 | Control modes | Manual, autonomous, hybrid |
 | Compute | Jetson Orin Nano Super ($249) + ESP32-S3 (EA-04) |
 | CAD | Fusion 360 |
-| 3D Printer | Ender 3 (220x220x250mm) |
+| 3D Printer | CTC 3D Bizer (225x145x150mm) |
 
 ### Build Phases
 
 | Phase | Scale | Material | Goal |
 |-------|-------|----------|------|
-| 1 | 0.4x (~45x28cm) | PLA/PETG | Test rocker-bogie, basic driving |
-| 2 | 1.0x (110x65cm) | PLA/PETG + aluminium extrusion | Full electronics, all features |
+| 1 | 0.4x (~45x28cm) | PLA | Test rocker-bogie, basic driving |
+| 2 | 1.0x (110x65cm) | PETG/ASA + aluminium extrusion | Full electronics, all features |
 | 3 | 1.0x (110x65cm) | Aluminium/steel machined + 3D printed housings | Production quality, weatherproof |
 
 ---
@@ -153,7 +153,7 @@ Top View (1100mm x 650mm):
 | Weight (Phase 3) | 20.8 kg | +4.1 kg for metal panels/hubs (EA-05) |
 | Centre of gravity | 232mm above ground | Calculated from component positions (EA-05) |
 | Max tilt angle (before tip) | 49° (conservative) | With elevated CoG estimate (EA-01) |
-| Bearings | 19× 608ZZ (8mm bore) | All pivot points + wheel axles (EA-01) |
+| Bearings | 9× 608ZZ (8mm bore, buy 12) | All pivot points + wheel axles (EA-01) |
 
 ### Wheel Design
 
@@ -182,7 +182,7 @@ Each wheel features:
 
 ### Body Frame Structure
 
-Modular tray system designed for Ender 3 (220x220mm bed):
+Modular tray system designed for CTC Bizer (225x145mm bed):
 
 ```
 Top deck:  [Panel A1][Panel A2][Panel A3][Panel A4][Panel A5]
@@ -885,8 +885,8 @@ Rover underside:
 | 4 | L298N motor drivers (dual H-bridge) | 2 | $3 | $6 |
 | 5 | 2S LiPo 2200mAh (7.4V, XT30) | 1 | $12 | $12 |
 | 6 | LiPo charger (2S balance) | 1 | $8 | $8 |
-| 7 | PETG filament (1kg spool) | 1 | $20 | $20 |
-| 8 | 608ZZ bearings | 10 | $0.50 | $5 |
+| 7 | PLA filament (1kg spool) | 1 | $20 | $20 |
+| 8 | 608ZZ bearings | 12 | $0.50 | $6 |
 | 9 | M3 fastener set + heat-set inserts | 1 set | $9 | $9 |
 | 10 | Breadboard + jumper wires + switch | 1 | $8 | $8 |
 | | **Phase 1 Total** | | | **$102** |
@@ -959,7 +959,7 @@ Rover underside:
 - No AI, no LIDAR, no GPS
 - Simple RC control from phone via WiFi (web server on ESP32)
 
-**Print segments** (220x220mm bed):
+**Print segments** (225x145mm bed):
 - Chassis: ~6-8 segments (body is ~440x260mm at 0.4 scale)
 - Rocker arms: 2x (each fits in one print)
 - Bogie arms: 2x (each fits in one print)
@@ -971,7 +971,7 @@ Rover underside:
 
 **Goal**: Full electronics integration, all features working, software complete.
 
-**Print segments** (220x220mm bed, body is 1100x650mm):
+**Print segments** (225x145mm bed, body is 1100x650mm):
 - Top deck: ~25-30 panels (220x130mm each, 2 layers of panels)
 - Side panels: ~12 panels
 - Electronics bay: ~8 panels
@@ -1051,7 +1051,7 @@ All design decisions in this document are backed by detailed engineering analyse
 
 | Doc | Title | Key Decisions |
 |-----|-------|---------------|
-| EA-01 | Suspension Analysis | Rocker-bogie geometry (NASA ratio scaling), 150mm obstacle climb, 49° tilt limit, 19× 608ZZ bearings |
+| EA-01 | Suspension Analysis | Rocker-bogie geometry (NASA ratio scaling), 150mm obstacle climb, 49° tilt limit, 9× 608ZZ bearings |
 | EA-02 | Drivetrain Analysis | 33.5 kg·cm worst-case torque, Chihai 37mm 80RPM motors, Cytron MDD10A drivers, MG996R servos |
 | EA-03 | Power System Analysis | 6S LiPo (444Wh), 97.5W typical draw, 4hr runtime, 2S2P solar config, wire gauge calcs |
 | EA-04 | Compute & Sensors | Jetson Orin Nano Super (67 TOPS), PCA9685 servo driver, full camera/sensor suite |
@@ -1061,15 +1061,25 @@ All design decisions in this document are backed by detailed engineering analyse
 | EA-08 | Phase 1 Prototype Spec | All parts dimensioned for CAD, 22 printed parts, 65hr print time, assembly sequence |
 | EA-09 | ESP32-S3 GPIO Pin Map | Complete pin assignment for Phase 1 (20 pins) and Phase 2 (28 pins), wiring diagrams |
 | EA-10 | Ackermann Steering | Steering angle calculations, min turn radius 993mm, point turn, crab walk, servo mapping |
-| EA-11 | 3D Printing Strategy | PETG/ASA material selection, print settings, heat-set inserts, part segmentation, ~317hr Phase 2 |
+| EA-11 | 3D Printing Strategy | PLA (Phase 1), CTC Bizer, print settings, heat-set inserts, part segmentation, ~317hr Phase 2 |
 | EA-12 | UART Protocol | Text-based NMEA-style protocol, 115200 baud, 50Hz control loop, 18 message types |
 | EA-13 | ROS2 Architecture | Node graph, Nav2 config, SLAM, EKF fusion, YOLO pipeline, behaviour trees, ~56% CPU / ~50% GPU |
 | EA-14 | Weatherproofing | IP44 Phase 2 / IP54 Phase 3, zone-based protection, cable glands, thermal management |
 | EA-15 | Safety Systems | 4-layer safety (HW/FW/SW/OPS), fault handling, anti-theft, human detection limits |
 | EA-16 | PWA App Design | Catppuccin Mocha phone UI, D-pad + joystick, camera streaming, navigation map |
 | EA-17 | Phase 1 Build Guide | Step-by-step from ordering to first drive, ~14 day timeline, troubleshooting |
+| EA-18 | Binary UART Protocol | COBS + CRC-16, 460800 baud, binary structs, 12% utilisation (Phase 2) |
+| EA-19 | Wiring Diagram | Phase 1 complete wiring reference, ASCII diagrams, connector strategy |
+| EA-20 | CAD Preparation | Parametric dimensions from EA-08, Fusion 360 assembly structure |
+| EA-21 | Test Procedures | Acceptance criteria for firmware, electronics, integration, autonomy |
+| EA-22 | Requirements Spec | Formal FR/PR/DIM/ELEC/LEARN/DFT/MOD requirements for Phase 1 |
+| EA-23 | Wire Harness | 58-wire schedule, connectors, cable routing, colour codes, build order |
+| EA-24 | Robotic Arm Study | Phase 2 arm feasibility, 3-DOF concept, Phase 1 mount prep |
+| EA-25 | Suspension Audit | Tube+connector approach, 9 bearings, dim matrix, wire routing |
+| EA-26 | Suspension Design Package | Full 18-section design: diff mechanism (bar+link+ball joints), steering knuckles, parametric ratios, DOF map |
+| EA-27 | Steering System Design | Complete physical steering mechanism: offset parallel drive, horn link 4-bar linkage, hard stops, clearance envelope |
 
 ---
 
-*Document generated 2026-03-14. Updated to v1.2 on 2026-03-15 with EA-01 through EA-17 and Phase 1 firmware.*
+*Document generated 2026-03-14. Updated to v1.2 on 2026-03-15 with EA-01 through EA-17 and Phase 1 firmware. Updated to v1.3 on 2026-03-25 with EA-00 through EA-27, CTC Bizer printer, PLA Phase 1, 9 bearings.*
 *This is a living document — will be updated as the design evolves.*

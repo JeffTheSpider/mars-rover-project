@@ -164,9 +164,9 @@ Mars rover-inspired outdoor robot for garden and park use. Rocker-bogie suspensi
 - ROS2 unit tests: 164 pytest tests across 6 test files (with mock framework)
 - ESP32 firmware unit tests: 42 pytest host-based tests (all passing)
 - CI/CD: GitHub Actions (ESP32 compile, firmware tests, ROS2 build, Python lint, docs check EA-00 to EA-27)
-- 33 Fusion 360 CAD scripts (EA-27: steering_horn_link + EA-26: diff mechanism; 3 deprecated)
-- EA-25/EA-26 suspension complete: tube+connector approach, 9 bearings (not 11), diff bar+link mechanism
-- BatchExportAll updated: 29 STL exports, EA-27 steering_horn_link added
+- 39 Fusion 360 CAD scripts (27 active + 4 deprecated + 6 reference models + 2 superseded)
+- EA-25/EA-26 suspension complete: tube+connector approach, 9 bearings (not 11), through-bar diff mechanism
+- BatchExportAll updated: 28 STL exports (DifferentialLink removed)
 - 4 wiring diagrams rendered to SVG (power, signal, tray layout, cable routing)
 - Print strategy, Phase 1 BOM, maintenance guide, disassembly guide, data capture template all complete
 - ESP32 Arduino core v3.3.7 installed locally, pytest + flake8 + mmdc installed

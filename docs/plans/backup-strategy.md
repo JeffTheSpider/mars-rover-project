@@ -45,7 +45,7 @@ Robocopy flags like `/MIR` get mangled by Git Bash's POSIX path conversion. Alwa
 ## What's Backed Up
 
 - All source code (firmware, ROS2, PWA)
-- All engineering documents (EA-00 through EA-26)
+- All engineering documents (EA-00 through EA-27)
 - All planning documents (design doc, shopping list, todo)
 - CAD scripts and parameters
 - Reference research documents

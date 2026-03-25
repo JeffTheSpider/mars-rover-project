@@ -44,7 +44,7 @@ def run(context):
         BORE_DIA = 2.215      # 22.15mm bore (608ZZ OD + 0.15mm for PLA press-fit)
         BORE_DEPTH = 0.72     # 7.2mm seat depth (7mm bearing + 0.2mm)
         CHAMFER = 0.03        # 0.3mm chamfer at bore entry
-        SHAFT_HOLE = 0.8      # 8mm through-hole for M8 shaft
+        SHAFT_HOLE = 0.81     # 8.1mm through-hole (0.1mm clearance on 8mm shaft)
         LIP_HEIGHT = 0.05     # 0.5mm retention lip at bottom of bore
 
         # ── Create a new component ──

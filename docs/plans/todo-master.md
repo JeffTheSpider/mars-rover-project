@@ -28,7 +28,7 @@
   - [x] Cross-reference EA-18 binary protocol for Phase 2
 
 ### 1.2 Cross-Reference Audit (DONE — 3 HIGH issues fixed, 3 MEDIUM noted, 5 LOW noted)
-- [x] Verify all 18 EAs reference each other correctly where dependent
+- [x] Verify all 28 EAs reference each other correctly where dependent
 - [x] Check EA-02 torque calcs match EA-05 weight budget values — consistent (34.2kg design weight)
 - [x] Check EA-03 power budget matches EA-02 motor selections — consistent (peak 24A = 6×4A stall)
 - [x] Check EA-06 cost breakdown matches all component selections — **fixed**: filament $10→$20
@@ -147,7 +147,7 @@
 - [ ] Print electronics tray
 - [ ] Print mast parts
 - [ ] Post-processing: sand, clean, verify fits
-- [ ] Install heat-set inserts (soldering iron, 200°C for PETG)
+- [ ] Install heat-set inserts (soldering iron, 170-180°C for PLA)
 
 ---
 
@@ -172,8 +172,8 @@
   - [ ] Wire (22AWG signal, 18AWG power)
   - [ ] E-stop mushroom button (normally closed)
   - [ ] Kill switch for battery
-  - [ ] PETG filament (2-3 spools, 1kg each)
-  - [ ] TPU filament (1 spool for tyres)
+  - [ ] PLA filament (2-3 spools, 1kg each)
+  - [ ] TPU filament (1 spool for tyres) (Phase 2 — CTC Bizer cannot print TPU)
 
 ### 4.2 Electronics Assembly
 - [ ] Create wiring harness diagram (from EA-09 GPIO pinmap)
@@ -337,7 +337,7 @@
 
 ## 10. PROJECT MANAGEMENT
 
-- [x] Complete all 21 engineering analyses (EA-00 through EA-21)
+- [x] Complete all 28 engineering analyses (EA-00 through EA-27)
 - [x] Create Phase 1 firmware skeleton (all modules implemented)
 - [x] Create ROS2 package scaffolding (all 10 nodes implemented)
 - [x] Create PWA app

@@ -7,11 +7,11 @@
 
 ## Purpose
 
-Comprehensive engineering plan covering every step from requirements verification through to first drive. This plan was created after a full project deep-dive reading all 27 engineering analyses, 17 plan documents, 22 CAD scripts, 9 firmware modules, PWA, 7 ROS2 packages, CI pipeline, and tooling.
+Comprehensive engineering plan covering every step from requirements verification through to first drive. This plan was created after a full project deep-dive reading all 28 engineering analyses, 17 plan documents, 39 CAD scripts, 9 firmware modules, PWA, 7 ROS2 packages, CI pipeline, and tooling.
 
 ## Executive Summary
 
-The Mars Rover Phase 1 prototype has exceptional documentation and software maturity (27 EAs, full firmware, PWA, 22 CAD scripts, CI/CD). However, **zero physical build work has started**. This plan identifies 25 issues found during the deep-dive and structures 8 phases of work from documentation cleanup through to first drive.
+The Mars Rover Phase 1 prototype has exceptional documentation and software maturity (28 EAs, full firmware, PWA, 39 CAD scripts, CI/CD). However, **zero physical build work has started**. This plan identifies 25 issues found during the deep-dive and structures 8 phases of work from documentation cleanup through to first drive.
 
 **Estimated timeline:** ~3-4 weeks (concurrent ordering + printing + testing)
 **Estimated print time:** ~69 hours across 46 parts
@@ -28,7 +28,7 @@ The Mars Rover Phase 1 prototype has exceptional documentation and software matu
 |---|----------|-------|----------|-----|
 | 1 | Firmware | `FW_VERSION "0.2.0"` should be `"0.3.0"` | `firmware/esp32/config.h` | Update string |
 | 2 | Firmware | Servo test constants mismatch (500/11.11 vs 544/10.31) | `firmware/tests/test_firmware_logic.py` | Sync to config.h |
-| 3 | CAD | Only 19 of 23 STLs exported (missing tire + 3 top deck tiles) | `3d-print/` | Re-run BatchExportAll |
+| 3 | CAD | Only 19 of 28 STLs exported (missing tire + 3 top deck tiles) | `3d-print/` | Re-run BatchExportAll |
 | 4 | CAD | `printer_calibration.py` all zeroes, never imported | `cad/scripts/printer_calibration.py` | Calibrate printer, integrate |
 | 5 | Electrical | L298N 78M05 rated 0.5A; 4x SG90 peak 2.6A | EA-19, BOM | Add XL4015 BEC to BOM |
 | 6 | Electrical | L298N 5V logic, ESP32 3.3V output | EA-02, EA-19 | Add to bench test plan |
@@ -134,14 +134,14 @@ The Mars Rover Phase 1 prototype has exceptional documentation and software matu
 ## Phase 2: CAD Final Verification & STL Export
 
 **Duration:** 1-2 hours (requires Fusion 360 running)
-**Gate:** All 23 STLs exported, dimensions verified, bed fit confirmed
+**Gate:** All 28 STLs exported, dimensions verified, bed fit confirmed
 
 ### Tasks
 
 - [x] **2.1** Run `/cad-audit` on all scripts — final consistency check ✓ 16 PASS, 1 FAIL (servo_mount wall), 0 stale values
 - [x] **2.2** Deploy all scripts to Fusion 360 Scripts directory ✓ 3 fixed scripts deployed (body_quadrant, servo_mount, batch_export_all)
 - [x] **2.3** Run BatchExportAll in Fusion 360 (via `/fusion-export`) ✓ 22/22 components, 0 errors, 48s
-- [x] **2.4** Verify 23 STL files exist in `3d-print/` subdirectories ✓ 24 files (22 batch + bearing_test_piece + old unsplit top_deck)
+- [x] **2.4** Verify 28 STL files exist in `3d-print/` subdirectories ✓ 24 files (22 batch + bearing_test_piece + old unsplit top_deck)
 - [x] **2.5** Check body quadrant dimensions ≤225×145mm via `get_stl_info` ✓ RL/RR now 140×220mm (PASS)
 - [x] **2.6** Check top deck exports are 4 separate tiles (each >5KB) ✓ FL 44KB, FR 106KB, RL 106KB, RR 60KB
 - [x] **2.7** Check rover_tire.stl exists (even though CTC Bizer can't print TPU) ✓ 93KB

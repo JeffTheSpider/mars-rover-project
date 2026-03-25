@@ -55,7 +55,7 @@ def run(context):
         # Bearing seat (top face)
         BEARING_SEAT_R = 1.1075  # 22.15mm dia bore
         BEARING_SEAT_DEPTH = 0.72  # 7.2mm
-        PIVOT_BORE_R = 0.4       # 8mm dia through-hole
+        PIVOT_BORE_R = 0.405     # 8.1mm dia through-hole (0.1mm clearance)
 
         # Hard stop channel (bottom face, ±35° limit)
         STOP_WALL_W = 0.3       # 3mm wall width

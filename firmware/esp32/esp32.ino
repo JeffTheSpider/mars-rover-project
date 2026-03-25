@@ -1,7 +1,7 @@
 // ============================================================
 // Mars Rover — Phase 1 Firmware
 // ESP32-S3 DevKitC-1 (N16R8)
-// Version: 0.2.0
+// Version: 0.3.0
 //
 // Phase 1: 0.4 scale prototype
 // - 4-channel motor control (L298N, 6 motors as 4 groups)

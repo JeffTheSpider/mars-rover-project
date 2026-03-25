@@ -75,7 +75,7 @@ Total: 4 quadrants, ~36hr print, ~350g PLA
 |------|-----|-----------------|----------|------------|------------|
 | Electronics tray | 1 | 120 × 180 × 18 | PLA | 3hr | 40g |
 
-Features: ESP32 standoffs (4× M2.5), 2× L298N standoffs (4× M2.5 each), mini breadboard standoffs (4× M2.5), LiPo cradle (70×35×25mm recess), battery strap anchor posts (×2), 4× floor wire channels (10mm wide × 3mm deep), 3× wall cable exits (10×5mm)
+Features: ESP32 standoffs (4× M2.5), 2× L298N standoffs (4× M2.5 each), mini breadboard standoffs (4× M2.5), LiPo cradle (86×34×19mm recess), battery strap anchor posts (×2), 4× floor wire channels (10mm wide × 3mm deep), 3× wall cable exits (10×5mm)
 Total: 1 tray, ~3hr print, ~40g PLA
 
 ### A9. Top Deck
@@ -177,7 +177,7 @@ Total: 1 plate, ~15min print, ~3g PLA
 
 | Part | Qty | Specs | Purpose |
 |------|-----|-------|---------|
-| N20 gearmotor 100RPM | 6 | 12×10×37mm, 3mm D-shaft, 6V | Wheel drive (×6) |
+| N20 gearmotor 100RPM | 6 | 12×10×24mm, 3mm D-shaft, 6V | Wheel drive (×6) |
 | SG90 micro servo | 4 | 22.2×11.8×22.7mm | Steering (FL, FR, RL, RR) |
 
 ---
@@ -228,9 +228,9 @@ Total: 1 plate, ~15min print, ~3g PLA
 
 | Part | Qty | Specs | Purpose |
 |------|-----|-------|---------|
-| ESP32-S3 DevKitC-1 N16R8 | 1 | 69×25mm | Main controller |
+| ESP32-S3 DevKitC-1 N16R8 | 1 | 63×25mm | Main controller |
 | L298N motor driver | 2 | 43×43×27mm | 3 motors each |
-| 2S LiPo battery | 1 | 7.4V 2200mAh, 70×35×18mm | Power |
+| 2S LiPo battery | 1 | 7.4V 2200mAh, 86×34×19mm | Power |
 | XT60 connector pair | 1 | | Battery connection |
 | Toggle switch | 1 | 15mm panel mount | Main power |
 | E-stop tactile button | 1 | Momentary, NC, panel mount | Emergency stop — cuts motor power (EA-15) |

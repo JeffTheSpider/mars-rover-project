@@ -67,7 +67,7 @@ Design each part in Fusion 360 using dimensions from EA-08:
 | 7 | Fixed wheel mounts | Middle wheels, no steering, bearing + motor mount | 2 |
 | 8 | Motor mounts | N20 snap-fit clip, 12.2×10.2mm inner | 6 |
 | 9 | Body segments | 4 quadrants (~220×130mm each), 3mm walls, alignment tabs | 4 |
-| 10 | Electronics tray | ESP32 (69×25mm) + 2× L298N (43×43mm) + LiPo tray | 1 |
+| 10 | Electronics tray | ESP32 (63×25mm) + 2× L298N (43×43mm) + LiPo tray | 1 |
 | 11 | Deck cover | Top panel, ventilation slots | 1 |
 
 ### After CAD

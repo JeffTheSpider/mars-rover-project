@@ -41,7 +41,7 @@ def run(context):
         # Bearing
         BRG_OD   = 2.215       # 22.15mm (608ZZ + press-fit oversize)
         BRG_W    = 0.72        # 7.2mm depth
-        BRG_ID   = 0.8         # 8mm through bore
+        BRG_ID   = 0.81        # 8.1mm through bore (0.1mm clearance)
         BRG_OD_R = BRG_OD / 2
         BRG_ID_R = BRG_ID / 2
 

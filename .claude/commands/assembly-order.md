@@ -35,7 +35,7 @@ BogiePivotConnector (×2) ───┤               │
 FrontWheelConnector (×4) ───┤               │
 MiddleWheelConnector (×2) ──┤→ Suspension   │
 DifferentialPivotHousing ───┤  Assembly     │
-DifferentialLink (×2) ──────┤               │
+SteeringHornLink (×4) ─────┤               │
 SteeringKnuckle (×4) ───────┤               │
 CableClip (×8-12) ──────────┘               │
                                              │
