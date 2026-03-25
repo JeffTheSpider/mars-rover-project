@@ -1078,8 +1078,9 @@ All design decisions in this document are backed by detailed engineering analyse
 | EA-25 | Suspension Audit | Tube+connector approach, 9 bearings, dim matrix, wire routing |
 | EA-26 | Suspension Design Package | Full 18-section design: diff mechanism (bar+link+ball joints), steering knuckles, parametric ratios, DOF map |
 | EA-27 | Steering System Design | Complete physical steering mechanism: offset parallel drive, horn link 4-bar linkage, hard stops, clearance envelope |
+| EA-28 | Systems Integration | Cross-domain interface matrix (42 interfaces), assembly DAG, integration test plan, 6 diagrams |
 
 ---
 
-*Document generated 2026-03-14. Updated to v1.2 on 2026-03-15 with EA-01 through EA-17 and Phase 1 firmware. Updated to v1.3 on 2026-03-25 with EA-00 through EA-27, CTC Bizer printer, PLA Phase 1, 9 bearings.*
+*Document generated 2026-03-14. Updated to v1.2 on 2026-03-15 with EA-01 through EA-17 and Phase 1 firmware. Updated to v1.3 on 2026-03-25 with EA-00 through EA-28, CTC Bizer printer, PLA Phase 1, 9 bearings.*
 *This is a living document — will be updated as the design evolves.*

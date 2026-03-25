@@ -2,7 +2,7 @@
 
 **Document**: EA-00
 **Date**: 2026-03-15
-**Purpose**: Comprehensive reference compiling all engineering analyses (EA-01 through EA-24) into one authoritative document. Summarises key specifications, decisions, and cross-references for the Mars Rover Garden Robot project.
+**Purpose**: Comprehensive reference compiling all engineering analyses (EA-01 through EA-28) into one authoritative document. Summarises key specifications, decisions, and cross-references for the Mars Rover Garden Robot project.
 **Status**: Living document -- updated as EAs are revised.
 
 ---
@@ -759,6 +759,10 @@ Comprehensive table of every key specification, its value, and the source EA.
 | EA-22 | Phase 1 Requirements Specification | `22-requirements-specification.md` | Formal requirements (FR, PR, DIM, ELEC, LEARN, DFT, MOD) with traceability to tests | EA-08, EA-10, EA-21 |
 | EA-23 | Wire Harness Specification | `23-wire-harness.md` | Wire schedule (58 wires), connector schedule, cable routing, colour codes, harness build order | EA-09, EA-19 |
 | EA-24 | Robotic Arm Feasibility Study | `24-robotic-arm-study.md` | Phase 2 arm concept (3-DOF), weight/CoG analysis, Phase 1 mount preparation | EA-05, EA-08 |
+| EA-25 | Suspension Design Audit | `25-suspension-audit.md` | Tube+connector approach, 9 bearings (Phase 1), dimension matrix, wire routing | EA-01, EA-08, EA-11 |
+| EA-26 | Suspension Design Package | `26-suspension-design-package.md` | Full 18-section design: diff mechanism (bar+link+ball joints), steering knuckles, parametric ratios, DOF map | EA-01, EA-25 |
+| EA-27 | Steering System Design | `27-steering-system-design.md` | Offset parallel drive, horn link 4-bar linkage, hard stops, clearance envelope | EA-10, EA-26 |
+| EA-28 | Systems Integration | `28-systems-integration.md` | Cross-domain interface matrix (42 interfaces), assembly DAG, integration test plan, 6 diagrams | EA-08, EA-17, EA-23, EA-25, EA-26, EA-27 |
 
 
 ### 8.1 Document Dependency Graph
@@ -871,8 +875,9 @@ EA-01 (Suspension)
 |---------|------|---------|
 | 1.0 | 2026-03-15 | Initial release compiling EA-01 through EA-19 |
 | 1.1 | 2026-03-15 | Added EA-20 (CAD Preparation) and EA-21 (Test Procedures) to Document Index |
+| 1.2 | 2026-03-25 | Added EA-25 through EA-28 to Document Index. Fixed N20 motor dimensions (24mm total, not 37mm). |
 
 ---
 
-*Document EA-00 v1.0 -- 2026-03-15*
+*Document EA-00 v1.2 -- 2026-03-25*
 *This is a reference document. For full details on any topic, consult the source EA listed in the Document Index (Section 8).*

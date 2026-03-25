@@ -79,7 +79,7 @@ Each segment fits within the CTC Bizer's 225×145mm bed. All four quadrants are 
 **Features to model**:
 - 2× rocker pivot holes (left/right): 8mm bore for 608ZZ bearings, located at Y=0, Z=+60mm, X=±125mm
 - Electronics mounting bosses: 4× M3 standoffs for ESP32, 4× M3 for L298N drivers
-- Battery tray: 70×35×25mm recess in floor centre (fits 2S 2200mAh LiPo)
+- Battery tray: 86×34×25mm recess in floor centre (fits 2S 2200mAh LiPo)
 - Cable routing channels: 10×10mm grooves in floor
 - Switch mount: 15mm diameter hole in rear wall for power switch
 - Ventilation slots: 5× 3mm slots in each side wall (motor driver cooling)
@@ -438,10 +438,10 @@ Standard N20 micro gearmotors (with encoder):
 
 | Parameter | Value |
 |-----------|-------|
-| Body dimensions | 12mm × 10mm × 25mm (motor) + 12mm (gearbox) = 37mm total |
+| Body dimensions | 12mm × 10mm × 15mm (motor can) + 9mm (gearbox) = 24mm total |
 | Shaft | 3mm D-shaft, 10mm protrusion |
 | Mounting | 2× M2 screws on 9mm centres (some have flat face for adhesive) |
-| Weight | ~20g each |
+| Weight | ~10g each |
 | Voltage | 6V rated (7.4V max from 2S LiPo — use PWM limiting) |
 | RPM | 100 RPM (at 6V, no load) |
 | Stall torque | ~0.5 kg·cm |
@@ -528,10 +528,10 @@ For 3D printed PLA bearing seats:
 
 | Component | Dimensions | Mount | Location |
 |-----------|-----------|-------|----------|
-| ESP32-S3 DevKit | 69mm × 25mm | 4× M3 standoffs | Centre of body, accessible |
+| ESP32-S3 DevKit | 62.7mm × 25.4mm | 4× M3 standoffs | Centre of body, accessible |
 | L298N driver #1 | 43mm × 43mm × 27mm | 4× M3 standoffs | Left side (drives W1, W2, W3) |
 | L298N driver #2 | 43mm × 43mm × 27mm | 4× M3 standoffs | Right side (drives W4, W5, W6) |
-| 2S LiPo 2200mAh | 70mm × 35mm × 18mm | Battery tray (Velcro strap) | Centre floor, low CoG |
+| 2S LiPo 2200mAh | 86mm × 34mm × 19mm | Battery tray (Velcro strap) | Centre floor, low CoG |
 | Power switch | 15mm panel mount | Rear wall hole | Easily accessible |
 | Breadboard (mini) | 47mm × 35mm | Adhesive back | For servo connections |
 
@@ -741,7 +741,7 @@ All dimensions in millimetres at 0.4 scale:
 | Fixed motor mount | 25 | 25 | 30 | Bolted to arm end |
 | 608ZZ bearing seat OD | 22.1 | — | 7.2 (depth) | Press-fit in printed parts |
 | N20 motor clip ID | 12.2 | — | 10.2 | Snap-fit |
-| Battery tray | 70 | 35 | 25 | Floor recess |
+| Battery tray | 86 | 34 | 25 | Floor recess |
 
 ---
 

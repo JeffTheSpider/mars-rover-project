@@ -204,15 +204,15 @@ All values are Phase 1 (0.4 scale) in millimetres.
 
 | Part | Dimension | Value (mm) | Tolerance | Notes |
 |------|-----------|------------|-----------|-------|
-| N20 motor | Body dimensions | 12 x 10 x 25 | reference | Motor body only |
-| N20 motor | Gearbox length | 12 | reference | Total length = 37mm |
-| N20 motor | Total length | 37 | reference | Motor + gearbox |
+| N20 motor | Body dimensions | 12 x 10 x 15 | reference | Motor can only |
+| N20 motor | Gearbox length | 9 | reference | Total length = 24mm |
+| N20 motor | Total length | 24 | reference | Motor can (15mm) + gearbox (9mm) |
 | N20 motor | Shaft diameter | 3.0 (D-shaft) | reference | |
 | N20 motor | Shaft protrusion | 10 | reference | |
 | N20 motor | Mounting screws | 2x M2, 9mm centres | reference | |
-| N20 motor | Weight (each) | ~20g | reference | |
+| N20 motor | Weight (each) | ~10g | reference | |
 
-### 2.9 608ZZ Bearing (x11)
+### 2.9 608ZZ Bearing (x9)
 
 | Part | Dimension | Value (mm) | Tolerance | Notes |
 |------|-----------|------------|-----------|-------|
@@ -228,11 +228,11 @@ All values are Phase 1 (0.4 scale) in millimetres.
 |---------|-----------|------------|-----------|-------|
 | Rocker pivot holes | Bore | 8.0 | H7 | At Y=0, Z=+60, X=+/-125 |
 | Rocker pivot holes | Boss OD | 22.1 | +0.0/-0.1 | 608ZZ seat |
-| Battery tray recess | L x W x H | 70 x 35 x 25 | +/-1.0 | Floor centre, fits 2S 2200mAh LiPo |
+| Battery tray recess | L x W x H | 86 x 34 x 25 | +/-1.0 | Floor centre, fits 2S 2200mAh LiPo |
 | Cable routing channels | Cross-section | 10 x 10 | +/-0.5 | Grooves in floor |
 | Switch mount | Diameter | 15 | +/-0.3 | Rear wall, power switch |
 | Ventilation slots | Width x count | 3mm x 5 | +/-0.2 | Each side wall |
-| ESP32 standoffs | 4x M3 | PCD per DevKit | +/-0.3 | 69x25mm board |
+| ESP32 standoffs | 4x M3 | PCD per DevKit | +/-0.3 | 62.7x25.4mm board |
 | L298N standoffs | 4x M3 | 37mm PCD | +/-0.3 | 43x43mm board, 2 sets |
 | Body join seams | Bolts | 12x M3x12 | -- | 6 per seam (Y=0 and X=0), see Section 5.3 |
 | Top deck clips | Count | 8 | -- | Snap clips along edges |
@@ -241,9 +241,9 @@ All values are Phase 1 (0.4 scale) in millimetres.
 
 | Component | Dimensions (mm) | Mount Pattern |
 |-----------|----------------|---------------|
-| ESP32-S3 DevKit | 69 x 25 | 4x M3 standoffs |
+| ESP32-S3 DevKit | 62.7 x 25.4 | 4x M3 standoffs |
 | L298N driver (x2) | 43 x 43 x 27 | 4x M3 standoffs, 37mm PCD |
-| 2S LiPo 2200mAh | 70 x 35 x 18 | Battery tray + Velcro strap |
+| 2S LiPo 2200mAh | 86 x 34 x 19 | Battery tray + Velcro strap |
 | Power switch | 15mm panel mount | Rear wall hole |
 | Mini breadboard | 47 x 35 | Adhesive back |
 
@@ -413,7 +413,7 @@ Using snap-fit clip design (not screws).
 
 | Feature | Dimension (mm) | Notes |
 |---------|---------------|-------|
-| Motor body envelope | 12 x 10 x 37 (with gearbox) | Total L includes gearbox |
+| Motor body envelope | 12 x 10 x 24 (with gearbox) | Total L includes gearbox |
 | Clip inner width | 12.2 | 0.2mm clearance on motor body |
 | Clip inner height | 10.2 | 0.2mm clearance |
 | Clip wall thickness | 2.0 | Flex arms |

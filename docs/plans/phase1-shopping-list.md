@@ -24,7 +24,7 @@
 
 | Item | Qty | Approx Price | Where to Buy | Notes |
 |------|-----|-------------|--------------|-------|
-| GA12-N20 DC Gearmotor 6V 100RPM with Hall Encoder | 6 | £2.50 each (£15) | [AliExpress](https://www.aliexpress.com/w/wholesale-n20-gear-motor-encoder-100rpm-6v.html) / [Amazon UK](https://www.amazon.co.uk/s?k=N20+gear+motor+encoder+100rpm) | **IMPORTANT: Confirm GA12-N20, 1:100 gear ratio, metal gearbox, 3mm D-shaft**. Rated torque ~2 kg·cm, stall ~10-16 kg·cm. Plastic gearbox versions strip under load — insist on metal. 12×10×37mm body. AliExpress ~£1.50 each (2-4 week shipping). Amazon ~£3-4 each. |
+| GA12-N20 DC Gearmotor 6V 100RPM with Hall Encoder | 6 | £2.50 each (£15) | [AliExpress](https://www.aliexpress.com/w/wholesale-n20-gear-motor-encoder-100rpm-6v.html) / [Amazon UK](https://www.amazon.co.uk/s?k=N20+gear+motor+encoder+100rpm) | **IMPORTANT: Confirm GA12-N20, 1:100 gear ratio, metal gearbox, 3mm D-shaft**. Rated torque ~2 kg·cm, stall ~10-16 kg·cm. Plastic gearbox versions strip under load — insist on metal. 12×10×24mm body (15mm can + 9mm gearbox), ~10g. AliExpress ~£1.50 each (2-4 week shipping). Amazon ~£3-4 each. |
 
 ### 4. Servos
 
@@ -190,7 +190,9 @@
 | Zip ties (100mm bag) | £2 |
 | Velcro cable ties | £3 |
 | Hot glue sticks | £2 |
-| **Consumables Total** | **~£8** |
+| Rubber O-rings 70mm ID × 3mm (wheel traction fallback) | £3 |
+| Glue stick (bed adhesion for CTC Bizer) | £2 |
+| **Consumables Total** | **~£13** |
 
 ### Optional Phase 1 Items
 
@@ -198,8 +200,7 @@
 |----------|---------------|
 | BNO055 IMU | £12 |
 | HC-SR04 ultrasonic (x2) | £3 |
-| Rubber O-rings 70mm ID × 3mm (wheel traction) | £3 |
-| **Optional Total** | **~£18** |
+| **Optional Total** | **~£15** |
 
 ### Tools (if needed)
 
@@ -219,11 +220,11 @@
 | | Cost |
 |---|------|
 | Core components | ~£153 |
-| Consumables & sundries | ~£8 |
-| Optional sensors/traction | ~£18 |
+| Consumables & sundries | ~£13 |
+| Optional sensors | ~£15 |
 | Tools (if needed) | ~£65 |
-| **Grand Total (everything)** | **~£244** |
-| **Grand Total (core + consumables, have tools)** | **~£161** |
+| **Grand Total (everything)** | **~£246** |
+| **Grand Total (core + consumables, have tools)** | **~£166** |
 
 > **Note**: The EA-06 estimate of $102/~£80 assumes AliExpress pricing for most components with 2-4 week shipping and only 1x 500g filament spool. The figures above use Amazon UK pricing (typically 1.5-2x AliExpress) and 2x 1kg PLA spools for realistic print margin. To hit the EA-06 budget, order motors, ESP32, servos, drivers, heat-set inserts, and connectors from AliExpress (~£50 saving) and accept the longer delivery time.
 

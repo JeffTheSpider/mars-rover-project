@@ -307,7 +307,9 @@ Each wheel hub needs 2 bearings (supporting the wheel on its axle):
 | Wheel hub (outer) | 608ZZ | 6 | |
 | Total wheel bearings | 608ZZ | 12 | |
 
-**Total 608ZZ bearings needed**: 7 (pivots) + 12 (wheels) = **19 bearings**
+**Phase 1 total**: 9 bearings (2 rocker + 2 bogie + 1 diff pivot + 4 steering). No wheel bearings — wheels mount directly on N20 D-shafts.
+
+**Phase 2+ total**: 7 (pivots) + 12 (wheel hubs) = **19 bearings**.
 At ~$0.50 each = **~$10 total** for all bearings.
 
 ---

@@ -28,12 +28,12 @@ Part List (24 printed + hardware):
   6x  Wheel (80mm OD x 32mm wide cylinder)
   4x  Steering bracket (35x25x40mm)
   2x  Fixed wheel mount (25x25x30mm)
-  6x  N20 motor (12x10x37mm)
+  6x  N20 motor (12x10x24mm)
   4x  SG90 servo (22.2x11.8x22.7mm)
-  11x 608ZZ bearing (22mm OD x 8mm ID x 7mm)
-  1x  ESP32-S3 DevKit (69x25mm)
+  9x  608ZZ bearing (22mm OD x 8mm ID x 7mm)
+  1x  ESP32-S3 DevKit (62.7x25.4mm)
   2x  L298N driver (43x43x27mm)
-  1x  LiPo battery (70x35x18mm)
+  1x  LiPo battery (86x34x19mm)
 """
 
 import adsk.core
@@ -116,7 +116,7 @@ FIXED_H = 3.0       # 30mm
 # -- N20 motor --
 MOTOR_BODY_W = 1.2   # 12mm
 MOTOR_BODY_H = 1.0   # 10mm
-MOTOR_TOTAL_L = 3.7  # 37mm (motor + gearbox)
+MOTOR_TOTAL_L = 2.4  # 24mm (15mm can + 9mm gearbox)
 MOTOR_SHAFT_L = 1.0  # 10mm shaft protrusion
 
 # -- SG90 servo --
@@ -130,17 +130,17 @@ BEARING_ID = 0.8     # 8mm
 BEARING_WIDTH = 0.7  # 7mm
 
 # -- Electronics --
-ESP32_L = 6.9        # 69mm
-ESP32_W = 2.5        # 25mm
+ESP32_L = 6.27       # 62.7mm
+ESP32_W = 2.54       # 25.4mm
 ESP32_H = 0.6        # 6mm (approximate board + components height)
 
 L298N_L = 4.3        # 43mm
 L298N_W = 4.3        # 43mm
 L298N_H = 2.7        # 27mm
 
-LIPO_L = 7.0         # 70mm
-LIPO_W = 3.5         # 35mm
-LIPO_H = 1.8         # 18mm
+LIPO_L = 8.6         # 86mm
+LIPO_W = 3.4         # 34mm
+LIPO_H = 1.9         # 19mm
 
 
 # =============================================================================
@@ -603,7 +603,7 @@ def run(context):
                        'servo')
 
         # =====================================================================
-        # 10. 608ZZ BEARINGS (10x, at all pivot points)
+        # 10. 608ZZ BEARINGS (9x, at key pivot points)
         # =====================================================================
         # Bearing locations from EA-08/EA-20:
         # 2x rocker body pivots (left/right)
