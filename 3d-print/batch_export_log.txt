@@ -1,25 +1,30 @@
 MARS ROVER — BATCH EXPORT COMPLETE
 ==================================================
-Components processed: 22/22
-STL files exported:   22
+Components processed: 28/28
+STL files exported:   27
 Errors:               0
-Elapsed time:         48s (0.8 min)
+Elapsed time:         58s (1.0 min)
 
 EXPORTED FILES:
   calibration\calibration_test_card.stl             266 KB
-  wheels\rover_wheel.stl                             91 KB
-  wheels\rover_tire.stl                              93 KB
-  steering\steering_bracket.stl                      65 KB
+  calibration\tube_socket_test.stl                   89 KB
+  wheels\rover_wheel_v3.stl                         108 KB
+  wheels\rover_tire.stl                              99 KB
+  steering\steering_bracket.stl                      50 KB
   steering\fixed_wheel_mount.stl                     35 KB
-  steering\servo_mount.stl                           63 KB
-  suspension\bogie_arm.stl                           28 KB
-  suspension\rocker_arm_front.stl                    66 KB
-  suspension\rocker_arm_rear.stl                     64 KB
-  drivetrain\diff_bar_adapter.stl                    73 KB
+  steering\servo_mount.stl                           70 KB
+  steering\steering_knuckle.stl                      39 KB
+  steering\steering_horn_link.stl                    35 KB
+  suspension\rocker_hub_connector.stl                19 KB
+  suspension\bogie_pivot_connector.stl               81 KB
+  suspension\front_wheel_connector.stl               46 KB
+  suspension\middle_wheel_connector.stl               1 KB
+  suspension\differential_pivot_housing.stl          47 KB
+  suspension\cable_clip.stl                          36 KB
   body\body_quadrant_fl.stl                          95 KB
   body\body_quadrant_fr.stl                          95 KB
-  body\body_quadrant_rl.stl                         117 KB
-  body\body_quadrant_rr.stl                         117 KB
+  body\body_quadrant_rl.stl                         123 KB
+  body\body_quadrant_rr.stl                         123 KB
   body\top_deck_fl.stl                               44 KB
   body\top_deck_fr.stl                              106 KB
   body\top_deck_rl.stl                              106 KB
@@ -35,4 +40,4 @@ NEXT STEPS:
   3. Export gcode, convert: gpx -m cr1d input.gcode output.x3g
   4. Copy .x3g to SD card, print on CTC Bizer
 
-Timestamp: 2026-03-24 11:13:08
+Timestamp: 2026-03-25 12:13:10
