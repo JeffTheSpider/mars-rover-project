@@ -94,8 +94,9 @@ COLOURS = {
 PARTS = [
     # ═══════════════════════════════════════════════════════════════
     # BODY — 4 quadrants tiled from single STL + 4 deck tiles
-    # Quadrant STL: origin at body centre, extends -X and +Y
-    # Tile: FL=as-is, FR=shift +X, RL=shift -Y, RR=shift both + 180° Z
+    # Quadrant STL origin at body centre (0,0), geometry extends -X, +Y
+    # FL: as-is. FR: shift +X. RL: shift -Y. RR: 180° Z only (no shift!)
+    # Rotation happens BEFORE translation, so 180°Z maps (-X,+Y) to (+X,-Y)
     # ═══════════════════════════════════════════════════════════════
     ('body/BodyQuadrant.stl', 'Body FL', 'body',
      [(0, 0, GROUND_Z, 0, 0, 0)]),
@@ -104,7 +105,7 @@ PARTS = [
     ('body/BodyQuadrant.stl', 'Body RL', 'body',
      [(0, -22.6, GROUND_Z, 0, 0, 0)]),
     ('body/BodyQuadrant.stl', 'Body RR', 'body',
-     [(13.1, -22.6, GROUND_Z, 0, 0, 180)]),
+     [(0, 0, GROUND_Z, 0, 0, 180)]),
 
     ('body/TopDeck.stl', 'Deck FL', 'deck',
      [(0, 0, GROUND_Z + BODY_H, 0, 0, 0)]),
@@ -113,7 +114,7 @@ PARTS = [
     ('body/TopDeck.stl', 'Deck RL', 'deck',
      [(0, -22.3, GROUND_Z + BODY_H, 0, 0, 0)]),
     ('body/TopDeck.stl', 'Deck RR', 'deck',
-     [(13.3, -22.3, GROUND_Z + BODY_H, 0, 0, 180)]),
+     [(0, 0, GROUND_Z + BODY_H, 0, 0, 180)]),
 
     # ═══════════════════════════════════════════════════════════════
     # WHEELS — 6 wheels, revolve around Z, 90° Y to orient hub outward
