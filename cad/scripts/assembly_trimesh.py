@@ -8,7 +8,7 @@ a colour-coded GLB file viewable in any 3D viewer.
 Collision detection highlights interfering parts.
 
 Usage: python assembly_trimesh.py
-Output: D:\Mars Rover Project\temp\rover_assembly.glb
+Output: D:\\Mars Rover Project\\temp\\rover_assembly.glb
 
 Coordinate system (mm):
   Origin: body centre, ground level (Z=0)
@@ -28,8 +28,8 @@ OUT_DIR = r'D:\Mars Rover Project\temp'
 # ══════════════════════════════════════════════════════════════════
 
 COLOURS = {
-    'body':        [210, 160, 100, 255],   # warm tan/orange
-    'deck':        [220, 220, 220, 255],   # light grey
+    'body':        [210, 160, 100, 80],    # warm tan/orange — semi-transparent
+    'deck':        [220, 220, 220, 60],    # light grey — semi-transparent
     'wheel':       [60, 60, 60, 255],      # dark charcoal
     'suspension':  [220, 120, 40, 255],    # Mars orange
     'steering':    [80, 160, 220, 255],    # sky blue
@@ -268,9 +268,12 @@ def build_parts_list():
 
         # Steering knuckle — hangs below bracket on pivot shaft
         # STL: kingpin near X=0, base Z=0, extends +Z (41.5mm)
-        # Place below bracket, pivot shaft connects them
+        # Steering arm extends +X in STL → correct for left side (inboard)
+        # Right side needs 180°Z to flip arm inboard
+        # Z=35: axle bore near wheel centre (Z~40), pivot bore at Z~76 (bracket bearing ~72)
+        knuckle_rz = 180 if sign_x > 0 else 0
         add('steering/SteeringKnuckle.stl', f'Knuckle {name_sfx}', 'steering',
-            cx, y_pos, CONN_Z - 45)
+            cx, y_pos, WHEEL_R - 8, rz=knuckle_rz)
 
         # Servo mount — on FW connector side face, offset toward body
         # STL: XY-centred, base Z=0
