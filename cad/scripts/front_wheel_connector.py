@@ -103,12 +103,13 @@ def run(context):
         # Tube socket on side face — rod enters horizontally from bogie/rocker arm.
         # Socket bore faces +Y direction (arm rod arrives from +Y side).
         # XZ plane normal is +Y. Offset to the +Y face of the body.
-        side_plane = make_offset_plane(comp, comp.xZConstructionPlane, BODY_H / 2)
+        side_plane = make_offset_plane(comp, comp.xZConstructionPlane, BODY_H)
 
         tube_sk = comp.sketches.add(side_plane)
         tube_sk.name = 'Tube Socket'
+        # On XZ plane: sketch X → world X, sketch Y → -world Z
         tube_sk.sketchCurves.sketchCircles.addByCenterRadius(
-            p(BODY_D / 2, 0), TUBE_BORE_R
+            p(0, -(BODY_D / 2)), TUBE_BORE_R
         )
 
         tube_prof = find_smallest_profile(tube_sk)
@@ -126,13 +127,14 @@ def run(context):
 
         # Grub screw approaches from the top face, perpendicular to the
         # horizontal tube bore axis. Positioned at mid-depth of tube engagement.
-        grub_plane_y = BODY_H / 2 - TUBE_DEPTH / 2
+        grub_plane_y = BODY_H - TUBE_DEPTH / 2
         grub_plane = make_offset_plane(comp, comp.xZConstructionPlane, grub_plane_y)
 
         grub_sk = comp.sketches.add(grub_plane)
         grub_sk.name = 'Tube Grub'
+        # On XZ plane: sketch X → world X, sketch Y → -world Z
         grub_sk.sketchCurves.sketchCircles.addByCenterRadius(
-            p(BODY_D / 2, TUBE_BORE_R + WALL / 2), GRUB_M3
+            p(0, -(BODY_D / 2)), GRUB_M3
         )
 
         grub_prof = find_smallest_profile(grub_sk)
@@ -156,22 +158,26 @@ def run(context):
         # NOTE: Heat-set insert faces (steering bracket on front, servo on side)
         # must be re-verified once tube socket is reoriented to horizontal entry.
 
+        # XY plane normal is +Z. Body spans Z:[0, BODY_D].
+        # Plane at Z=0 is the -normal face, so flip=False → cut in +Z (into body).
         make_heat_set_pair(
             comp, comp.xYConstructionPlane, STEER_BOLT_SPACING,
-            cx=0, cy=BODY_H / 3, axis='x'
+            cx=0, cy=BODY_H / 3, axis='x', flip=False
         )
 
         # ══════════════════════════════════════════════════════════
         # STEP 5: Servo mount — 2× heat-set inserts (side face)
         # ══════════════════════════════════════════════════════════
 
-        side_plane = make_offset_plane(
-            comp, comp.xZConstructionPlane, BODY_W / 2
+        # YZ plane normal is +X. Offset to the +X (side) face for servo mount.
+        servo_plane = make_offset_plane(
+            comp, comp.yZConstructionPlane, BODY_W / 2
         )
 
+        # On YZ plane: sketch X → -world Z, sketch Y → world Y
         make_heat_set_pair(
-            comp, side_plane, SERVO_BOLT_SPACING,
-            cx=BODY_D / 2, cy=BODY_H / 3, axis='y'
+            comp, servo_plane, SERVO_BOLT_SPACING,
+            cx=-(BODY_D / 2), cy=BODY_H / 3, axis='y'
         )
 
         # ══════════════════════════════════════════════════════════

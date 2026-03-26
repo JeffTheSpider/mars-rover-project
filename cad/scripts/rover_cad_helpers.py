@@ -238,7 +238,8 @@ def draw_stadium(sketch, cx, cy, half_length, radius):
 # Extrude / Revolve helpers
 # ═══════════════════════════════════════════════════════════════════
 
-def extrude_profile(comp, profile, height, operation=None, symmetric=False):
+def extrude_profile(comp, profile, height, operation=None, symmetric=False,
+                    target_body=None):
     """Extrude a profile to a given height.
 
     Args:
@@ -247,6 +248,7 @@ def extrude_profile(comp, profile, height, operation=None, symmetric=False):
         height: Extrusion distance (cm, positive).
         operation: FeatureOperations enum. Default: NewBody for first, Join otherwise.
         symmetric: If True, extrude symmetrically about the sketch plane.
+        target_body: Optional BRepBody for Join/Cut to target explicitly.
 
     Returns:
         The ExtrudeFeature, or None on failure.
@@ -258,6 +260,11 @@ def extrude_profile(comp, profile, height, operation=None, symmetric=False):
 
     extrudes = comp.features.extrudeFeatures
     ext_input = extrudes.createInput(profile, operation)
+    if target_body is not None:
+        try:
+            ext_input.participantBodies = [target_body]
+        except Exception:
+            pass  # participantBodies not supported in all contexts
     if symmetric:
         ext_input.setSymmetricExtent(val(height / 2), True)
     else:
@@ -295,20 +302,22 @@ def cut_profile(comp, profile, depth, flip=False):
         return None
 
 
-def join_profile(comp, profile, height):
+def join_profile(comp, profile, height, target_body=None):
     """Join (add) an extruded profile to the existing body.
 
     Args:
         comp: The root component.
         profile: The sketch profile.
         height: Extrusion height (cm).
+        target_body: Optional BRepBody for Join to target explicitly.
 
     Returns:
         The ExtrudeFeature, or None on failure.
     """
     return extrude_profile(
         comp, profile, height,
-        adsk.fusion.FeatureOperations.JoinFeatureOperation
+        adsk.fusion.FeatureOperations.JoinFeatureOperation,
+        target_body=target_body
     )
 
 
@@ -446,7 +455,7 @@ def make_tube_socket(comp, sketch_plane, cx=0, cy=0,
 # ═══════════════════════════════════════════════════════════════════
 
 def make_heat_set_pocket(comp, sketch_plane, cx=0, cy=0,
-                         bore=None, depth=None, chamfer=True):
+                         bore=None, depth=None, chamfer=True, flip=True):
     """Create an M3 heat-set insert pocket.
 
     Args:
@@ -456,6 +465,7 @@ def make_heat_set_pocket(comp, sketch_plane, cx=0, cy=0,
         bore: Pocket bore radius (cm). Default: INSERT_BORE/2.
         depth: Pocket depth (cm). Default: INSERT_DEPTH.
         chamfer: Add entry chamfer.
+        flip: Cut direction. True = -normal (default), False = +normal.
 
     Returns:
         The ExtrudeFeature for the pocket, or None.
@@ -468,11 +478,11 @@ def make_heat_set_pocket(comp, sketch_plane, cx=0, cy=0,
     sk.sketchCurves.sketchCircles.addByCenterRadius(p(cx, cy), bore_r)
 
     prof = find_smallest_profile(sk)
-    return cut_profile(comp, prof, pocket_d, flip=True)
+    return cut_profile(comp, prof, pocket_d, flip=flip)
 
 
 def make_heat_set_pair(comp, sketch_plane, spacing, cx=0, cy=0,
-                       axis='y', bore=None, depth=None):
+                       axis='y', bore=None, depth=None, flip=True):
     """Create a pair of heat-set insert pockets symmetrically placed.
 
     Args:
@@ -482,6 +492,7 @@ def make_heat_set_pair(comp, sketch_plane, spacing, cx=0, cy=0,
         cx, cy: Midpoint of the pair (cm).
         axis: 'x' or 'y' — which axis the pair is spread along.
         bore, depth: Override pocket dimensions.
+        flip: Cut direction. True = -normal (default), False = +normal.
 
     Returns:
         List of 2 ExtrudeFeatures.
@@ -491,11 +502,13 @@ def make_heat_set_pair(comp, sketch_plane, spacing, cx=0, cy=0,
     for sign in [-1, 1]:
         if axis == 'y':
             results.append(make_heat_set_pocket(
-                comp, sketch_plane, cx, cy + sign * half, bore, depth
+                comp, sketch_plane, cx, cy + sign * half, bore, depth,
+                flip=flip
             ))
         else:
             results.append(make_heat_set_pocket(
-                comp, sketch_plane, cx + sign * half, cy, bore, depth
+                comp, sketch_plane, cx + sign * half, cy, bore, depth,
+                flip=flip
             ))
     return results
 
@@ -724,7 +737,8 @@ def _chamfer_circular_edge(comp, feature, target_radius, size, body=None):
 # ═══════════════════════════════════════════════════════════════════
 
 def add_triangular_gusset(comp, sketch_plane, x1, y1, x2, y2, x3, y3,
-                          height, operation=None):
+                          height, operation=None, symmetric=False,
+                          target_body=None):
     """Add a triangular gusset (reinforcement rib).
 
     Args:
@@ -733,6 +747,8 @@ def add_triangular_gusset(comp, sketch_plane, x1, y1, x2, y2, x3, y3,
         x1,y1,x2,y2,x3,y3: Triangle vertices (cm).
         height: Extrusion height (cm).
         operation: Feature operation. Default: JoinFeatureOperation.
+        symmetric: If True, extrude symmetrically about the sketch plane.
+        target_body: Optional BRepBody for Join to target explicitly.
 
     Returns:
         The ExtrudeFeature, or None.
@@ -749,7 +765,8 @@ def add_triangular_gusset(comp, sketch_plane, x1, y1, x2, y2, x3, y3,
 
     expected = abs((x2 - x1) * (y3 - y1) - (x3 - x1) * (y2 - y1)) / 2
     prof = find_profile_by_area(sk, expected, tolerance=0.6)
-    return extrude_profile(comp, prof, height, operation)
+    return extrude_profile(comp, prof, height, operation, symmetric=symmetric,
+                           target_body=target_body)
 
 
 # ═══════════════════════════════════════════════════════════════════

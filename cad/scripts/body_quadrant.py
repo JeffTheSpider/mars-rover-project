@@ -142,6 +142,9 @@ def run(context):
         RTG_PAD_W = 1.0
         RTG_PAD_H = 0.5
         RTG_PAD_D = 0.1
+        # Small inward offset for sketch planes on body faces
+        # Resolves Fusion 360 target-body detection ambiguity
+        FACE_INSET = 0.001  # 0.01mm — below print resolution
 
         # Arm mount (FL only)
         ARM_PATTERN = 4.0
@@ -328,7 +331,8 @@ def run(context):
         vent_x = qx_min if QUADRANT in ('FL', 'RL') else qx_max
         vent_base_z = BODY_H * 0.3
 
-        vent_plane = make_offset_plane(comp, comp.yZConstructionPlane, vent_x)
+        vent_inset = FACE_INSET if QUADRANT in ('FL', 'RL') else -FACE_INSET
+        vent_plane = make_offset_plane(comp, comp.yZConstructionPlane, vent_x + vent_inset)
         vent_sk = comp.sketches.add(vent_plane)
         vent_sk.name = f'Vents {QUADRANT}'
 
@@ -337,9 +341,10 @@ def run(context):
 
         for vi in range(VENT_COUNT):
             vy = vent_start + vi * VENT_SPACING
+            # YZ plane: sketch X → -world Z, sketch Y → world Y
             draw_stadium(
                 vent_sk,
-                cx=vy, cy=vent_base_z + VENT_W * 2,
+                cx=-(vent_base_z + VENT_W * 2), cy=vy,
                 half_length=VENT_H / 2 - VENT_W,
                 radius=VENT_W
             )
@@ -352,7 +357,7 @@ def run(context):
                 v_in = extrudes.createInput(
                     pr, adsk.fusion.FeatureOperations.CutFeatureOperation
                 )
-                v_in.setDistanceExtent(True, val(WALL + 0.01))
+                v_in.setDistanceExtent(False, val(WALL + 0.01))  # +X inward for FL/RL (plane at qx_min)
                 try:
                     extrudes.add(v_in)
                 except Exception as e:
@@ -410,8 +415,9 @@ def run(context):
             sw_plane = make_offset_plane(comp, comp.xZConstructionPlane, qy_min)
             sw_sk = comp.sketches.add(sw_plane)
             sw_sk.name = 'Kill Switch Hole'
+            # XZ plane: sketch Y → -world Z
             sw_sk.sketchCurves.sketchCircles.addByCenterRadius(
-                p(q_cx, BODY_H / 2), KILL_SW_R
+                p(q_cx, -BODY_H / 2), KILL_SW_R
             )
             sw_prof = find_smallest_profile(sw_sk)
             if sw_prof:
@@ -431,10 +437,11 @@ def run(context):
         seam_positions = []
 
         # X seam (right edge for FL/RL, left edge for FR/RR)
+        INSERT_INSET = INSERT_BORE / 2 + 0.05  # keep bore circle fully inside body
         if QUADRANT in ('FL', 'RL'):
-            seam_x = qx_max - WALL / 2
+            seam_x = qx_max - INSERT_INSET
         else:
-            seam_x = qx_min + WALL / 2
+            seam_x = qx_min + INSERT_INSET
 
         n_y = int((q_length * 10 - 2 * BOLT_INSET * 10) / (BOLT_SPACING * 10)) + 1
         for bi in range(n_y):
@@ -444,9 +451,9 @@ def run(context):
 
         # Y seam (bottom edge for FL/FR, top edge for RL/RR)
         if QUADRANT in ('FL', 'FR'):
-            seam_y = qy_min + WALL / 2
+            seam_y = qy_min + INSERT_INSET
         else:
-            seam_y = qy_max - WALL / 2
+            seam_y = qy_max - INSERT_INSET
 
         n_x = int((q_width * 10 - 2 * BOLT_INSET * 10) / (BOLT_SPACING * 10)) + 1
         for bi in range(n_x):
@@ -472,14 +479,16 @@ def run(context):
 
         if cable_exits:
             ce_x = qx_min if QUADRANT in ('FL', 'RL') else qx_max
-            ce_plane = make_offset_plane(comp, comp.yZConstructionPlane, ce_x)
+            ce_inset = FACE_INSET if QUADRANT in ('FL', 'RL') else -FACE_INSET
+            ce_plane = make_offset_plane(comp, comp.yZConstructionPlane, ce_x + ce_inset)
             ce_sk = comp.sketches.add(ce_plane)
             ce_sk.name = f'Cable Exits {QUADRANT}'
 
             for ce_y, ce_z in cable_exits:
+                # YZ plane: sketch X → -world Z, sketch Y → world Y
                 draw_rounded_rect(
-                    ce_sk, ce_y, ce_z + CABLE_EXIT_H / 2,
-                    CABLE_EXIT_W, CABLE_EXIT_H, r=0.1
+                    ce_sk, -(ce_z + CABLE_EXIT_H / 2), ce_y,
+                    CABLE_EXIT_H, CABLE_EXIT_W, r=0.1
                 )
 
             for pi in range(ce_sk.profiles.count):
@@ -489,7 +498,7 @@ def run(context):
                     ce_in = extrudes.createInput(
                         pr, adsk.fusion.FeatureOperations.CutFeatureOperation
                     )
-                    ce_in.setDistanceExtent(True, val(WALL + 0.02))
+                    ce_in.setDistanceExtent(False, val(WALL + 0.02))  # +X inward for FL/RL (plane at qx_min)
                     try:
                         extrudes.add(ce_in)
                     except Exception as e:
@@ -536,7 +545,8 @@ def run(context):
             (q_cx + q_width * 0.2 if QUADRANT in ('FL', 'RL') else q_cx - q_width * 0.2, end_y),
         ]
 
-        led_sk = comp.sketches.add(comp.xYConstructionPlane)
+        led_floor = make_offset_plane(comp, comp.xYConstructionPlane, FACE_INSET)
+        led_sk = comp.sketches.add(led_floor)
         led_sk.name = f'LED Underglow {QUADRANT}'
         for lx, ly in led_holes:
             led_sk.sketchCurves.sketchCircles.addByCenterRadius(p(lx, ly), LED_HOLE_R)
@@ -557,7 +567,8 @@ def run(context):
         else:
             light_wall_y = qy_min
 
-        light_plane = make_offset_plane(comp, comp.xZConstructionPlane, light_wall_y)
+        light_inset = -FACE_INSET if QUADRANT in ('FL', 'FR') else FACE_INSET
+        light_plane = make_offset_plane(comp, comp.xZConstructionPlane, light_wall_y + light_inset)
         light_sk = comp.sketches.add(light_plane)
         light_type = 'Headlights' if QUADRANT in ('FL', 'FR') else 'Taillights'
         light_sk.name = f'{light_type} {QUADRANT}'
@@ -565,8 +576,9 @@ def run(context):
         for sign in [-1, 1]:
             lx = q_cx + sign * LIGHT_SPACING / 2
             lz = BODY_H * LIGHT_Z_FRAC
+            # XZ plane: sketch Y → -world Z
             light_sk.sketchCurves.sketchCircles.addByCenterRadius(
-                p(lx, lz), LIGHT_HOLE_R
+                p(lx, -lz), LIGHT_HOLE_R
             )
             light_holes.append((lx, lz))
 
@@ -591,12 +603,14 @@ def run(context):
 
         for groove_frac in [0.25, 0.75]:
             gz = BODY_H * groove_frac
-            pl_plane = make_offset_plane(comp, comp.yZConstructionPlane, panel_wall_x)
+            pl_inset = FACE_INSET if QUADRANT in ('FL', 'RL') else -FACE_INSET
+            pl_plane = make_offset_plane(comp, comp.yZConstructionPlane, panel_wall_x + pl_inset)
             pl_sk = comp.sketches.add(pl_plane)
             pl_sk.name = f'Panel Line {groove_frac:.0%}'
+            # YZ plane: sketch X → -world Z, sketch Y → world Y
             pl_sk.sketchCurves.sketchLines.addTwoPointRectangle(
-                p(qy_min + WALL, gz - PANEL_LINE_W / 2),
-                p(qy_max - WALL, gz + PANEL_LINE_W / 2)
+                p(-(gz + PANEL_LINE_W / 2), qy_min + WALL),
+                p(-(gz - PANEL_LINE_W / 2), qy_max - WALL)
             )
             for pi in range(pl_sk.profiles.count):
                 pr = pl_sk.profiles.item(pi)
@@ -605,7 +619,7 @@ def run(context):
                     pl_in = extrudes.createInput(
                         pr, adsk.fusion.FeatureOperations.CutFeatureOperation
                     )
-                    pl_in.setDistanceExtent(True, val(PANEL_LINE_D))
+                    pl_in.setDistanceExtent(False, val(PANEL_LINE_D))  # +X inward for FL/RL (plane at qx_min)
                     try:
                         extrudes.add(pl_in)
                     except Exception as e:
@@ -616,12 +630,14 @@ def run(context):
 
         for groove_frac in [0.25, 0.75]:
             gz = BODY_H * groove_frac
-            pl2_plane = make_offset_plane(comp, comp.xZConstructionPlane, panel_wall_y)
+            pl2_inset = -FACE_INSET if QUADRANT in ('FL', 'FR') else FACE_INSET
+            pl2_plane = make_offset_plane(comp, comp.xZConstructionPlane, panel_wall_y + pl2_inset)
             pl2_sk = comp.sketches.add(pl2_plane)
             pl2_sk.name = f'Panel Line FR {groove_frac:.0%}'
+            # XZ plane: sketch Y → -world Z
             pl2_sk.sketchCurves.sketchLines.addTwoPointRectangle(
-                p(qx_min + WALL, gz - PANEL_LINE_W / 2),
-                p(qx_max - WALL, gz + PANEL_LINE_W / 2)
+                p(qx_min + WALL, -(gz + PANEL_LINE_W / 2)),
+                p(qx_max - WALL, -(gz - PANEL_LINE_W / 2))
             )
             for pi in range(pl2_sk.profiles.count):
                 pr = pl2_sk.profiles.item(pi)
@@ -645,15 +661,17 @@ def run(context):
             arm_cx = q_cx
             arm_cz = BODY_H * 0.6
 
-            arm_plane = make_offset_plane(comp, comp.xZConstructionPlane, qy_max)
+            BOSS_INSET = 0.1  # 1mm inside body for reliable join overlap
+            arm_plane = make_offset_plane(comp, comp.xZConstructionPlane, qy_max - BOSS_INSET)
             arm_sk = comp.sketches.add(arm_plane)
             arm_sk.name = 'Arm Mount Bosses FL'
 
             for sx in [-1, 1]:
                 for sz in [-1, 1]:
+                    # XZ plane: sketch Y → -world Z
                     arm_sk.sketchCurves.sketchCircles.addByCenterRadius(
                         p(arm_cx + sx * ARM_PATTERN / 2,
-                          arm_cz + sz * ARM_PATTERN / 2),
+                          -(arm_cz + sz * ARM_PATTERN / 2)),
                         ARM_BOSS_R
                     )
 
@@ -662,7 +680,7 @@ def run(context):
                 a = pr.areaProperties().area
                 if a < 1.0:
                     extrude_profile(
-                        comp, pr, ARM_BOSS_H,
+                        comp, pr, ARM_BOSS_H + BOSS_INSET,
                         adsk.fusion.FeatureOperations.JoinFeatureOperation
                     )
                     arm_mount_count += 1
@@ -673,10 +691,11 @@ def run(context):
             )
             for sx in [-1, 1]:
                 for sz in [-1, 1]:
+                    # XZ plane: sketch Y → -world Z
                     make_heat_set_pocket(
                         comp, arm_top,
                         arm_cx + sx * ARM_PATTERN / 2,
-                        arm_cz + sz * ARM_PATTERN / 2
+                        -(arm_cz + sz * ARM_PATTERN / 2)
                     )
 
         # ══════════════════════════════════════════════════════════
@@ -690,8 +709,9 @@ def run(context):
             rtg_sk.name = f'RTG Detail {QUADRANT}'
 
             for frac in [0.70, 0.80]:
+                # XZ plane: sketch Y → -world Z
                 draw_rounded_rect(
-                    rtg_sk, q_cx, BODY_H * frac,
+                    rtg_sk, q_cx, -(BODY_H * frac),
                     RTG_PAD_W, RTG_PAD_H, r=0.05
                 )
                 rtg_count += 1
@@ -715,16 +735,20 @@ def run(context):
 
         mli_z = BODY_H - MLI_INSET
 
-        # Side wall ridge
+        # Side wall ridge — use 0.2mm inset into wall for reliable join
+        MLI_INSET_DEPTH = 0.02  # 0.2mm inside wall surface
+        mli_side_x = qx_min if QUADRANT in ('FL', 'RL') else qx_max
+        mli_side_inset = MLI_INSET_DEPTH if QUADRANT in ('FL', 'RL') else -MLI_INSET_DEPTH
         mli_side_plane = make_offset_plane(
             comp, comp.yZConstructionPlane,
-            qx_min if QUADRANT in ('FL', 'RL') else qx_max
+            mli_side_x + mli_side_inset
         )
         mli_sk = comp.sketches.add(mli_side_plane)
         mli_sk.name = f'MLI Side {QUADRANT}'
+        # YZ plane: sketch X → -world Z, sketch Y → world Y
         mli_sk.sketchCurves.sketchLines.addTwoPointRectangle(
-            p(qy_min + WALL, mli_z - MLI_RIDGE_W / 2),
-            p(qy_max - WALL, mli_z + MLI_RIDGE_W / 2)
+            p(-(mli_z + MLI_RIDGE_W / 2), qy_min + WALL),
+            p(-(mli_z - MLI_RIDGE_W / 2), qy_max - WALL)
         )
         for pi in range(mli_sk.profiles.count):
             pr = mli_sk.profiles.item(pi)
@@ -734,36 +758,76 @@ def run(context):
                 m_in = extrudes.createInput(
                     pr, adsk.fusion.FeatureOperations.JoinFeatureOperation
                 )
-                m_in.setDistanceExtent(flip, val(MLI_RIDGE_H))
+                m_in.setDistanceExtent(flip, val(MLI_RIDGE_H + MLI_INSET_DEPTH))
                 try:
                     extrudes.add(m_in)
                 except Exception as e:
                     print(f'  Warning: {e}')
 
-        # End wall ridge
+        # End wall ridge — inset 0.2mm into wall, extrude outward
+        mli_end_y = qy_max if QUADRANT in ('FL', 'FR') else qy_min
+        mli_end_inset = -MLI_INSET_DEPTH if QUADRANT in ('FL', 'FR') else MLI_INSET_DEPTH
         mli_end_plane = make_offset_plane(
             comp, comp.xZConstructionPlane,
-            qy_max if QUADRANT in ('FL', 'FR') else qy_min
+            mli_end_y + mli_end_inset
         )
         mli_end_sk = comp.sketches.add(mli_end_plane)
         mli_end_sk.name = f'MLI End {QUADRANT}'
+        # XZ plane: sketch Y → -world Z
         mli_end_sk.sketchCurves.sketchLines.addTwoPointRectangle(
-            p(qx_min + WALL, mli_z - MLI_RIDGE_W / 2),
-            p(qx_max - WALL, mli_z + MLI_RIDGE_W / 2)
+            p(qx_min + WALL, -(mli_z + MLI_RIDGE_W / 2)),
+            p(qx_max - WALL, -(mli_z - MLI_RIDGE_W / 2))
         )
         for pi in range(mli_end_sk.profiles.count):
             pr = mli_end_sk.profiles.item(pi)
             a = pr.areaProperties().area
             if a < 2.0:
-                flip = QUADRANT not in ('FL', 'FR')
+                # FL/FR: extrude +Y (outward from front face), RL/RR: extrude -Y
+                flip_end = QUADRANT not in ('FL', 'FR')
                 me_in = extrudes.createInput(
                     pr, adsk.fusion.FeatureOperations.JoinFeatureOperation
                 )
-                me_in.setDistanceExtent(not flip, val(MLI_RIDGE_H))
+                me_in.setDistanceExtent(flip_end, val(MLI_RIDGE_H + MLI_INSET_DEPTH))
                 try:
                     extrudes.add(me_in)
                 except Exception as e:
                     print(f'  Warning: {e}')
+
+        # ══════════════════════════════════════════════════════════
+        # Step 16b: Combine any loose bodies into main body
+        # ══════════════════════════════════════════════════════════
+
+        if comp.bRepBodies.count > 1:
+            main_body = None
+            max_vol = 0
+            for bi in range(comp.bRepBodies.count):
+                b = comp.bRepBodies.item(bi)
+                if not b.isValid:
+                    continue
+                bb = b.boundingBox
+                vol = ((bb.maxPoint.x - bb.minPoint.x) *
+                       (bb.maxPoint.y - bb.minPoint.y) *
+                       (bb.maxPoint.z - bb.minPoint.z))
+                if vol > max_vol:
+                    max_vol = vol
+                    main_body = b
+
+            if main_body:
+                tool_bodies = adsk.core.ObjectCollection.create()
+                for bi in range(comp.bRepBodies.count):
+                    b = comp.bRepBodies.item(bi)
+                    if b.isValid and b != main_body:
+                        tool_bodies.add(b)
+
+                if tool_bodies.count > 0:
+                    try:
+                        combines = comp.features.combineFeatures
+                        ci = combines.createInput(main_body, tool_bodies)
+                        ci.operation = adsk.fusion.FeatureOperations.JoinFeatureOperation
+                        combines.add(ci)
+                        body = main_body
+                    except Exception as e:
+                        print(f'  Warning: combine: {e}')
 
         # ══════════════════════════════════════════════════════════
         # Step 17: External fillets

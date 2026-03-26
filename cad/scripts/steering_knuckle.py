@@ -249,13 +249,13 @@ def run(context):
         arm_sk.name = 'Steering Arm'
 
         # Stadium shape for the arm (wider at body, rounded at tip)
-        arm_tip_x = BODY_W / 2 - 0.2 + ARM_LENGTH
-        arm_mid_x = (BODY_W / 2 - 0.2 + arm_tip_x) / 2
-        arm_half_len = (arm_tip_x - (BODY_W / 2 - 0.2)) / 2
+        arm_tip_x = BODY_W / 2 - 0.5 + ARM_LENGTH
+        arm_mid_x = (BODY_W / 2 - 0.5 + arm_tip_x) / 2
+        arm_half_len = (arm_tip_x - (BODY_W / 2 - 0.5)) / 2
 
         draw_stadium(
             arm_sk,
-            cx=BODY_W / 2 - 0.2 + arm_half_len,
+            cx=BODY_W / 2 - 0.5 + arm_half_len,
             cy=0,
             half_length=arm_half_len,
             radius=ARM_WIDTH / 2
@@ -265,7 +265,7 @@ def run(context):
         arm_prof = find_profile_by_area(arm_sk, arm_target, tolerance=0.5)
         if arm_prof is None:
             arm_prof = find_largest_profile(arm_sk)
-        join_profile(comp, arm_prof, ARM_HEIGHT)
+        join_profile(comp, arm_prof, ARM_HEIGHT, target_body=body)
 
         # M2 hole at arm tip
         arm_hole_plane = make_offset_plane(
@@ -284,12 +284,18 @@ def run(context):
         # STEP 7: Hard stop tab (EA-27 — rounded profile)
         # ══════════════════════════════════════════════════════════
 
-        stop_plane = make_offset_plane(comp, comp.xYConstructionPlane, BODY_H)
+        # Place sketch inside body so tab straddles top face
+        # Account for 2° draft taper: body shrinks as Z increases
+        TAPER_SHRINK = BODY_H * math.tan(math.radians(2))  # ~0.14 cm
+        BODY_L_TOP = BODY_L / 2 - TAPER_SHRINK             # tapered half-length at top
+
+        stop_z = BODY_H - STOP_TAB_H / 2   # straddle the top face
+        stop_plane = make_offset_plane(comp, comp.xYConstructionPlane, stop_z)
         stop_sk = comp.sketches.add(stop_plane)
         stop_sk.name = 'Hard Stop Tab'
 
-        # Stadium-shaped tab extending in +Y direction
-        tab_cy = BODY_L / 2 - 0.1 + STOP_TAB_R / 2
+        # Position tab inner edge well inside the tapered body
+        tab_cy = BODY_L_TOP - 0.2 + STOP_TAB_R / 2
         draw_stadium(
             stop_sk,
             cx=0, cy=tab_cy,
@@ -301,7 +307,7 @@ def run(context):
         stop_prof = find_profile_by_area(stop_sk, tab_target, tolerance=0.6)
         if stop_prof is None:
             stop_prof = find_largest_profile(stop_sk)
-        join_profile(comp, stop_prof, STOP_TAB_H)
+        join_profile(comp, stop_prof, STOP_TAB_H, target_body=body)
 
         # ══════════════════════════════════════════════════════════
         # STEP 8: External fillets

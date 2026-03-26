@@ -148,11 +148,11 @@ def run(context):
             sl = strap_sk.sketchCurves.sketchLines
 
             for x_off in [-STRAP_SPACING / 2, STRAP_SPACING / 2]:
-                # On XZ plane: X stays X, Z becomes the vertical axis
-                # Slot is STRAP_L wide (X) × STRAP_W tall (Z)
+                # On XZ plane: X stays X, sketch Y = -World Z
+                # Negate Z so slots cut into the body (Z > 0)
                 sl.addTwoPointRectangle(
-                    p(x_off - STRAP_L / 2, STRAP_Z, 0),
-                    p(x_off + STRAP_L / 2, STRAP_Z + STRAP_W, 0)
+                    p(x_off - STRAP_L / 2, -(STRAP_Z + STRAP_W), 0),
+                    p(x_off + STRAP_L / 2, -STRAP_Z, 0)
                 )
 
             strap_target = STRAP_L * STRAP_W

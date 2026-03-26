@@ -70,7 +70,7 @@ def run(context):
         # Hard stop
         STOP_W = 0.3               # 3mm stop feature width
         STOP_D = 0.2               # 2mm stop depth
-        STOP_RADIUS = 0.8          # 8mm from centre
+        STOP_RADIUS = 1.15         # 11.5mm from centre (outside 11.075mm bearing seat)
 
         comp = design.rootComponent
 

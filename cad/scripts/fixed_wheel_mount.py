@@ -111,7 +111,7 @@ def run(context):
         # ══════════════════════════════════════════════════════════
 
         shaft_plane = make_offset_plane(
-            comp, comp.yZConstructionPlane, -MOUNT_W / 2
+            comp, comp.yZConstructionPlane, -(MOUNT_W / 2 - 0.001)
         )
         shaft_sk = comp.sketches.add(shaft_plane)
         shaft_sk.name = 'Shaft Exit'
@@ -124,7 +124,7 @@ def run(context):
             shaft_input = extrudes.createInput(
                 shaft_prof, adsk.fusion.FeatureOperations.CutFeatureOperation
             )
-            shaft_input.setDistanceExtent(True, val(MOUNT_W))
+            shaft_input.setDistanceExtent(False, val(MOUNT_W))
             try:
                 extrudes.add(shaft_input)
             except Exception as e:
@@ -198,16 +198,18 @@ def run(context):
         # Connect top mount face to motor pocket walls
         # ══════════════════════════════════════════════════════════
 
-        # Side gussets on XZ midplane
+        # Side gussets on XZ midplane (sketch Y = -world Z on XZ plane)
         mid_plane = make_offset_plane(comp, comp.xZConstructionPlane, 0)
         for sign in [-1, 1]:
             x_base = sign * (MOUNT_W / 2 - RIB_THICK)
             add_triangular_gusset(
                 comp, mid_plane,
-                x_base, N20_D,              # motor pocket top, near wall
-                x_base, MOUNT_H,            # mount face top
-                sign * N20_W / 2, N20_D,    # motor pocket corner
-                RIB_THICK,
+                x_base, -N20_D,              # motor pocket top, near wall
+                x_base, -MOUNT_H,            # mount face top
+                sign * N20_W / 2, -N20_D,    # motor pocket corner
+                MOUNT_L * 0.6,
+                symmetric=True,
+                target_body=body,
             )
 
         # ══════════════════════════════════════════════════════════

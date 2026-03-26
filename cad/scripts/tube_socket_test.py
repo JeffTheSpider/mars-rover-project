@@ -181,7 +181,7 @@ def run(context):
         # On XZ plane: X = radial position, Y = height (Z in model space)
         # Position the hole at the outer edge of the boss wall
         grub_sk.sketchCurves.sketchCircles.addByCenterRadius(
-            p(BOSS_R, grub_z), GRUB_R
+            p(BOSS_R, -grub_z), GRUB_R
         )
 
         grub_prof = find_smallest_profile(grub_sk)

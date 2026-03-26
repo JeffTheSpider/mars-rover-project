@@ -190,7 +190,7 @@ def run(context):
             cutInput = extrudes.createInput(
                 voidProf, adsk.fusion.FeatureOperations.CutFeatureOperation
             )
-            cutInput.setDistanceExtent(False, val(WHEEL_W + 0.05))
+            cutInput.setDistanceExtent(True, val(WHEEL_W + 0.05))  # -Z direction into wheel body
             try:
                 voidCut = extrudes.add(cutInput)
             except Exception as e:

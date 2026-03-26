@@ -348,8 +348,8 @@ def run(context):
         left_sk = comp.sketches.add(left_plane)
         left_sk.name = 'Cable Exit Left'
         draw_rounded_rect(
-            left_sk, L298N_Y, FLOOR_H + EXIT_H / 2,
-            EXIT_W, EXIT_H, r=0.05
+            left_sk, -(FLOOR_H + EXIT_H / 2), L298N_Y,
+            EXIT_H, EXIT_W, r=0.05
         )
         for pi in range(left_sk.profiles.count):
             pr = left_sk.profiles.item(pi)
@@ -358,7 +358,7 @@ def run(context):
                 l_in = extrudes.createInput(
                     pr, adsk.fusion.FeatureOperations.CutFeatureOperation
                 )
-                l_in.setDistanceExtent(True, val(WALL_T + 0.01))
+                l_in.setDistanceExtent(False, val(WALL_T + 0.01))
                 try:
                     extrudes.add(l_in)
                 except Exception as e:
@@ -371,8 +371,8 @@ def run(context):
         right_sk = comp.sketches.add(right_plane)
         right_sk.name = 'Cable Exit Right'
         draw_rounded_rect(
-            right_sk, L298N_Y, FLOOR_H + EXIT_H / 2,
-            EXIT_W, EXIT_H, r=0.05
+            right_sk, -(FLOOR_H + EXIT_H / 2), L298N_Y,
+            EXIT_H, EXIT_W, r=0.05
         )
         for pi in range(right_sk.profiles.count):
             pr = right_sk.profiles.item(pi)
@@ -394,7 +394,7 @@ def run(context):
         rear_sk = comp.sketches.add(rear_plane)
         rear_sk.name = 'Cable Exit Rear'
         draw_rounded_rect(
-            rear_sk, LIPO_X, FLOOR_H + EXIT_H / 2,
+            rear_sk, LIPO_X, -(FLOOR_H + EXIT_H / 2),
             EXIT_W, EXIT_H, r=0.05
         )
         for pi in range(rear_sk.profiles.count):
@@ -404,7 +404,7 @@ def run(context):
                 re_in = extrudes.createInput(
                     pr, adsk.fusion.FeatureOperations.CutFeatureOperation
                 )
-                re_in.setDistanceExtent(True, val(WALL_T + 0.01))
+                re_in.setDistanceExtent(False, val(WALL_T + 0.01))
                 try:
                     extrudes.add(re_in)
                 except Exception as e:
@@ -420,7 +420,7 @@ def run(context):
         usb_sk = comp.sketches.add(front_plane)
         usb_sk.name = 'USB-C Access'
         draw_rounded_rect(
-            usb_sk, ESP32_X + USB_OFFSET_X, FLOOR_H + STAND_H,
+            usb_sk, ESP32_X + USB_OFFSET_X, -(FLOOR_H + STAND_H),
             USB_W, USB_H, r=0.05
         )
         usb_target = USB_W * USB_H

@@ -147,7 +147,7 @@ def run(context):
 
         # Channel housing on bottom (-Y side) of clip
         ch_y_outer = -(CLIP_OUTER_R + WIRE_D)
-        ch_y_inner = -CLIP_OUTER_R + 0.01
+        ch_y_inner = -CLIP_OUTER_R + CLIP_WALL / 2
         ch_x_half = WIRE_W / 2
 
         ch_lines.addTwoPointRectangle(
@@ -217,18 +217,16 @@ def run(context):
         # STEP 5: Entry chamfers on snap lips
         # ══════════════════════════════════════════════════════════
 
-        if body:
-            from rover_cad_helpers import add_chamfer
-            add_chamfer(comp, body, ROD_R, CHAMFER_STD)
+        # Chamfers skipped: C-clip arcs are Arc3D, not Circle3D (add_chamfer misses them)
+        # and the 1mm snap lip geometry is too small for 0.3mm chamfers.
 
         # ══════════════════════════════════════════════════════════
         # STEP 6: External fillets
         # ══════════════════════════════════════════════════════════
 
-        if body:
-            fillet_count = add_edge_fillets(comp, body, FILLET_STD)
-        else:
-            fillet_count = 0
+        # Fillets skipped: 0.5mm fillets on 1.5mm clip wall cause Fusion 360
+        # kernel crash (stale edge refs + geometry too small). Part is 12mm — cosmetic only.
+        fillet_count = 0
 
         # ══════════════════════════════════════════════════════════
         # STEP 7: Zoom and report

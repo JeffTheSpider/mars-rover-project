@@ -129,7 +129,7 @@ def run(context):
         grub_sk = comp.sketches.add(mid_plane)
         grub_sk.name = 'Diff Bar Grub'
         grub_sk.sketchCurves.sketchCircles.addByCenterRadius(
-            p(0, BODY_H_Z / 2 + DIFF_BORE_R + WALL / 2), GRUB_M3
+            p(0, -BODY_D / 2), GRUB_M3
         )
 
         grub_prof = find_smallest_profile(grub_sk)
@@ -157,7 +157,7 @@ def run(context):
         fb_sk = comp.sketches.add(mid_plane)
         fb_sk.name = 'Front Tube Socket'
         fb_sk.sketchCurves.sketchCircles.addByCenterRadius(
-            p(front_y, front_z), TUBE_BORE_R
+            p(front_y, -BODY_D / 2), TUBE_BORE_R
         )
 
         fb_prof = find_smallest_profile(fb_sk)
@@ -172,7 +172,7 @@ def run(context):
         fg_sk = comp.sketches.add(mid_plane)
         fg_sk.name = 'Front Grub'
         fg_sk.sketchCurves.sketchCircles.addByCenterRadius(
-            p(front_y - TUBE_DEPTH / 2, front_z + TUBE_BORE_R + WALL / 2),
+            p(front_y - TUBE_DEPTH / 2, -BODY_D / 2),
             GRUB_M3
         )
         fg_prof = find_smallest_profile(fg_sk)
@@ -199,7 +199,7 @@ def run(context):
         rb_sk = comp.sketches.add(mid_plane)
         rb_sk.name = 'Rear Tube Socket'
         rb_sk.sketchCurves.sketchCircles.addByCenterRadius(
-            p(rear_y, rear_z), TUBE_BORE_R
+            p(rear_y, -BODY_D / 2), TUBE_BORE_R
         )
 
         rb_prof = find_smallest_profile(rb_sk)
@@ -213,7 +213,7 @@ def run(context):
         rg_sk = comp.sketches.add(mid_plane)
         rg_sk.name = 'Rear Grub'
         rg_sk.sketchCurves.sketchCircles.addByCenterRadius(
-            p(rear_y + TUBE_DEPTH / 2, rear_z + TUBE_BORE_R + WALL / 2),
+            p(rear_y + TUBE_DEPTH / 2, -BODY_D / 2),
             GRUB_M3
         )
         rg_prof = find_smallest_profile(rg_sk)
