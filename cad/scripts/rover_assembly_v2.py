@@ -333,10 +333,14 @@ def run(context):
     try:
         app = adsk.core.Application.get()
         ui = app.userInterface
-        design = adsk.fusion.Design.cast(app.activeProduct)
 
+        # Create a new Design document (supports multiple components, unlike Part Design)
+        doc = app.documents.add(adsk.core.DocumentTypes.FusionDesignDocumentType)
+        doc.name = 'Mars Rover Phase 1 Assembly'
+
+        design = adsk.fusion.Design.cast(app.activeProduct)
         if not design:
-            ui.messageBox('No active design.')
+            ui.messageBox('Failed to create design document.')
             return
 
         # Switch to direct design mode (avoids baseFeature requirement for mesh import)
