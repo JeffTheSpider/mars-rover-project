@@ -284,7 +284,7 @@ def apply_colour(body, rgb):
 
     if appear is None:
         # Find a base plastic appearance from the library
-        lib = app.materialLibraries.itemByName('Fusion 360 Appearance Library')
+        lib = app.materialLibraries.itemByName('Fusion Appearance Library')
         if lib:
             base = None
             for i in range(lib.appearances.count):
