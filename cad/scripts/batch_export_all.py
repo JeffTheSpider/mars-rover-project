@@ -10,7 +10,7 @@ Usage:
   1. Open Fusion 360
   2. Shift+S (Scripts and Add-Ins)
   3. Select "BatchExportAll" > Run
-  4. Wait for completion (~5-10 min, exports 29 STL files)
+  4. Wait for completion (~5-10 min, exports 30 STL files)
   5. Check D:/Mars Rover Project/3d-print/ for output
 
 Output: STL files in D:/Mars Rover Project/3d-print/<category>/
@@ -48,42 +48,41 @@ FUSION_SCRIPTS = os.path.join(
 # stl_filename: if None, handled specially (multi-body or multi-run)
 COMPONENTS = [
     # Stage 1: Calibration & Test Pieces
-    ('CalibrationTestCard', 'calibration', 'calibration_test_card.stl', 'Calibration Card', 'Stage 1'),
-    ('BearingTestPiece',    'calibration', 'bearing_test_piece.stl',    None, 'Stage 1'),
-    ('TubeSocketTest',      'calibration', 'tube_socket_test.stl',     None, 'Stage 1 — validate 8mm rod fit'),
+    ('CalibrationTestCard', 'calibration', 'CalibrationTestCard.stl', 'Calibration Card', 'Stage 1'),
+    ('BearingTestPiece',    'calibration', 'BearingTestPiece.stl',    None, 'Stage 1'),
+    ('TubeSocketTest',      'calibration', 'TubeSocketTest.stl',     None, 'Stage 1 — validate 8mm rod fit'),
 
     # Stage 2: Wheels (V3 replaces V1, EA-25)
-    ('RoverWheelV3', 'wheels', 'rover_wheel_v3.stl', 'Wheel V3', 'Stage 2 — print x6'),
-    ('RoverTire',    'wheels', 'rover_tire.stl',      None, 'Stage 2 — TPU x6 (friend\'s printer)'),
+    ('RoverWheelV3', 'wheels', 'RoverWheelV3.stl', 'Wheel V3', 'Stage 2 — print x6'),
+    ('RoverTire',    'wheels', 'RoverTire.stl',     None, 'Stage 2 — TPU x6 (friend\'s printer)'),
 
     # Stage 3: Steering & Motor Mounts
-    ('SteeringBracket',  'steering', 'steering_bracket.stl',  None, 'Stage 3 — print x4'),
-    ('FixedWheelMount',  'steering', 'fixed_wheel_mount.stl', None, 'Stage 3 — print x2'),
-    ('ServoMount',       'steering', 'servo_mount.stl',       None, 'Stage 3 — print x4'),
-    ('SteeringKnuckle',  'steering', 'steering_knuckle.stl', 'Steering Knuckle', 'Stage 3 — print x4'),
-    ('SteeringHornLink', 'steering', 'steering_horn_link.stl', 'Steering Horn Link', 'Stage 3 — print x4 (EA-27)'),
+    ('SteeringBracket',  'steering',   'SteeringBracket.stl',  None, 'Stage 3 — print x4'),
+    ('FixedWheelMount',  'drivetrain', 'FixedWheelMount.stl',  None, 'Stage 3 — print x2'),
+    ('ServoMount',       'steering',   'ServoMount.stl',       None, 'Stage 3 — print x4'),
+    ('SteeringKnuckle',  'steering',   'SteeringKnuckle.stl', 'Steering Knuckle', 'Stage 3 — print x4'),
+    ('SteeringHornLink', 'steering',   'SteeringHornLink.stl', 'Steering Horn Link', 'Stage 3 — print x4 (EA-27)'),
 
     # Stage 4: Suspension Connectors (EA-25 tube + connector, EA-26 diff mechanism)
     # Note: BogieArm, RockerArm, DiffBarAdapter DEPRECATED per EA-25
-    ('RockerHubConnector',          'suspension', 'rocker_hub_connector.stl',          'Rocker Hub Connector',          'Stage 4 — print x2'),
-    ('BogiePivotConnector',         'suspension', 'bogie_pivot_connector.stl',         'Bogie Pivot Connector',         'Stage 4 — print x2'),
-    ('FrontWheelConnector',         'suspension', 'front_wheel_connector.stl',         'Front Wheel Connector',         'Stage 4 — print x4'),
-    ('MiddleWheelConnector',        'suspension', 'middle_wheel_connector.stl',        'Middle Wheel Connector',        'Stage 4 — print x2'),
-    ('DifferentialPivotHousing',    'suspension', 'differential_pivot_housing.stl',    'Diff Pivot Housing',            'Stage 4 — print x1'),
-    # DifferentialLink DEPRECATED — through-bar mechanism doesn't use links
-    # ('DifferentialLink',            'suspension', 'differential_link.stl',             'Differential Link',             'Stage 4 — print x2'),
-    ('CableClip',                   'suspension', 'cable_clip.stl',                    'Cable Clip',                    'Stage 4 — print x12'),
+    ('RockerHubConnector',          'suspension', 'RockerHubConnector.stl',          'Rocker Hub Connector',          'Stage 4 — print x2'),
+    ('BogiePivotConnector',         'suspension', 'BogiePivotConnector.stl',         'Bogie Pivot Connector',         'Stage 4 — print x2'),
+    ('FrontWheelConnector',         'suspension', 'FrontWheelConnector.stl',         'Front Wheel Connector',         'Stage 4 — print x4'),
+    ('MiddleWheelConnector',        'suspension', 'MiddleWheelConnector.stl',        'Middle Wheel Connector',        'Stage 4 — print x2'),
+    ('DifferentialPivotHousing',    'suspension', 'DifferentialPivotHousing.stl',    'Diff Pivot Housing',            'Stage 4 — print x1'),
+    ('DifferentialLink',            'suspension', 'DifferentialLink.stl',            'Differential Link',             'Stage 4 — print x2 (EA-26 diff mechanism)'),
+    ('CableClip',                   'suspension', 'CableClip.stl',                   'Cable Clip',                    'Stage 4 — print x12'),
 
     # Stage 5: Body (BodyQuadrant handled specially — 4 runs)
     ('BodyQuadrant', 'body', None,             None, 'Stage 5 — 4 quadrants'),
     ('TopDeck',      'body', None,             None, 'Stage 5 — 4 tiles'),
 
     # Stage 6: Internal Components
-    ('ElectronicsTray',    'body', 'electronics_tray.stl',    None, 'Stage 6'),
-    ('StrainReliefClip',   'body', 'strain_relief_clip.stl',  None, 'Stage 6 — print x10'),
-    ('FuseHolderBracket',  'body', 'fuse_holder_bracket.stl', None, 'Stage 6'),
-    ('SwitchMountPlate',   'body', 'switch_mount_plate.stl',  None, 'Stage 6'),
-    ('BatteryTray',        'body', 'battery_tray.stl',        'Battery Tray', 'Stage 6'),
+    ('ElectronicsTray',    'body', 'ElectronicsTray.stl',    None, 'Stage 6'),
+    ('StrainReliefClip',   'body', 'StrainReliefClip.stl',   None, 'Stage 6 — print x10'),
+    ('FuseHolderBracket',  'body', 'FuseHolderBracket.stl',  None, 'Stage 6'),
+    ('SwitchMount',        'body', 'SwitchMount.stl',         None, 'Stage 6'),
+    ('BatteryTray',        'body', 'BatteryTray.stl',        'Battery Tray', 'Stage 6'),
 ]
 
 
@@ -285,7 +284,7 @@ def run(context):
 
                         exported = export_bodies(
                             rootComp, stl_dir,
-                            filename=f'body_quadrant_{quad.lower()}.stl',
+                            filename=f'BodyQuadrant{quad}.stl',
                             body_filter=f'Body {quad}'
                         )
                         all_exported.extend(exported)
@@ -317,7 +316,7 @@ def run(context):
 
                         exported = export_bodies(
                             rootComp, stl_dir,
-                            filename=f'top_deck_{tile.lower()}.stl',
+                            filename=f'TopDeck{tile}.stl',
                             body_filter=f'Top Deck {tile}'
                         )
                         all_exported.extend(exported)
