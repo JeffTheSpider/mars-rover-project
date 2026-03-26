@@ -2,7 +2,7 @@
 Mars Rover Phase 1 — Full Assembly Visualisation (V2)
 ======================================================
 
-Imports ALL 29 STL exports and positions them in a complete rover
+Imports ALL 24 STL files and positions them in a complete rover
 assembly with colour-coded subsystems. This shows how every printed
 part fits together in the final Phase 1 (0.4 scale) prototype.
 
@@ -22,7 +22,7 @@ Subsystem Colours:
   Accessories   — light grey
 
 Usage: Run as Script in Fusion 360 (Shift+S > RoverAssemblyV2 > Run)
-Requires: All 29 STLs exported via BatchExportAll first.
+Requires: All 24 STLs exported via BatchExportAll first.
 
 Reference: EA-01, EA-08, EA-25, EA-26, EA-27, EA-28
 """
@@ -91,145 +91,138 @@ COLOURS = {
 # rx, ry, rz = rotation in degrees around each axis (applied in Z, Y, X order)
 
 PARTS = [
-    # ── Body quadrants ──
-    ('body/body_quadrant_fl.stl', 'Body FL', 'body',
-     [(0, 0, GROUND_Z, 0, 0, 0)]),
-    ('body/body_quadrant_fr.stl', 'Body FR', 'body',
-     [(0, 0, GROUND_Z, 0, 0, 0)]),
-    ('body/body_quadrant_rl.stl', 'Body RL', 'body',
-     [(0, 0, GROUND_Z, 0, 0, 0)]),
-    ('body/body_quadrant_rr.stl', 'Body RR', 'body',
+    # ── Body (single quadrant/deck — use same STL for all 4) ──
+    ('body/BodyQuadrant.stl', 'Body FL', 'body',
      [(0, 0, GROUND_Z, 0, 0, 0)]),
 
-    # ── Top deck tiles ──
-    ('body/top_deck_fl.stl', 'Deck FL', 'deck',
-     [(0, 0, GROUND_Z + BODY_H, 0, 0, 0)]),
-    ('body/top_deck_fr.stl', 'Deck FR', 'deck',
-     [(0, 0, GROUND_Z + BODY_H, 0, 0, 0)]),
-    ('body/top_deck_rl.stl', 'Deck RL', 'deck',
-     [(0, 0, GROUND_Z + BODY_H, 0, 0, 0)]),
-    ('body/top_deck_rr.stl', 'Deck RR', 'deck',
+    ('body/TopDeck.stl', 'Deck FL', 'deck',
      [(0, 0, GROUND_Z + BODY_H, 0, 0, 0)]),
 
     # ── Wheels (6) — created as revolve around Z, need 90° Y rotation ──
-    ('wheels/rover_wheel_v3.stl', 'Wheel FL', 'wheel',
+    ('wheels/RoverWheelV3.stl', 'Wheel FL', 'wheel',
      [(TRACK_HALF + WHEEL_W/2, WB_HALF, WHEEL_Z, 0, 90, 0)]),
-    ('wheels/rover_wheel_v3.stl', 'Wheel FR', 'wheel',
+    ('wheels/RoverWheelV3.stl', 'Wheel FR', 'wheel',
      [(-TRACK_HALF - WHEEL_W/2, WB_HALF, WHEEL_Z, 0, -90, 0)]),
-    ('wheels/rover_wheel_v3.stl', 'Wheel ML', 'wheel',
+    ('wheels/RoverWheelV3.stl', 'Wheel ML', 'wheel',
      [(TRACK_HALF + WHEEL_W/2, 0, WHEEL_Z, 0, 90, 0)]),
-    ('wheels/rover_wheel_v3.stl', 'Wheel MR', 'wheel',
+    ('wheels/RoverWheelV3.stl', 'Wheel MR', 'wheel',
      [(-TRACK_HALF - WHEEL_W/2, 0, WHEEL_Z, 0, -90, 0)]),
-    ('wheels/rover_wheel_v3.stl', 'Wheel RL', 'wheel',
+    ('wheels/RoverWheelV3.stl', 'Wheel RL', 'wheel',
      [(TRACK_HALF + WHEEL_W/2, -WB_HALF, WHEEL_Z, 0, 90, 0)]),
-    ('wheels/rover_wheel_v3.stl', 'Wheel RR', 'wheel',
+    ('wheels/RoverWheelV3.stl', 'Wheel RR', 'wheel',
      [(-TRACK_HALF - WHEEL_W/2, -WB_HALF, WHEEL_Z, 0, -90, 0)]),
 
     # ── Suspension connectors — Mars orange ──
     # Rocker hub connectors (on diff bar, one per side)
-    ('suspension/rocker_hub_connector.stl', 'Rocker Hub L', 'suspension',
+    ('suspension/RockerHubConnector.stl', 'Rocker Hub L', 'suspension',
      [(ROCKER_X, 0, DIFF_Z, 0, 0, 0)]),
-    ('suspension/rocker_hub_connector.stl', 'Rocker Hub R', 'suspension',
+    ('suspension/RockerHubConnector.stl', 'Rocker Hub R', 'suspension',
      [(-ROCKER_X, 0, DIFF_Z, 0, 0, 0)]),
 
     # Bogie pivot connectors (at rocker-bogie junction)
-    ('suspension/bogie_pivot_connector.stl', 'Bogie Pivot L', 'suspension',
+    ('suspension/BogiePivotConnector.stl', 'Bogie Pivot L', 'suspension',
      [(ROCKER_X, BOGIE_Y, BOGIE_Z, 0, 0, 0)]),
-    ('suspension/bogie_pivot_connector.stl', 'Bogie Pivot R', 'suspension',
+    ('suspension/BogiePivotConnector.stl', 'Bogie Pivot R', 'suspension',
      [(-ROCKER_X, BOGIE_Y, BOGIE_Z, 0, 0, 0)]),
 
     # Front wheel connectors (at 4 steered wheel positions)
-    ('suspension/front_wheel_connector.stl', 'FW Conn FL', 'suspension',
+    ('suspension/FrontWheelConnector.stl', 'FW Conn FL', 'suspension',
      [(TRACK_HALF - 2, WB_HALF, WHEEL_Z + 2, 0, 0, 0)]),
-    ('suspension/front_wheel_connector.stl', 'FW Conn FR', 'suspension',
+    ('suspension/FrontWheelConnector.stl', 'FW Conn FR', 'suspension',
      [(-TRACK_HALF + 2, WB_HALF, WHEEL_Z + 2, 0, 0, 0)]),
-    ('suspension/front_wheel_connector.stl', 'FW Conn RL', 'suspension',
+    ('suspension/FrontWheelConnector.stl', 'FW Conn RL', 'suspension',
      [(TRACK_HALF - 2, -WB_HALF, WHEEL_Z + 2, 0, 0, 0)]),
-    ('suspension/front_wheel_connector.stl', 'FW Conn RR', 'suspension',
+    ('suspension/FrontWheelConnector.stl', 'FW Conn RR', 'suspension',
      [(-TRACK_HALF + 2, -WB_HALF, WHEEL_Z + 2, 0, 0, 0)]),
 
     # Middle wheel connectors
-    ('suspension/middle_wheel_connector.stl', 'MW Conn L', 'suspension',
+    ('suspension/MiddleWheelConnector.stl', 'MW Conn L', 'suspension',
      [(TRACK_HALF - 2, 0, WHEEL_Z + 2, 0, 0, 0)]),
-    ('suspension/middle_wheel_connector.stl', 'MW Conn R', 'suspension',
+    ('suspension/MiddleWheelConnector.stl', 'MW Conn R', 'suspension',
      [(-TRACK_HALF + 2, 0, WHEEL_Z + 2, 0, 0, 0)]),
 
     # Differential pivot housing (body centre)
-    ('suspension/differential_pivot_housing.stl', 'Diff Pivot', 'diffbar',
+    ('suspension/DifferentialPivotHousing.stl', 'Diff Pivot', 'diffbar',
      [(0, 0, DIFF_Z, 0, 0, 0)]),
 
-    # Cable clips (representative — 4 along each side tube)
-    ('suspension/cable_clip.stl', 'Clip L1', 'accessory',
+    # Differential links (between pivot and rocker hubs)
+    ('suspension/DifferentialLink.stl', 'Diff Link L', 'diffbar',
+     [(ROCKER_X / 2, 0, DIFF_Z - 0.5, 0, 0, 0)]),
+    ('suspension/DifferentialLink.stl', 'Diff Link R', 'diffbar',
+     [(-ROCKER_X / 2, 0, DIFF_Z - 0.5, 0, 0, 0)]),
+
+    # Cable clips (representative — 4 along side tubes)
+    ('suspension/CableClip.stl', 'Clip L1', 'accessory',
      [(ROCKER_X, 6, DIFF_Z, 0, 0, 0)]),
-    ('suspension/cable_clip.stl', 'Clip L2', 'accessory',
+    ('suspension/CableClip.stl', 'Clip L2', 'accessory',
      [(ROCKER_X, 12, DIFF_Z, 0, 0, 0)]),
-    ('suspension/cable_clip.stl', 'Clip R1', 'accessory',
+    ('suspension/CableClip.stl', 'Clip R1', 'accessory',
      [(-ROCKER_X, 6, DIFF_Z, 0, 0, 0)]),
-    ('suspension/cable_clip.stl', 'Clip R2', 'accessory',
+    ('suspension/CableClip.stl', 'Clip R2', 'accessory',
      [(-ROCKER_X, 12, DIFF_Z, 0, 0, 0)]),
 
     # ── Steering — sky blue ──
     # Steering brackets (above each steered wheel)
-    ('steering/steering_bracket.stl', 'Steer Bracket FL', 'steering',
+    ('steering/SteeringBracket.stl', 'Steer Bracket FL', 'steering',
      [(TRACK_HALF, WB_HALF, WHEEL_Z + 4, 0, 0, 0)]),
-    ('steering/steering_bracket.stl', 'Steer Bracket FR', 'steering',
+    ('steering/SteeringBracket.stl', 'Steer Bracket FR', 'steering',
      [(-TRACK_HALF, WB_HALF, WHEEL_Z + 4, 0, 0, 0)]),
-    ('steering/steering_bracket.stl', 'Steer Bracket RL', 'steering',
+    ('steering/SteeringBracket.stl', 'Steer Bracket RL', 'steering',
      [(TRACK_HALF, -WB_HALF, WHEEL_Z + 4, 0, 0, 0)]),
-    ('steering/steering_bracket.stl', 'Steer Bracket RR', 'steering',
+    ('steering/SteeringBracket.stl', 'Steer Bracket RR', 'steering',
      [(-TRACK_HALF, -WB_HALF, WHEEL_Z + 4, 0, 0, 0)]),
 
     # Steering knuckles (below brackets, around wheel axle)
-    ('steering/steering_knuckle.stl', 'Knuckle FL', 'steering',
+    ('steering/SteeringKnuckle.stl', 'Knuckle FL', 'steering',
      [(TRACK_HALF, WB_HALF, WHEEL_Z, 0, 0, 0)]),
-    ('steering/steering_knuckle.stl', 'Knuckle FR', 'steering',
+    ('steering/SteeringKnuckle.stl', 'Knuckle FR', 'steering',
      [(-TRACK_HALF, WB_HALF, WHEEL_Z, 0, 0, 0)]),
-    ('steering/steering_knuckle.stl', 'Knuckle RL', 'steering',
+    ('steering/SteeringKnuckle.stl', 'Knuckle RL', 'steering',
      [(TRACK_HALF, -WB_HALF, WHEEL_Z, 0, 0, 0)]),
-    ('steering/steering_knuckle.stl', 'Knuckle RR', 'steering',
+    ('steering/SteeringKnuckle.stl', 'Knuckle RR', 'steering',
      [(-TRACK_HALF, -WB_HALF, WHEEL_Z, 0, 0, 0)]),
 
     # Servo mounts (next to steering brackets)
-    ('steering/servo_mount.stl', 'Servo FL', 'steering',
+    ('steering/ServoMount.stl', 'Servo FL', 'steering',
      [(TRACK_HALF - 3, WB_HALF, WHEEL_Z + 4, 0, 0, 0)]),
-    ('steering/servo_mount.stl', 'Servo FR', 'steering',
+    ('steering/ServoMount.stl', 'Servo FR', 'steering',
      [(-TRACK_HALF + 3, WB_HALF, WHEEL_Z + 4, 0, 0, 0)]),
-    ('steering/servo_mount.stl', 'Servo RL', 'steering',
+    ('steering/ServoMount.stl', 'Servo RL', 'steering',
      [(TRACK_HALF - 3, -WB_HALF, WHEEL_Z + 4, 0, 0, 0)]),
-    ('steering/servo_mount.stl', 'Servo RR', 'steering',
+    ('steering/ServoMount.stl', 'Servo RR', 'steering',
      [(-TRACK_HALF + 3, -WB_HALF, WHEEL_Z + 4, 0, 0, 0)]),
 
     # Steering horn links
-    ('steering/steering_horn_link.stl', 'Horn Link FL', 'steering',
+    ('steering/SteeringHornLink.stl', 'Horn Link FL', 'steering',
      [(TRACK_HALF - 1.5, WB_HALF + 1, WHEEL_Z + 3, 0, 0, 0)]),
-    ('steering/steering_horn_link.stl', 'Horn Link FR', 'steering',
+    ('steering/SteeringHornLink.stl', 'Horn Link FR', 'steering',
      [(-TRACK_HALF + 1.5, WB_HALF + 1, WHEEL_Z + 3, 0, 0, 0)]),
-    ('steering/steering_horn_link.stl', 'Horn Link RL', 'steering',
+    ('steering/SteeringHornLink.stl', 'Horn Link RL', 'steering',
      [(TRACK_HALF - 1.5, -WB_HALF + 1, WHEEL_Z + 3, 0, 0, 0)]),
-    ('steering/steering_horn_link.stl', 'Horn Link RR', 'steering',
+    ('steering/SteeringHornLink.stl', 'Horn Link RR', 'steering',
      [(-TRACK_HALF + 1.5, -WB_HALF + 1, WHEEL_Z + 3, 0, 0, 0)]),
 
     # ── Drivetrain — teal ──
     # Fixed wheel mounts (middle wheels, no steering)
-    ('steering/fixed_wheel_mount.stl', 'Fixed Mount L', 'drivetrain',
+    ('drivetrain/FixedWheelMount.stl', 'Fixed Mount L', 'drivetrain',
      [(TRACK_HALF, 0, WHEEL_Z + 2, 0, 0, 0)]),
-    ('steering/fixed_wheel_mount.stl', 'Fixed Mount R', 'drivetrain',
+    ('drivetrain/FixedWheelMount.stl', 'Fixed Mount R', 'drivetrain',
      [(-TRACK_HALF, 0, WHEEL_Z + 2, 0, 0, 0)]),
 
     # ── Electronics — green ──
-    ('body/electronics_tray.stl', 'Electronics Tray', 'electronics',
+    ('body/ElectronicsTray.stl', 'Electronics Tray', 'electronics',
      [(0, 5, GROUND_Z + 0.3, 0, 0, 0)]),
-    ('body/battery_tray.stl', 'Battery Tray', 'electronics',
+    ('body/BatteryTray.stl', 'Battery Tray', 'electronics',
      [(0, -8, GROUND_Z + 0.3, 0, 0, 0)]),
 
     # ── Accessories — light grey ──
-    ('body/strain_relief_clip.stl', 'Strain Relief 1', 'accessory',
+    ('body/StrainReliefClip.stl', 'Strain Relief 1', 'accessory',
      [(8, 0, GROUND_Z + 0.3, 0, 0, 0)]),
-    ('body/strain_relief_clip.stl', 'Strain Relief 2', 'accessory',
+    ('body/StrainReliefClip.stl', 'Strain Relief 2', 'accessory',
      [(-8, 0, GROUND_Z + 0.3, 0, 0, 0)]),
-    ('body/fuse_holder_bracket.stl', 'Fuse Holder', 'accessory',
+    ('body/FuseHolderBracket.stl', 'Fuse Holder', 'accessory',
      [(5, -5, GROUND_Z + 0.3, 0, 0, 0)]),
-    ('body/switch_mount_plate.stl', 'Switch Mount', 'accessory',
+    ('body/SwitchMount.stl', 'Switch Mount', 'accessory',
      [(-5, 10, GROUND_Z + BODY_H / 2, 0, 0, 90)]),
 ]
 

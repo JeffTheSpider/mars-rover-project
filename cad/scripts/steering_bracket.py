@@ -20,7 +20,7 @@ Features:
   - 608ZZ bearing seat (top): 22.15mm × 7.2mm, 0.3mm entry chamfer
   - 8mm pivot bore (through full height)
   - Hard stop channel: 70° open arc at bracket bottom (±35° limit)
-  - 2× M3 heat-set insert pockets (top face, for connector bolting)
+  - 2× M3 clearance through-holes (for bolting to connector inserts)
   - Bearing entry chamfer (0.3mm × 45°)
 
 Overall size: 35 × 30 × 25mm
