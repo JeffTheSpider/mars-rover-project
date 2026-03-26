@@ -10,7 +10,7 @@ Usage:
   1. Open Fusion 360
   2. Shift+S (Scripts and Add-Ins)
   3. Select "BatchExportAll" > Run
-  4. Wait for completion (~5-10 min, exports 30 STL files)
+  4. Wait for completion (~5-10 min, exports 33 STL files)
   5. Check D:/Mars Rover Project/3d-print/ for output
 
 Output: STL files in D:/Mars Rover Project/3d-print/<category>/
@@ -52,9 +52,17 @@ COMPONENTS = [
     ('BearingTestPiece',    'calibration', 'BearingTestPiece.stl',    None, 'Stage 1'),
     ('TubeSocketTest',      'calibration', 'TubeSocketTest.stl',     None, 'Stage 1 — validate 8mm rod fit'),
 
-    # Stage 2: Wheels (V3 replaces V1, EA-25)
-    ('RoverWheelV3', 'wheels', 'RoverWheelV3.stl', 'Wheel V3', 'Stage 2 — print x6'),
-    ('RoverTire',    'wheels', 'RoverTire.stl',     None, 'Stage 2 — TPU x6 (friend\'s printer)'),
+    # Stage 2: Wheels
+    # V5 Curiosity-inspired wheel: pre-scaled from GrabCAD reference model (80mm OD)
+    # NOT a Fusion script — pre-made STL at 3d-print/wheels/CuriosityWheelV5.stl
+    # Print x6, 360k faces (may need Cura decimation for CTC Bizer)
+    # V4 hub+tire scripts retained as alternative (below, commented out)
+    # ('RoverWheelHubV4',   'wheels', 'RoverWheelHubV4.stl',   'Wheel Hub V4',        'Stage 2 — V4 alt, print x6'),
+    # ('RoverBeadlockRing', 'wheels', 'RoverBeadlockRing.stl', 'Beadlock Ring',       'Stage 2 — V4 alt, print x6'),
+    # ('RoverTireMars',     'wheels', 'RoverTireMars.stl',     'Tire Mars Chevron',   'Stage 2 — V4 alt, print x6'),
+    # ('RoverTireSmooth',   'wheels', 'RoverTireSmooth.stl',   'Tire Smooth',         'Stage 2 — V4 alt, print x6'),
+    # ('RoverTireOffroad',  'wheels', 'RoverTireOffroad.stl',  'Tire Offroad',        'Stage 2 — V4 alt, print x6'),
+    # ('RoverTirePaddle',   'wheels', 'RoverTirePaddle.stl',   'Tire Paddle',         'Stage 2 — V4 alt, print x6'),
 
     # Stage 3: Steering & Motor Mounts
     ('SteeringBracket',  'steering',   'SteeringBracket.stl',  None, 'Stage 3 — print x4'),

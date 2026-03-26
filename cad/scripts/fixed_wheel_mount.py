@@ -32,6 +32,7 @@ sys.path.insert(0, r"D:\Mars Rover Project\cad\scripts")
 from rover_cad_helpers import (
     p, val, FILLET_STD, CHAMFER_STD, CORNER_R,
     N20_W, N20_H, N20_D, N20_SHAFT_EXIT,
+    WHEEL_BCD, WHEEL_BOLT_COUNT, M3_CLEARANCE,
     draw_rounded_rect,
     find_largest_profile, find_smallest_profile, find_profile_by_area,
     extrude_profile, cut_profile, join_profile,
@@ -59,8 +60,10 @@ def run(context):
         # Shaft exit
         SHAFT_HOLE_R = N20_SHAFT_EXIT  # 2mm radius (4mm hole)
 
-        # M3 heat-set insert spacing
-        BOLT_SPACING = 1.6  # 16mm between bolt centres (matches middle_wheel_connector)
+        # Bolt pattern: 4x M3 on 20mm BCD (matches middle_wheel_connector + wheel hub)
+        # Design decision: Changed from 2x linear 16mm to 4x BCD 20mm
+        # for bolt-on wheel mounting alignment.
+        MOUNT_BCD = WHEEL_BCD  # 20mm BCD (cm)
 
         # Zip-tie slot
         ZIPTIE_W = 0.35     # 3.5mm slot width
@@ -152,21 +155,26 @@ def run(context):
                     print(f'  Warning: shaft exit chamfer failed: {e}')
 
         # ══════════════════════════════════════════════════════════
-        # STEP 4: M3 clearance through-holes (for bolting to connector)
+        # STEP 4: M3 clearance through-holes on 20mm BCD
+        # (for bolting to connector heat-set inserts)
         # ══════════════════════════════════════════════════════════
 
-        # FIX C1: Bolt holes along X to match middle_wheel_connector's
-        # heat-set inserts (axis='x' in make_heat_set_pair)
+        # 4x M3 clearance holes on 20mm BCD at 0/90/180/270 degrees.
+        # Matches middle_wheel_connector's heat-set inserts.
         top_plane = make_offset_plane(comp, comp.xYConstructionPlane, MOUNT_H)
         mount_sk = comp.sketches.add(top_plane)
         mount_sk.name = 'M3 Through-Holes'
-        m3_r = 0.165  # 3.3mm dia M3 clearance
-        mount_sk.sketchCurves.sketchCircles.addByCenterRadius(
-            p(-BOLT_SPACING / 2, 0, 0), m3_r
-        )
-        mount_sk.sketchCurves.sketchCircles.addByCenterRadius(
-            p(BOLT_SPACING / 2, 0, 0), m3_r
-        )
+        m3_r = M3_CLEARANCE  # 1.6mm radius (3.2mm dia)
+        bcd_r = MOUNT_BCD / 2  # 10mm radius
+
+        for i in range(WHEEL_BOLT_COUNT):
+            angle = math.radians(i * (360 / WHEEL_BOLT_COUNT))
+            bx = bcd_r * math.cos(angle)
+            by = bcd_r * math.sin(angle)
+            mount_sk.sketchCurves.sketchCircles.addByCenterRadius(
+                p(bx, by, 0), m3_r
+            )
+
         for pi_idx in range(mount_sk.profiles.count):
             pr = mount_sk.profiles.item(pi_idx)
             a = pr.areaProperties().area
@@ -234,8 +242,8 @@ def run(context):
             f'N20 motor pocket: {N20_W*10:.1f} × {N20_H*10:.1f}mm, '
             f'{N20_D*10:.0f}mm deep (rounded corners)\n'
             f'Shaft hole: {SHAFT_HOLE_R*20:.0f}mm horizontal (chamfered)\n'
-            f'Arm mount: 2× M3 through-holes '
-            f'({BOLT_SPACING*10:.0f}mm, bolts to connector)\n'
+            f'Arm mount: 4x M3 through-holes '
+            f'({MOUNT_BCD*10:.0f}mm BCD, bolts to connector)\n'
             f'Motor retention: zip-tie slot\n'
             f'Reinforcement: 2× diagonal gussets\n'
             f'Fillets: {fillet_count} edges @ {FILLET_STD*10:.1f}mm\n\n'

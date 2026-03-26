@@ -102,3 +102,9 @@ temp_*.png
 firmware-test-results.xml
 htmlcov/
 .coverage
+# Large files (>100MB GitHub limit)
+cad/reference-wheels/curiosity-mars-rover-wheel-1.snapshot.2.zip
+cad/reference=suspension/extracted/0.4-scale/full_rover_assembly_04x.stl
+3d-print/reference-suspension/rover_suspension_wheels_0.4x.stl
+cad/reference=suspension/extracted/0.4-scale/rover_suspension_wheels_0.4x.stl
+cad/reference=suspension/extracted/0.4-scale/rover_with_v5_wheels_04x.stl

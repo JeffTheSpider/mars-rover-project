@@ -123,19 +123,52 @@ FULL_SCALE_PARAMS = {
     # Wheels (x6)
     # ------------------------------------------------------------------
     "wheel": {
-        "outer_diameter":        200,   # mm, including tread
+        "outer_diameter":        200,   # mm, including tread (tire OD)
         "radius":                100,   # mm
-        "width":                 110,   # mm, tread included (ratio 0.55, between Curiosity 0.79 and Perseverance 0.58)
+        "width":                 110,   # mm, total hub width
         "hub_bore_d_shaft":      3.0,   # mm, N20 D-shaft (Phase 1) -- NOT scaled
         "hub_bore_clearance":    0.1,   # mm, added to bore for print tolerance
         "d_flat_depth":          0.5,   # mm
         "hub_boss_od":            10,   # mm
         "hub_boss_length":         8,   # mm, shaft engagement
-        "grouser_count":          12,   # chevron grousers
-        "grouser_depth":           3,   # mm (NOT scaled -- print minimum)
+        "grouser_count":          12,   # chevron grousers per tire
+        "grouser_depth":         7.5,   # mm, grouser/tread height
         "grouser_width_base":      3,   # mm (NOT scaled)
-        "spoke_count":             6,   # with flex zones
+        "spoke_count":             6,   # spiral spokes
         "grub_screw_size":         2,   # M2
+        # Two-piece wheel system (V4): hub/rim + interchangeable tire + beadlock ring
+        "seat_diameter":         175,   # mm, tire band sits on this surface
+        "flange_diameter":       185,   # mm, motor-side lip OD (retains tire)
+        "rim_wall":             6.25,   # mm, rim wall thickness
+        "tire_wall":               5,   # mm, tire band structural wall
+        "tread_height":          7.5,   # mm, grouser height above tire wall
+        "tire_width":             96,   # mm, tire band width (between lip and ring)
+        "twist_angle":            25,   # degrees, spoke spiral twist (NOT scaled)
+        "beadlock_screw_count":    4,   # M2 screws for ring retention (NOT scaled)
+        "beadlock_screw_size":     2,   # M2 (NOT scaled)
+        "beadlock_screw_radius":  84,   # mm, screw hole distance from centre
+        # V5 Curiosity-inspired wheel (one-piece, replaces V4 hub+tire)
+        # Scaled from GrabCAD Curiosity Wheel v25 (499mm OD -> 80mm at 0.4x)
+        "v5_one_piece":          True, # single-piece PLA (hub+spokes+tread)
+        "v5_source_od":          499,  # mm, original Curiosity model OD
+        "v5_width_ratio":       0.81,  # width/OD ratio (404/499 from Curiosity)
+        # At 0.4 scale: 80mm OD x 64.7mm wide, 6 curved spokes, chevron grousers
+        # STL: 3d-print/wheels/CuriosityWheelV5.stl (360k faces, pre-scaled)
+    },
+
+    # ------------------------------------------------------------------
+    # Reference model suspension (from frame_assem_v6.STEP, scaled 0.4x)
+    # See docs/engineering/reference-model-integration-log.md for full details
+    # ------------------------------------------------------------------
+    "reference_suspension": {
+        "source":               "frame_assem_v6.STEP (GrabCAD)",
+        "scale_factor":          0.4,
+        "track_width_actual":    296.2,  # mm at 0.4x (741mm full, vs 700mm target)
+        "wheelbase_actual":      298.3,  # mm at 0.4x (746mm full, vs 900mm target)
+        "tube_cross_section":      8.0,  # mm at 0.4x (20mm full -- matches 8mm rods!)
+        "envelope_x":            304.4,  # mm, width
+        "envelope_y":            159.7,  # mm, height
+        "envelope_z":            318.3,  # mm, length
     },
 
     # ------------------------------------------------------------------
@@ -410,7 +443,7 @@ _NO_SCALE_KEYS = {
     "differential_link.ball_joint_angle_deg",
     "differential_link.turnbuckle",
 
-    # Wheel -- bore/grouser are print minimums
+    # Wheel -- bore/grouser are print minimums, beadlock is hardware
     "wheel.hub_bore_d_shaft",
     "wheel.hub_bore_clearance",
     "wheel.d_flat_depth",
@@ -421,6 +454,9 @@ _NO_SCALE_KEYS = {
     "wheel.grouser_width_base",
     "wheel.spoke_count",
     "wheel.grub_screw_size",
+    "wheel.twist_angle",
+    "wheel.beadlock_screw_count",
+    "wheel.beadlock_screw_size",
 
     # Steering -- hardware constants
     "steering.bearing_seat_od",
@@ -512,8 +548,17 @@ def get_params(scale=0.4):
     params["overall"]["body_height"] = 120
     params["overall"]["driving_height"] = 420    # EA-08: no mast in Phase 1
     params["overall"]["target_speed_kmh"] = 2    # EA-08: 2 km/h for safety
-    params["wheel"]["hub_boss_od"] = 14           # 14mm OD (wider for spoke strength at 0.4 scale, matches V3 CAD)
+    params["wheel"]["hub_boss_od"] = 14           # 14mm OD (wider for spoke strength at 0.4 scale, matches V4 CAD)
     params["wheel"]["hub_boss_length"] = 8        # not scaled, shaft engagement
+    # Two-piece wheel V4 overrides (don't follow simple 0.4x scaling)
+    params["wheel"]["seat_diameter"] = 70         # 70mm — tire band sits here
+    params["wheel"]["flange_diameter"] = 74       # 74mm — motor-side lip OD
+    params["wheel"]["rim_wall"] = 2.5             # 2.5mm rim wall
+    params["wheel"]["tire_wall"] = 2              # 2mm tire structural wall (PLA minimum)
+    params["wheel"]["tread_height"] = 3           # 3mm grouser height (PLA minimum)
+    params["wheel"]["grouser_depth"] = 3          # 3mm (matches tread_height)
+    params["wheel"]["tire_width"] = 40            # 40mm (between lip and beadlock ring)
+    params["wheel"]["beadlock_screw_radius"] = 33.75  # 33.75mm from centre
     params["body_features"]["rocker_pivot_x"] = 125  # EA-08: X=+/-125mm
     params["body_features"]["rocker_pivot_z"] = 120  # Raised: 1.5× wheel ø above ground (like Curiosity, arms sweep ~24° down)
     params["body_features"]["battery_tray_l"] = 70   # EA-08: fits 2S 2200mAh

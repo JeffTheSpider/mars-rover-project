@@ -15,9 +15,10 @@ Redesigned with:
   - M3 grub screw for tube retention
 
 Features:
-  - 1× tube socket (8.2mm bore × 15mm deep) with M3 grub screw
-  - Fixed wheel mount face: 2× M3 heat-set inserts
-  - Wire exit hole: 8×6mm (motor wires only — no servo)
+  - 1x tube socket (8.2mm bore x 15mm deep) with M3 grub screw
+  - Wheel mount face: 4x M3 heat-set inserts on 20mm BCD
+    (bolt-on mounting to V5 wheel hub via 608ZZ bearing axle)
+  - Wire exit hole: 8x6mm (motor wires only -- no servo)
   - 4mm minimum wall thickness
 
 Overall size: ~30 × 25 × 25mm (smallest connector)
@@ -37,10 +38,11 @@ sys.path.insert(0, r"D:\Mars Rover Project\cad\scripts")
 from rover_cad_helpers import (
     p, val, FILLET_STD, CHAMFER_STD, CORNER_R,
     TUBE_BORE, TUBE_DEPTH, TUBE_WALL, GRUB_M3,
+    WHEEL_BCD, WHEEL_BOLT_COUNT,
     draw_rounded_rect,
     find_largest_profile, find_smallest_profile, find_profile_by_area,
     extrude_profile, cut_profile,
-    make_offset_plane, make_heat_set_pair,
+    make_offset_plane, make_heat_set_pair, make_heat_set_bcd,
     add_edge_fillets, add_chamfer, zoom_fit,
 )
 
@@ -67,7 +69,10 @@ def run(context):
         BODY_D = 2.5                   # 25mm (Z)
         BODY_H = 2.5                   # 25mm (Y)
 
-        MOUNT_BOLT_SPACING = 1.6       # 16mm (matches fixed_wheel_mount)
+        # Wheel bolt pattern: 4x M3 on 20mm BCD (matches V5 wheel hub)
+        # Design decision: Changed from 2x M3 linear 16mm to 4x BCD 20mm
+        # for bolt-on wheel mounting with 608ZZ bearing axle interface.
+        MOUNT_BCD = WHEEL_BCD           # 20mm BCD (cm)
 
         comp = design.rootComponent
         extrudes = comp.features.extrudeFeatures
@@ -144,17 +149,20 @@ def run(context):
                 print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
-        # STEP 4: Fixed mount — 2× heat-set inserts (bottom face)
+        # STEP 4: Wheel mount — 4× M3 heat-set inserts on BCD
+        # (bottom face, bolt-on wheel mounting)
         # ══════════════════════════════════════════════════════════
 
-        # NOTE: Heat-set insert faces (fixed wheel mount on bottom)
-        # must be re-verified once tube socket is reoriented to horizontal entry.
-
+        # 4× M3 heat-set inserts on 20mm BCD at 0/90/180/270°
+        # Matches bolt holes in V5 Curiosity wheel hub.
+        # Wheel bolts from outside through hub into these inserts.
+        #
         # XY plane normal is +Z. Body spans Z:[0, BODY_D].
-        # Plane at Z=0 is the -normal face, so flip=False → cut in +Z (into body).
-        make_heat_set_pair(
-            comp, comp.xYConstructionPlane, MOUNT_BOLT_SPACING,
-            cx=0, cy=BODY_D / 2, axis='x', flip=False
+        # Plane at Z=0 is the -normal face, so flip=False -> cut in +Z (into body).
+        make_heat_set_bcd(
+            comp, comp.xYConstructionPlane, MOUNT_BCD,
+            count=WHEEL_BOLT_COUNT, start_angle=0,
+            cx=0, cy=BODY_D / 2, flip=False
         )
 
         # ══════════════════════════════════════════════════════════
@@ -205,8 +213,8 @@ def run(context):
             f'(rounded corners)\n\n'
             f'TUBE SOCKET: {TUBE_BORE*10:.1f}mm × {TUBE_DEPTH*10:.0f}mm deep\n'
             f'  M3 grub screw, {CHAMFER_STD*10:.1f}mm entry chamfer\n\n'
-            f'FIXED MOUNT: 2× M3 heat-set inserts '
-            f'({MOUNT_BOLT_SPACING*10:.0f}mm, bottom face)\n'
+            f'WHEEL MOUNT: 4x M3 heat-set inserts '
+            f'({MOUNT_BCD*10:.0f}mm BCD, bottom face)\n'
             f'WIRE EXIT: {WIRE_W*10:.0f}×{WIRE_H*10:.0f}mm (rounded)\n'
             f'Fillets: {fillet_count} edges @ {FILLET_STD*10:.1f}mm\n\n'
             'Bolt fixed_wheel_mount to bottom face.\n'

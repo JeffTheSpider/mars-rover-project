@@ -513,6 +513,51 @@ def make_heat_set_pair(comp, sketch_plane, spacing, cx=0, cy=0,
     return results
 
 
+def make_heat_set_bcd(comp, sketch_plane, bcd, count=4, start_angle=0,
+                      cx=0, cy=0, bore=None, depth=None, flip=True):
+    """Create heat-set insert pockets on a bolt circle diameter (BCD).
+
+    Places `count` pockets equally spaced on a circle of diameter `bcd`,
+    starting at `start_angle` degrees.
+
+    Design decision: BCD pattern chosen over linear pair for bolt-on
+    wheel mounting — provides 4-point clamping with equal load distribution.
+    20mm BCD fits within the 28mm hub face with adequate material margin.
+
+    Args:
+        comp: Root component.
+        sketch_plane: Insertion face plane.
+        bcd: Bolt circle diameter (cm).
+        count: Number of pockets (default 4).
+        start_angle: Starting angle in degrees (default 0).
+        cx, cy: Centre of the bolt circle (cm).
+        bore, depth: Override pocket dimensions.
+        flip: Cut direction. True = -normal (default), False = +normal.
+
+    Returns:
+        List of ExtrudeFeatures.
+    """
+    import math
+    results = []
+    radius = bcd / 2
+    for i in range(count):
+        angle = math.radians(start_angle + i * (360 / count))
+        px = cx + radius * math.cos(angle)
+        py = cy + radius * math.sin(angle)
+        results.append(make_heat_set_pocket(
+            comp, sketch_plane, px, py, bore, depth, flip=flip
+        ))
+    return results
+
+
+# M3 clearance hole (for through-bolt patterns)
+M3_CLEARANCE = 0.16         # 1.6mm radius (3.2mm dia)
+
+# Wheel mounting bolt pattern
+WHEEL_BCD = 2.0             # 20mm bolt circle diameter (cm)
+WHEEL_BOLT_COUNT = 4        # 4x M3 bolts
+
+
 # ═══════════════════════════════════════════════════════════════════
 # Feature builders — N20 motor clip
 # ═══════════════════════════════════════════════════════════════════

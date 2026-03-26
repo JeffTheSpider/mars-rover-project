@@ -19,8 +19,8 @@ Redesigned with:
 
 Features:
   - 1× tube socket (8.2mm bore × 15mm deep) with M3 grub screw
-  - Steering bracket mount face: 2× M3 heat-set inserts
-  - Servo mount face: 2× M3 heat-set inserts
+  - Steering bracket mount face: 4x M3 heat-set inserts on 20mm BCD
+  - Servo mount face: 2x M3 heat-set inserts
   - Wire exit hole: 10×8mm (motor + servo wires)
   - 4mm minimum wall thickness
 
@@ -41,10 +41,11 @@ sys.path.insert(0, r"D:\Mars Rover Project\cad\scripts")
 from rover_cad_helpers import (
     p, val, FILLET_STD, CHAMFER_STD, CORNER_R,
     TUBE_BORE, TUBE_DEPTH, TUBE_WALL, GRUB_M3,
+    WHEEL_BCD, WHEEL_BOLT_COUNT,
     draw_rounded_rect,
     find_largest_profile, find_smallest_profile, find_profile_by_area,
     extrude_profile, cut_profile,
-    make_offset_plane, make_heat_set_pair,
+    make_offset_plane, make_heat_set_pair, make_heat_set_bcd,
     add_edge_fillets, add_chamfer, zoom_fit,
 )
 
@@ -72,7 +73,10 @@ def run(context):
         BODY_H = 3.0                   # 30mm height (Y)
 
         # Mount bolt patterns
-        STEER_BOLT_SPACING = 2.0       # 20mm
+        # Design decision: Steering bracket mount changed from 2x linear
+        # to 4x BCD to standardize all connector interfaces at 20mm BCD.
+        # Servo mount stays 2x linear (different interface).
+        STEER_BCD = WHEEL_BCD          # 20mm BCD (matches wheel pattern)
         SERVO_BOLT_SPACING = 2.0       # 20mm
 
         comp = design.rootComponent
@@ -151,18 +155,19 @@ def run(context):
                 print(f'  Warning: {e}')
 
         # ══════════════════════════════════════════════════════════
-        # STEP 4: Steering bracket mount — 2× heat-set inserts
-        # (front face, XY plane at Z=0)
+        # STEP 4: Steering bracket mount -- 4x M3 heat-set inserts
+        # on 20mm BCD (front face, XY plane at Z=0)
         # ══════════════════════════════════════════════════════════
 
-        # NOTE: Heat-set insert faces (steering bracket on front, servo on side)
-        # must be re-verified once tube socket is reoriented to horizontal entry.
-
+        # 4x M3 heat-set inserts on 20mm BCD at 0/90/180/270 degrees.
+        # Standardized interface matching wheel bolt pattern.
+        #
         # XY plane normal is +Z. Body spans Z:[0, BODY_D].
-        # Plane at Z=0 is the -normal face, so flip=False → cut in +Z (into body).
-        make_heat_set_pair(
-            comp, comp.xYConstructionPlane, STEER_BOLT_SPACING,
-            cx=0, cy=BODY_H / 3, axis='x', flip=False
+        # Plane at Z=0 is the -normal face, so flip=False -> cut in +Z (into body).
+        make_heat_set_bcd(
+            comp, comp.xYConstructionPlane, STEER_BCD,
+            count=WHEEL_BOLT_COUNT, start_angle=0,
+            cx=0, cy=BODY_H / 3, flip=False
         )
 
         # ══════════════════════════════════════════════════════════
@@ -228,8 +233,8 @@ def run(context):
             f'(rounded corners)\n\n'
             f'TUBE SOCKET: {TUBE_BORE*10:.1f}mm × {TUBE_DEPTH*10:.0f}mm deep\n'
             f'  M3 grub screw, {CHAMFER_STD*10:.1f}mm entry chamfer\n\n'
-            f'STEERING MOUNT: 2× M3 heat-set inserts '
-            f'({STEER_BOLT_SPACING*10:.0f}mm, front face)\n'
+            f'STEERING MOUNT: 4x M3 heat-set inserts '
+            f'({STEER_BCD*10:.0f}mm BCD, front face)\n'
             f'SERVO MOUNT: 2× M3 heat-set inserts '
             f'({SERVO_BOLT_SPACING*10:.0f}mm, side face)\n'
             f'WIRE EXIT: {WIRE_W*10:.0f}×{WIRE_H*10:.0f}mm (bottom)\n'
