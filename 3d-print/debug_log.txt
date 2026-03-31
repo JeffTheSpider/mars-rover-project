@@ -1,0 +1,17 @@
+OK: BearingTestPiece — 0 bodies
+
+OK: ServoMount — 0 bodies
+
+OK: SteeringKnuckle — 0 bodies
+
+OK: RockerHubConnector — 0 bodies
+
+OK: FrontWheelConnector — 0 bodies
+
+OK: MiddleWheelConnector — 0 bodies
+
+OK: DifferentialPivotHousing — 2 bodies
+
+OK: SwitchMountPlate — 0 bodies
+
+OK: BatteryTray — 0 bodies

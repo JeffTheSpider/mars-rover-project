@@ -153,20 +153,20 @@ After scaling, always verify:
 ## File Manifest
 
 ### Checkpoints
-- `cad/reference=suspension/checkpoints/suspension_clean_fullscale.stl` — Combined full-scale after cleanup
+- `cad/reference-suspension/checkpoints/suspension_clean_fullscale.stl` — Combined full-scale after cleanup
 
 ### Full-Scale Exports
-- `cad/reference=suspension/extracted/full-scale/*.stl` — 19 individual part STLs
-- `cad/reference=suspension/extracted/full-scale/assembly_positions.json` — Translation-only positions (partial)
-- `cad/reference=suspension/extracted/full-scale/assembly_transforms.json` — Full 4x4 transforms (authoritative)
+- `cad/reference-suspension/extracted/full-scale/*.stl` — 19 individual part STLs
+- `cad/reference-suspension/extracted/full-scale/assembly_positions.json` — Translation-only positions (partial)
+- `cad/reference-suspension/extracted/full-scale/assembly_transforms.json` — Full 4x4 transforms (authoritative)
 
 ### 0.4x Scale Exports
-- `cad/reference=suspension/extracted/0.4-scale/*.stl` — 19 positioned + scaled STLs
-- `cad/reference=suspension/extracted/0.4-scale/suspension_assembly_0.4x.stl` — Combined suspension
-- `cad/reference=suspension/extracted/0.4-scale/suspension_assembly_0.4x.glb` — 3D visualization
-- `cad/reference=suspension/extracted/0.4-scale/rover_suspension_wheels_0.4x.stl` — Full rover (suspension + 6 wheels)
-- `cad/reference=suspension/extracted/0.4-scale/rover_suspension_wheels_0.4x.glb` — Full rover GLB
-- `cad/reference=suspension/extracted/0.4-scale/wheel_FL.stl` through `wheel_RR.stl` — 6 positioned wheels
+- `cad/reference-suspension/extracted/0.4-scale/*.stl` — 19 positioned + scaled STLs
+- `cad/reference-suspension/extracted/0.4-scale/suspension_assembly_0.4x.stl` — Combined suspension
+- `cad/reference-suspension/extracted/0.4-scale/suspension_assembly_0.4x.glb` — 3D visualization
+- `cad/reference-suspension/extracted/0.4-scale/rover_suspension_wheels_0.4x.stl` — Full rover (suspension + 6 wheels)
+- `cad/reference-suspension/extracted/0.4-scale/rover_suspension_wheels_0.4x.glb` — Full rover GLB
+- `cad/reference-suspension/extracted/0.4-scale/wheel_FL.stl` through `wheel_RR.stl` — 6 positioned wheels
 
 ### Curiosity Wheel V5
 - `cad/reference-wheels/curiosity_wheel_v5_80mm.stl` — 80mm OD, centered at origin (360k faces)
@@ -220,11 +220,11 @@ After scaling, always verify:
 | motorCAD2.0 | 40.4 x 12.8 x 12.8 | 2 | Ref motor position — using N20 (12x10x24mm) |
 
 ### Individual Part Files
-- `cad/reference=suspension/extracted/full-scale/individual/*.stl` — 43 full-scale STLs
-- `cad/reference=suspension/extracted/full-scale/individual/part_transforms.json` — 4x4 world transforms
-- `cad/reference=suspension/extracted/0.4-scale/individual/*_04x.stl` — 43 scaled STLs
-- `cad/reference=suspension/extracted/0.4-scale/individual/individual_parts_catalog.json` — Full catalog
-- `cad/reference=suspension/extracted/0.4-scale/individual/printable_parts_assembly_04x.stl` — Combined printable
+- `cad/reference-suspension/extracted/full-scale/individual/*.stl` — 43 full-scale STLs
+- `cad/reference-suspension/extracted/full-scale/individual/part_transforms.json` — 4x4 world transforms
+- `cad/reference-suspension/extracted/0.4-scale/individual/*_04x.stl` — 43 scaled STLs
+- `cad/reference-suspension/extracted/0.4-scale/individual/individual_parts_catalog.json` — Full catalog
+- `cad/reference-suspension/extracted/0.4-scale/individual/printable_parts_assembly_04x.stl` — Combined printable
 - `3d-print/reference-suspension/individual/ref_*.stl` — 13 unique printable designs
 
 ## Status Summary
